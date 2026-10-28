@@ -5,267 +5,503 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ERP - Trabajos</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .menu-nav { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); padding: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 1000; }
-    .menu-nav .logo { color: white; font-weight: bold; font-size: 1.2rem; text-decoration: none; }
-    .menu-nav .nav-link { color: rgba(255,255,255,0.85); font-weight: 500; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; text-decoration: none; display: flex; align-items: center; gap: 6px; }
-    .menu-nav .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
-    .menu-nav .nav-link.active { background: white; color: #0d6efd; }
-    .menu-nav .nav-link i { font-size: 1.1rem; }
-    @media (max-width: 767px) { .menu-nav .nav-link span { display: none; } .menu-nav .nav-link { padding: 8px 10px; } }
-    .card { border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
-    .kpi-card { border-left: 4px solid; border-radius: 8px; background: white; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .kpi-card.pendiente { border-left-color: #6c757d; }
-    .kpi-card.diagnostico { border-left-color: #0dcaf0; }
-    .kpi-card.reparacion { border-left-color: #ffc107; }
-    .kpi-card.terminado { border-left-color: #6f42c1; }
-    .kpi-card.entregado { border-left-color: #198754; }
-    .kpi-card.cobrado { border-left-color: #198754; background: linear-gradient(135deg, #d1e7dd 0%, #ffffff 100%); }
-    .kpi-card.pendiente-cobro { border-left-color: #dc3545; background: linear-gradient(135deg, #f8d7da 0%, #ffffff 100%); }
-    .kpi-card.total { border-left-color: #0d6efd; background: linear-gradient(135deg, #cfe2ff 0%, #ffffff 100%); }
-    .kpi-label { font-size: 0.75rem; color: #6c757d; text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
-    .kpi-value { font-size: 1.5rem; font-weight: bold; margin: 0; }
-    .kpi-sub { font-size: 0.8rem; color: #6c757d; margin-top: 5px; }
-    .btn-accion { padding: 4px 8px; font-size: 0.85rem; margin: 0 2px; }
-    .btn-diagnostico { background-color: #0dcaf0; color: white; }
-    .btn-reparacion { background-color: #ffc107; color: #000; }
-    .btn-terminado { background-color: #6f42c1; color: white; }
-    .btn-entregado { background-color: #198754; color: white; }
-    .btn-pagado { background-color: #198754; color: white; }
-    .btn-editar { background-color: #0d6efd; color: white; }
-    .btn-eliminar { background-color: #dc3545; color: white; }
-    .badge-pendiente { background-color: #6c757d; color: white; }
-    .badge-diagnostico { background-color: #0dcaf0; color: white; }
-    .badge-reparacion { background-color: #ffc107; color: #000; }
-    .badge-terminado { background-color: #6f42c1; color: white; }
-    .badge-entregado { background-color: #198754; color: white; }
-    .badge-pagado { background-color: #198754; color: white; }
-    .badge-impago { background-color: #dc3545; color: white; }
-    .table th { background-color: #f8f9fa; font-weight: 600; font-size: 0.9rem; }
-    .alerta-vencido { background-color: #fff3f3; border-left: 4px solid #dc3545; }
-    .alerta-proximo { background-color: #fff8e1; border-left: 4px solid #fd7e14; }
-    .filtro-estado { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
-    .filtro-estado .btn-filtro { padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; border: 2px solid #dee2e6; background: white; color: #495057; cursor: pointer; transition: all 0.2s; }
-    .filtro-estado .btn-filtro:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .filtro-estado .btn-filtro.active { color: white; border-color: transparent; }
-    .filtro-estado .btn-filtro[data-filtro="todos"].active { background: #6c757d; }
-    .filtro-estado .btn-filtro[data-filtro="Pendiente"].active { background: #6c757d; }
-    .filtro-estado .btn-filtro[data-filtro="En Diagnóstico"].active { background: #0dcaf0; }
-    .filtro-estado .btn-filtro[data-filtro="En Reparación"].active { background: #ffc107; color: #000; }
-    .filtro-estado .btn-filtro[data-filtro="Terminado"].active { background: #6f42c1; }
-    .filtro-estado .btn-filtro[data-filtro="Entregado"].active { background: #198754; }
-    .contador-filtro { background: rgba(255,255,255,0.3); padding: 1px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 4px; }
-    .section-divider { display: flex; align-items: center; margin: 15px 0 10px 0; }
-    .section-divider .line { flex: 1; height: 2px; background: #dee2e6; }
-    .section-divider .label { padding: 4px 16px; font-weight: bold; font-size: 0.95rem; border-radius: 20px; color: white; }
-    .section-divider .label.estado { background: #6c757d; }
-    .section-divider .label.finanzas { background: #0d6efd; }
-    @media (max-width: 767px) { .table-responsive { font-size: 0.85rem; } .btn-accion { padding: 3px 6px; font-size: 0.75rem; } .kpi-value { font-size: 1.2rem; } }
+    body { background-color: #f8f9fa; }
+    .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .kpi-card {
+      background: white; border-radius: 12px; padding: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08); text-align: center; height: 100%;
+    }
+    .kpi-value { font-size: 1.5rem; font-weight: bold; margin: 5px 0; }
+    .kpi-label { font-size: 0.8rem; color: #6c757d; text-transform: uppercase; }
+    .table-container {
+      background: white; border-radius: 12px; padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-top: 20px;
+    }
+    .badge-pendiente { background-color: #ffc107; color: #000; }
+    .badge-diagnostico { background-color: #fd7e14; color: #fff; }
+    .badge-reparacion { background-color: #0dcaf0; color: #000; }
+    .badge-terminado { background-color: #198754; color: #fff; }
+    .badge-entregado { background-color: #6f42c1; color: #fff; }
   </style>
 </head>
 <body>
-
-  <nav class="menu-nav">
-    <div class="container-fluid px-3">
-      <div class="d-flex align-items-center justify-content-between flex-wrap">
-        <a href="index.html" class="logo me-3"><i class="bi bi-building"></i> ERP Data Technology</a>
-        <div class="d-flex flex-wrap gap-1">
-          <a href="index.html" class="nav-link"><i class="bi bi-house"></i> <span>Inicio</span></a>
-          <a href="clientes.html" class="nav-link"><i class="bi bi-people"></i> <span>Clientes</span></a>
-          <a href="cuenta-corriente.html" class="nav-link"><i class="bi bi-wallet2"></i> <span>Cta. Cte.</span></a>
-          <a href="finanzas.html" class="nav-link"><i class="bi bi-cash-stack"></i> <span>Finanzas</span></a>
-          <a href="cheques.html" class="nav-link"><i class="bi bi-receipt"></i> <span>Cheques</span></a>
-          <a href="trabajos.html" class="nav-link active"><i class="bi bi-tools"></i> <span>Trabajos</span></a>
-          <a href="agenda.html" class="nav-link"><i class="bi bi-calendar-event"></i> <span>Agenda</span></a>
-        </div>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="index.html"><i class="bi bi-building"></i> ERP Data Technology</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html"><i class="bi bi-house"></i> Inicio</a></li>
+          <li class="nav-item"><a class="nav-link" href="clientes.html"><i class="bi bi-people"></i> Clientes</a></li>
+          <li class="nav-item"><a class="nav-link" href="cuenta-corriente.html"><i class="bi bi-wallet2"></i> Cta. Cte.</a></li>
+          <li class="nav-item"><a class="nav-link" href="finanzas.html"><i class="bi bi-cash-stack"></i> Finanzas</a></li>
+          <li class="nav-item"><a class="nav-link" href="cheques.html"><i class="bi bi-receipt"></i> Cheques</a></li>
+          <li class="nav-item"><a class="nav-link active" href="trabajos.html"><i class="bi bi-briefcase"></i> Trabajos</a></li>
+          <li class="nav-item"><a class="nav-link" href="agenda.html"><i class="bi bi-calendar"></i> Agenda</a></li>
+          <li class="nav-item"><a class="nav-link" href="reportes.html"><i class="bi bi-bar-chart"></i> Reportes</a></li>
+          <li class="nav-item"><a class="nav-link" href="empresa.html"><i class="bi bi-building"></i> Empresa</a></li>
+          <li class="nav-item"><a class="nav-link" href="presupuestos.html"><i class="bi bi-pc-display"></i> PC Builder</a></li>
+        </ul>
       </div>
     </div>
   </nav>
 
-  <div class="container-fluid px-3 py-3">
-    <div class="section-divider"><div class="line"></div><div class="label estado">🔧 ESTADOS DE TRABAJOS</div><div class="line"></div></div>
-    <div class="row g-2 mb-3">
-      <div class="col-md-2 col-6"><div class="kpi-card pendiente"><div class="kpi-label">⏳ Pendiente</div><div class="kpi-value" style="color:#6c757d;" id="kpiPendiente">0</div><div class="kpi-sub" id="kpiPendienteTotal">$0,00</div></div></div>
-      <div class="col-md-2 col-6"><div class="kpi-card diagnostico"><div class="kpi-label">🔍 En Diagnóstico</div><div class="kpi-value" style="color:#0dcaf0;" id="kpiDiagnostico">0</div><div class="kpi-sub" id="kpiDiagnosticoTotal">$0,00</div></div></div>
-      <div class="col-md-2 col-6"><div class="kpi-card reparacion"><div class="kpi-label"> En Reparación</div><div class="kpi-value" style="color:#ffc107;" id="kpiReparacion">0</div><div class="kpi-sub" id="kpiReparacionTotal">$0,00</div></div></div>
-      <div class="col-md-2 col-6"><div class="kpi-card terminado"><div class="kpi-label">✅ Terminado</div><div class="kpi-value" style="color:#6f42c1;" id="kpiTerminado">0</div><div class="kpi-sub" id="kpiTerminadoTotal">$0,00</div></div></div>
-      <div class="col-md-2 col-6"><div class="kpi-card entregado"><div class="kpi-label">📦 Entregado</div><div class="kpi-value text-success" id="kpiEntregado">0</div><div class="kpi-sub" id="kpiEntregadoTotal">$0,00</div></div></div>
-      <div class="col-md-2 col-6"><div class="kpi-card total"><div class="kpi-label">📊 Total General</div><div class="kpi-value text-primary" id="kpiTotal">0</div><div class="kpi-sub" id="kpiTotalMonto">$0,00</div></div></div>
-    </div>
-
-    <div class="section-divider"><div class="line"></div><div class="label finanzas">💰 ESTADO FINANCIERO</div><div class="line"></div></div>
-    <div class="row g-2 mb-3">
-      <div class="col-md-4"><div class="kpi-card cobrado"><div class="kpi-label">✅ Pagados</div><div class="kpi-value text-success" id="kpiPagados">0</div><div class="kpi-sub" id="kpiPagadosTotal">$0,00</div></div></div>
-      <div class="col-md-4"><div class="kpi-card pendiente-cobro"><div class="kpi-label">💸 Pendientes de Cobro</div><div class="kpi-value text-danger" id="kpiPendientesCobro">0</div><div class="kpi-sub" id="kpiPendientesCobroTotal">$0,00</div></div></div>
-      <div class="col-md-4"><div class="kpi-card total"><div class="kpi-label">💵 Total Facturado</div><div class="kpi-value text-primary" id="kpiFacturado">$0,00</div><div class="kpi-sub" id="kpiFacturadoCant">0 trabajos</div></div></div>
-    </div>
-
-    <div class="card"><div class="card-body"><div class="row g-3">
-      <div class="col-md-4"><label class="form-label fw-bold"> Buscar</label><input type="text" class="form-control" id="filtroBusqueda" placeholder="Código, cliente, equipo..." oninput="aplicarFiltros()"></div>
-      <div class="col-md-8"><label class="form-label fw-bold">Filtrar por Estado</label>
-        <div class="filtro-estado">
-          <button class="btn-filtro active" data-filtro="todos" onclick="setFiltroEstado('todos')">Todos <span class="contador-filtro" id="countTodos">0</span></button>
-          <button class="btn-filtro" data-filtro="Pendiente" onclick="setFiltroEstado('Pendiente')">Pendiente <span class="contador-filtro" id="countPendiente">0</span></button>
-          <button class="btn-filtro" data-filtro="En Diagnóstico" onclick="setFiltroEstado('En Diagnóstico')">Diagnóstico <span class="contador-filtro" id="countDiagnostico">0</span></button>
-          <button class="btn-filtro" data-filtro="En Reparación" onclick="setFiltroEstado('En Reparación')">Reparación <span class="contador-filtro" id="countReparacion">0</span></button>
-          <button class="btn-filtro" data-filtro="Terminado" onclick="setFiltroEstado('Terminado')">Terminado <span class="contador-filtro" id="countTerminado">0</span></button>
-          <button class="btn-filtro" data-filtro="Entregado" onclick="setFiltroEstado('Entregado')">Entregado <span class="contador-filtro" id="countEntregado">0</span></button>
+  <div class="container-fluid mt-4 px-4">
+    <!-- KPIs Estados -->
+    <h5 class="mb-3"><i class="bi bi-tools"></i> ESTADOS DE TRABAJOS</h5>
+    <div class="row g-3 mb-4">
+      <div class="col-md-2 col-6">
+        <div class="kpi-card">
+          <div class="kpi-label">⏳ Pendiente</div>
+          <div class="kpi-value text-warning" id="kpiPendiente">0</div>
+          <small class="text-muted" id="montoPendiente">$0,00</small>
         </div>
       </div>
-    </div></div></div>
+      <div class="col-md-2 col-6">
+        <div class="kpi-card">
+          <div class="kpi-label">🔍 En Diagnóstico</div>
+          <div class="kpi-value text-warning" id="kpiDiagnostico">0</div>
+          <small class="text-muted" id="montoDiagnostico">$0,00</small>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="kpi-card">
+          <div class="kpi-label">🔧 En Reparación</div>
+          <div class="kpi-value text-info" id="kpiReparacion">0</div>
+          <small class="text-muted" id="montoReparacion">$0,00</small>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="kpi-card">
+          <div class="kpi-label">✅ Terminado</div>
+          <div class="kpi-value text-success" id="kpiTerminado">0</div>
+          <small class="text-muted" id="montoTerminado">$0,00</small>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="kpi-card">
+          <div class="kpi-label">📦 Entregado</div>
+          <div class="kpi-value text-primary" id="kpiEntregado">0</div>
+          <small class="text-muted" id="montoEntregado">$0,00</small>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="kpi-card">
+          <div class="kpi-label"> Total General</div>
+          <div class="kpi-value text-dark" id="kpiTotal">0</div>
+          <small class="text-muted" id="montoTotal">$0,00</small>
+        </div>
+      </div>
+    </div>
 
-    <div class="card mb-3"><div class="card-body d-flex justify-content-between align-items-center"><h5 class="fw-bold mb-0"><i class="bi bi-tools"></i> Gestión de Trabajos</h5><button class="btn btn-primary btn-lg" onclick="abrirModalNuevo()"><i class="bi bi-plus-circle"></i> Nuevo Trabajo</button></div></div>
+    <!-- KPIs Financieros -->
+    <h5 class="mb-3">💰 ESTADO FINANCIERO</h5>
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="kpi-card" style="border-left: 4px solid #198754;">
+          <div class="kpi-label">✅ Pagados</div>
+          <div class="kpi-value text-success" id="kpiPagados">0</div>
+          <small class="text-muted" id="montoPagados">$0,00</small>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="kpi-card" style="border-left: 4px solid #dc3545;">
+          <div class="kpi-label">💸 Pendientes de Cobro</div>
+          <div class="kpi-value text-danger" id="kpiPendientesCobro">0</div>
+          <small class="text-muted" id="montoPendientesCobro">$0,00</small>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="kpi-card" style="border-left: 4px solid #6f42c1;">
+          <div class="kpi-label">💵 Total Facturado</div>
+          <div class="kpi-value text-primary" id="kpiFacturado">$0,00</div>
+          <small class="text-muted" id="cantTrabajos">0 trabajos</small>
+        </div>
+      </div>
+    </div>
 
-    <div class="card"><div class="card-body p-0"><div class="table-responsive">
-      <table class="table table-hover align-middle mb-0"><thead><tr><th>Código</th><th>Cliente</th><th>Equipo</th><th>Falla</th><th class="text-end">Total</th><th>Ingreso</th><th>Entrega Est.</th><th>Estado</th><th class="text-center">Pago</th><th class="text-center">Acciones</th></tr></thead>
-      <tbody id="tablaTrabajos"><tr><td colspan="10" class="text-center py-4 text-muted">Cargando...</td></tr></tbody></table>
-    </div></div></div>
+    <!-- Filtros y Buscador -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" id="buscador" placeholder="Buscar por código, cliente, equipo...">
+        </div>
+      </div>
+      <div class="col-md-6">
+        <select class="form-select" id="filtroEstado" onchange="filtrarTrabajos()">
+          <option value="">Filtrar por Estado - Todos</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="En Diagnóstico">En Diagnóstico</option>
+          <option value="En Reparación">En Reparación</option>
+          <option value="Terminado">Terminado</option>
+          <option value="Entregado">Entregado</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Tabla de Trabajos -->
+    <div class="table-container">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="bi bi-list-ul"></i> Gestión de Trabajos</h5>
+        <button class="btn btn-primary" onclick="abrirModalNuevo()">
+          <i class="bi bi-plus-circle"></i> Nuevo Trabajo
+        </button>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Cliente</th>
+              <th>Equipo</th>
+              <th>Falla</th>
+              <th>Total</th>
+              <th>Ingreso</th>
+              <th>Entrega Est.</th>
+              <th>Estado</th>
+              <th>Pago</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tablaTrabajos">
+            <tr><td colspan="10" class="text-center text-muted">Cargando trabajos...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
+  <!-- Modal Nuevo/Editar Trabajo -->
   <div class="modal fade" id="modalTrabajo" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered"><div class="modal-content">
-      <div class="modal-header bg-primary text-white"><h5 class="modal-title" id="modalTitulo"><i class="bi bi-plus-circle"></i> Nuevo Trabajo</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-      <div class="modal-body"><form id="formTrabajo"><input type="hidden" id="trabajoId"><div class="row g-3">
-        <div class="col-md-6"><label class="form-label fw-bold">Cliente *</label><select class="form-select" id="trabajoCliente" required><option value="">Seleccionar cliente...</option></select></div>
-        <div class="col-md-3"><label class="form-label fw-bold">Fecha de Ingreso *</label><input type="date" class="form-control" id="trabajoFechaIngreso" required></div>
-        <div class="col-md-3"><label class="form-label fw-bold">Fecha Estimada Entrega</label><input type="date" class="form-control" id="trabajoFechaEntrega"></div>
-        <div class="col-md-4"><label class="form-label fw-bold">Tipo de Equipo *</label><input type="text" class="form-control" id="trabajoTipoEquipo" required placeholder="Ej: Notebook, Celular, PC"></div>
-        <div class="col-md-4"><label class="form-label fw-bold">Marca/Modelo</label><input type="text" class="form-control" id="trabajoMarcaModelo" placeholder="Ej: Lenovo ThinkPad T480"></div>
-        <div class="col-md-4"><label class="form-label fw-bold">Número de Serie</label><input type="text" class="form-control" id="trabajoNumeroSerie" placeholder="N° de serie"></div>
-        <div class="col-12"><label class="form-label fw-bold">Falla Reportada *</label><textarea class="form-control" id="trabajoFalla" rows="2" required placeholder="Descripción de la falla"></textarea></div>
-        <div class="col-md-4"><label class="form-label fw-bold">Monto Diagnóstico ($)</label><input type="number" step="0.01" min="0" class="form-control" id="trabajoMontoDiagnostico" value="0"></div>
-        <div class="col-md-4"><label class="form-label fw-bold">Monto Reparación ($)</label><input type="number" step="0.01" min="0" class="form-control" id="trabajoMontoReparacion" value="0"></div>
-        <div class="col-md-4"><label class="form-label fw-bold">Estado</label><select class="form-select" id="trabajoEstado"><option value="Pendiente">Pendiente</option><option value="En Diagnóstico">En Diagnóstico</option><option value="En Reparación">En Reparación</option><option value="Terminado">Terminado</option><option value="Entregado">Entregado</option></select></div>
-        <div class="col-12"><label class="form-label fw-bold">Observaciones</label><textarea class="form-control" id="trabajoObservaciones" rows="2" placeholder="Observaciones adicionales"></textarea></div>
-        <div class="col-md-6"><div class="form-check form-switch mt-4"><input class="form-check-input" type="checkbox" id="trabajoPagado"><label class="form-check-label fw-bold" for="trabajoPagado">✅ Marcar como PAGADO (se registrará en Finanzas)</label></div></div>
-      </div></form></div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" onclick="guardarTrabajo()"><i class="bi bi-save"></i> Guardar</button></div>
-    </div></div>
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitulo">Nuevo Trabajo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formTrabajo">
+            <input type="hidden" id="trabajoId">
+            <div class="mb-3">
+              <label class="form-label">Cliente *</label>
+              <select class="form-select" id="trabajoCliente" required>
+                <option value="">Seleccionar cliente...</option>
+              </select>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Fecha de Ingreso *</label>
+                <input type="date" class="form-control" id="trabajoFechaIngreso" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Fecha Estimada Entrega</label>
+                <input type="date" class="form-control" id="trabajoFechaEntrega">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Tipo de Equipo *</label>
+                <input type="text" class="form-control" id="trabajoTipoEquipo" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Marca/Modelo</label>
+                <input type="text" class="form-control" id="trabajoMarcaModelo">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Número de Serie</label>
+                <input type="text" class="form-control" id="trabajoNumeroSerie">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Falla Reportada *</label>
+              <textarea class="form-control" id="trabajoFalla" rows="2" required></textarea>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Monto Diagnóstico ($)</label>
+                <input type="number" class="form-control" id="trabajoMontoDiagnostico" step="0.01" min="0">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Monto Reparación ($)</label>
+                <input type="number" class="form-control" id="trabajoMontoReparacion" step="0.01" min="0">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Estado</label>
+              <select class="form-select" id="trabajoEstado">
+                <option value="Pendiente">Pendiente</option>
+                <option value="En Diagnóstico">En Diagnóstico</option>
+                <option value="En Reparación">En Reparación</option>
+                <option value="Terminado">Terminado</option>
+                <option value="Entregado">Entregado</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Observaciones</label>
+              <textarea class="form-control" id="trabajoObservaciones" rows="2"></textarea>
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="trabajoPagado">
+              <label class="form-check-label" for="trabajoPagado">✅ Marcar como PAGADO (se registrará en Finanzas)</label>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="guardarTrabajo()">Guardar</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const API_URL = 'http://localhost:3000/api/trabajos';
-    const API_CLIENTES = 'http://localhost:3000/api/clientes';
-    let trabajosGlobal = [], clientesGlobal = [], filtroEstadoActual = 'todos';
-    document.addEventListener('DOMContentLoaded', function() { cargarDatos(); });
+    const API = '/api';
+    let trabajosData = [];
+    let clientesList = [];
 
-    async function cargarDatos() { await Promise.all([cargarTrabajos(), cargarClientes(), cargarResumen()]); }
-    async function cargarTrabajos() { try { const r = await fetch(API_URL); trabajosGlobal = await r.json(); aplicarFiltros(); } catch (e) { console.error(e); } }
-    async function cargarClientes() { try {
-      const r = await fetch(API_CLIENTES); clientesGlobal = await r.json();
-      const s = document.getElementById('trabajoCliente'); s.innerHTML = '<option value="">Seleccionar cliente...</option>';
-      clientesGlobal.forEach(c => { const o = document.createElement('option'); o.value = c.id; o.textContent = `${c.codigo} - ${c.nombre}`; s.appendChild(o); });
-    } catch (e) { console.error(e); } }
-    async function cargarResumen() { try {
-      const r = await fetch(`${API_URL}/resumen`); const d = await r.json();
-      document.getElementById('kpiPendiente').textContent = d.pendiente.cantidad; document.getElementById('kpiPendienteTotal').textContent = `$${fn(d.pendiente.total)}`;
-      document.getElementById('kpiDiagnostico').textContent = d.en_diagnostico.cantidad; document.getElementById('kpiDiagnosticoTotal').textContent = `$${fn(d.en_diagnostico.total)}`;
-      document.getElementById('kpiReparacion').textContent = d.en_reparacion.cantidad; document.getElementById('kpiReparacionTotal').textContent = `$${fn(d.en_reparacion.total)}`;
-      document.getElementById('kpiTerminado').textContent = d.terminado.cantidad; document.getElementById('kpiTerminadoTotal').textContent = `$${fn(d.terminado.total)}`;
-      document.getElementById('kpiEntregado').textContent = d.entregado.cantidad; document.getElementById('kpiEntregadoTotal').textContent = `$${fn(d.entregado.total)}`;
-      document.getElementById('kpiTotal').textContent = d.cantidad_general; document.getElementById('kpiTotalMonto').textContent = `$${fn(d.total_general)}`;
-      document.getElementById('kpiPagados').textContent = d.pagados.cantidad; document.getElementById('kpiPagadosTotal').textContent = `$${fn(d.pagados.total)}`;
-      document.getElementById('kpiPendientesCobro').textContent = d.pendientes_cobro.cantidad; document.getElementById('kpiPendientesCobroTotal').textContent = `$${fn(d.pendientes_cobro.total)}`;
-      document.getElementById('kpiFacturado').textContent = `$${fn(d.total_general)}`; document.getElementById('kpiFacturadoCant').textContent = `${d.cantidad_general} trabajos`;
-    } catch (e) { console.error(e); } }
+    document.addEventListener('DOMContentLoaded', async () => {
+      await cargarClientes();
+      await cargarTrabajos();
+      
+      // Buscador en tiempo real
+      document.getElementById('buscador').addEventListener('input', filtrarTrabajos);
+    });
 
-    function setFiltroEstado(f) { filtroEstadoActual = f; document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('active')); document.querySelector(`[data-filtro="${f}"]`).classList.add('active'); aplicarFiltros(); }
-    function aplicarFiltros() {
-      const busq = document.getElementById('filtroBusqueda').value.toLowerCase().trim();
-      let f = trabajosGlobal;
-      if (filtroEstadoActual !== 'todos') f = f.filter(t => t.estado === filtroEstadoActual);
-      if (busq) f = f.filter(t => t.codigo_orden.toLowerCase().includes(busq) || (t.cliente && t.cliente.nombre.toLowerCase().includes(busq)) || t.tipo_equipo.toLowerCase().includes(busq) || t.falla.toLowerCase().includes(busq));
-      actualizarContadores(); renderizarTrabajos(f);
-    }
-    function actualizarContadores() {
-      const busq = document.getElementById('filtroBusqueda').value.toLowerCase().trim();
-      let b = trabajosGlobal; if (busq) b = b.filter(t => t.codigo_orden.toLowerCase().includes(busq) || (t.cliente && t.cliente.nombre.toLowerCase().includes(busq)) || t.tipo_equipo.toLowerCase().includes(busq));
-      document.getElementById('countTodos').textContent = b.length;
-      document.getElementById('countPendiente').textContent = b.filter(t => t.estado === 'Pendiente').length;
-      document.getElementById('countDiagnostico').textContent = b.filter(t => t.estado === 'En Diagnóstico').length;
-      document.getElementById('countReparacion').textContent = b.filter(t => t.estado === 'En Reparación').length;
-      document.getElementById('countTerminado').textContent = b.filter(t => t.estado === 'Terminado').length;
-      document.getElementById('countEntregado').textContent = b.filter(t => t.estado === 'Entregado').length;
+    async function cargarClientes() {
+      try {
+        const res = await fetch(`${API}/clientes`);
+        clientesList = await res.json();
+        
+        const select = document.getElementById('trabajoCliente');
+        clientesList.forEach(c => {
+          const option = document.createElement('option');
+          option.value = c.id;
+          option.textContent = `${c.codigo} - ${c.nombre}`;
+          select.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error al cargar clientes:', error);
+      }
     }
 
-    function renderizarTrabajos(trabajos) {
-      const t = document.getElementById('tablaTrabajos');
-      if (trabajos.length === 0) { t.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-muted">No hay trabajos.</td></tr>'; return; }
-      const hoy = new Date();
-      t.innerHTML = trabajos.map(tr => {
-        const ent = tr.fecha_estimada_entrega ? new Date(tr.fecha_estimada_entrega) : null;
-        const esVenc = ent && ent < hoy && tr.estado !== 'Entregado';
-        const esProx = ent && ent >= hoy && ent <= new Date(Date.now() + 3*24*60*60*1000) && tr.estado !== 'Entregado';
-        const cf = esVenc ? 'alerta-vencido' : (esProx ? 'alerta-proximo' : '');
-        const be = tr.estado === 'Pendiente' ? 'badge-pendiente' : (tr.estado === 'En Diagnóstico' ? 'badge-diagnostico' : (tr.estado === 'En Reparación' ? 'badge-reparacion' : (tr.estado === 'Terminado' ? 'badge-terminado' : 'badge-entregado')));
-        const bp = tr.pagado ? '<span class="badge badge-pagado">Pagado</span>' : '<span class="badge badge-impago">Impago</span>';
-        let acc = '';
-        if (tr.estado === 'Pendiente') acc = `<button class="btn btn-accion btn-diagnostico" onclick="cambiarEstado('${tr.id}','En Diagnóstico')" title="Iniciar Diagnóstico"><i class="bi bi-search"></i></button>`;
-        else if (tr.estado === 'En Diagnóstico') acc = `<button class="btn btn-accion btn-reparacion" onclick="cambiarEstado('${tr.id}','En Reparación')" title="Iniciar Reparación"><i class="bi bi-tools"></i></button>`;
-        else if (tr.estado === 'En Reparación') acc = `<button class="btn btn-accion btn-terminado" onclick="cambiarEstado('${tr.id}','Terminado')" title="Terminado"><i class="bi bi-check-circle"></i></button>`;
-        else if (tr.estado === 'Terminado') acc = `<button class="btn btn-accion btn-entregado" onclick="cambiarEstado('${tr.id}','Entregado')" title="Entregado"><i class="bi bi-box-seam"></i></button>`;
-        if (!tr.pagado && tr.estado === 'Entregado') acc += `<button class="btn btn-accion btn-pagado" onclick="marcarPagado('${tr.id}')" title="Marcar Pagado"><i class="bi bi-cash-coin"></i></button>`;
-        acc += `<button class="btn btn-accion btn-editar" onclick="editarTrabajo('${tr.id}')"><i class="bi bi-pencil"></i></button><button class="btn btn-accion btn-eliminar" onclick="eliminarTrabajo('${tr.id}')"><i class="bi bi-trash"></i></button>`;
-        const cn = tr.cliente ? `${tr.cliente.codigo} - ${tr.cliente.nombre}` : '-';
-        const eq = tr.marca_modelo ? `${tr.tipo_equipo} - ${tr.marca_modelo}` : tr.tipo_equipo;
-        const fc = tr.falla.length > 30 ? tr.falla.substring(0,30) + '...' : tr.falla;
-        const fe = tr.fecha_estimada_entrega ? new Date(tr.fecha_estimada_entrega).toLocaleDateString('es-AR') : '-';
-        return `<tr class="${cf}"><td><strong>${tr.codigo_orden}</strong></td><td>${cn}</td><td>${eq}</td><td title="${tr.falla}">${fc}</td><td class="text-end fw-bold">$${fn(tr.monto_total)}</td><td>${new Date(tr.fecha_ingreso).toLocaleDateString('es-AR')}</td><td>${fe}</td><td><span class="badge ${be}">${tr.estado}</span></td><td class="text-center">${bp}</td><td class="text-center">${acc}</td></tr>`;
-      }).join('');
+    async function cargarTrabajos() {
+      try {
+        const res = await fetch(`${API}/trabajos`);
+        trabajosData = await res.json();
+        
+        // Cargar resumen KPIs
+        const resKpi = await fetch(`${API}/trabajos/resumen`);
+        const kpis = await resKpi.json();
+        
+        actualizarKPIs(kpis);
+        renderizarTabla(trabajosData);
+      } catch (error) {
+        console.error('Error al cargar trabajos:', error);
+        document.getElementById('tablaTrabajos').innerHTML = 
+          '<tr><td colspan="10" class="text-center text-danger">Error al cargar datos</td></tr>';
+      }
     }
 
-    function abrirModalNuevo() { document.getElementById('formTrabajo').reset(); document.getElementById('trabajoId').value = ''; document.getElementById('modalTitulo').innerHTML = '<i class="bi bi-plus-circle"></i> Nuevo Trabajo'; document.getElementById('trabajoFechaIngreso').value = new Date().toISOString().split('T')[0]; document.getElementById('trabajoMontoDiagnostico').value = '0'; document.getElementById('trabajoMontoReparacion').value = '0'; document.getElementById('trabajoPagado').checked = false; new bootstrap.Modal(document.getElementById('modalTrabajo')).show(); }
+    function actualizarKPIs(kpis) {
+      // Estados
+      const estados = ['pendiente', 'diagnostico', 'reparacion', 'terminado', 'entregado'];
+      estados.forEach(estado => {
+        const key = estado.charAt(0).toUpperCase() + estado.slice(1);
+        document.getElementById(`kpi${key}`).textContent = kpis[estado]?.cantidad || 0;
+        document.getElementById(`monto${key}`).textContent = formatMoney(kpis[estado]?.total || 0);
+      });
+      
+      document.getElementById('kpiTotal').textContent = kpis.total_general?.cantidad || 0;
+      document.getElementById('montoTotal').textContent = formatMoney(kpis.total_general?.total || 0);
+      
+      // Financieros
+      document.getElementById('kpiPagados').textContent = kpis.pagados?.cantidad || 0;
+      document.getElementById('montoPagados').textContent = formatMoney(kpis.pagados?.total || 0);
+      
+      document.getElementById('kpiPendientesCobro').textContent = kpis.pendientes_cobro?.cantidad || 0;
+      document.getElementById('montoPendientesCobro').textContent = formatMoney(kpis.pendientes_cobro?.total || 0);
+      
+      document.getElementById('kpiFacturado').textContent = formatMoney(kpis.total_facturado || 0);
+      document.getElementById('cantTrabajos').textContent = `${kpis.cantidad_general || 0} trabajos`;
+    }
+
+    function renderizarTabla(trabajos) {
+      const tbody = document.getElementById('tablaTrabajos');
+      
+      if (trabajos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">No hay trabajos registrados.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = trabajos.map(tr => {
+        const cliente = clientesList.find(c => c.id === tr.cliente_id);
+        const clienteNombre = cliente ? `${cliente.codigo} - ${cliente.nombre}` : '-';
+        const total = (tr.monto_diagnostico || 0) + (tr.monto_reparacion || 0);
+        
+        return `
+        <tr>
+          <td><strong>${tr.codigo}</strong></td>
+          <td>${clienteNombre}</td>
+          <td>${tr.tipo_equipo} ${tr.marca_modelo ? `(${tr.marca_modelo})` : ''}</td>
+          <td>${tr.falla}</td>
+          <td class="text-end fw-bold">${formatMoney(total)}</td>
+          <td>${formatDate(tr.fecha_ingreso)}</td>
+          <td>${tr.fecha_entrega_estimada ? formatDate(tr.fecha_entrega_estimada) : '-'}</td>
+          <td><span class="badge ${getBadgeClass(tr.estado)}">${tr.estado}</span></td>
+          <td>${tr.pagado ? '<span class="badge bg-success">Pagado</span>' : '<span class="badge bg-danger">Pendiente</span>'}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary me-1" onclick="editarTrabajo('${tr.id}')">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="eliminarTrabajo('${tr.id}', '${tr.codigo}')">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `}).join('');
+    }
+
+    function filtrarTrabajos() {
+      const texto = document.getElementById('buscador').value.toLowerCase().trim();
+      const estado = document.getElementById('filtroEstado').value;
+      
+      let filtrados = trabajosData;
+      
+      if (texto) {
+        filtrados = filtrados.filter(tr => 
+          tr.codigo.toLowerCase().includes(texto) ||
+          tr.tipo_equipo.toLowerCase().includes(texto) ||
+          tr.falla.toLowerCase().includes(texto) ||
+          (tr.cliente_id && clientesList.find(c => c.id === tr.cliente_id)?.nombre.toLowerCase().includes(texto))
+        );
+      }
+      
+      if (estado) {
+        filtrados = filtrados.filter(tr => tr.estado === estado);
+      }
+      
+      renderizarTabla(filtrados);
+    }
+
+    function abrirModalNuevo() {
+      document.getElementById('modalTitulo').textContent = 'Nuevo Trabajo';
+      document.getElementById('formTrabajo').reset();
+      document.getElementById('trabajoId').value = '';
+      document.getElementById('trabajoFechaIngreso').value = new Date().toISOString().split('T')[0];
+      new bootstrap.Modal(document.getElementById('modalTrabajo')).show();
+    }
 
     function editarTrabajo(id) {
-      const tr = trabajosGlobal.find(x => x.id === id); if (!tr) return;
+      const tr = trabajosData.find(t => t.id === id);
+      if (!tr) return;
+
+      document.getElementById('modalTitulo').textContent = 'Editar Trabajo';
       document.getElementById('trabajoId').value = tr.id;
       document.getElementById('trabajoCliente').value = tr.cliente_id;
-      document.getElementById('trabajoFechaIngreso').value = tr.fecha_ingreso;
-      document.getElementById('trabajoFechaEntrega').value = tr.fecha_estimada_entrega || '';
+      document.getElementById('trabajoFechaIngreso').value = tr.fecha_ingreso.split('T')[0];
+      document.getElementById('trabajoFechaEntrega').value = tr.fecha_entrega_estimada ? tr.fecha_entrega_estimada.split('T')[0] : '';
       document.getElementById('trabajoTipoEquipo').value = tr.tipo_equipo;
       document.getElementById('trabajoMarcaModelo').value = tr.marca_modelo || '';
       document.getElementById('trabajoNumeroSerie').value = tr.numero_serie || '';
       document.getElementById('trabajoFalla').value = tr.falla;
-      document.getElementById('trabajoMontoDiagnostico').value = tr.monto_diagnostico;
-      document.getElementById('trabajoMontoReparacion').value = tr.monto_reparacion;
+      document.getElementById('trabajoMontoDiagnostico').value = tr.monto_diagnostico || 0;
+      document.getElementById('trabajoMontoReparacion').value = tr.monto_reparacion || 0;
       document.getElementById('trabajoEstado').value = tr.estado;
       document.getElementById('trabajoObservaciones').value = tr.observaciones || '';
-      document.getElementById('trabajoPagado').checked = tr.pagado;
-      document.getElementById('modalTitulo').innerHTML = '<i class="bi bi-pencil"></i> Editar Trabajo';
+      document.getElementById('trabajoPagado').checked = tr.pagado || false;
+      
       new bootstrap.Modal(document.getElementById('modalTrabajo')).show();
     }
 
     async function guardarTrabajo() {
       const id = document.getElementById('trabajoId').value;
-      const datos = { cliente_id: document.getElementById('trabajoCliente').value, fecha_ingreso: document.getElementById('trabajoFechaIngreso').value, tipo_equipo: document.getElementById('trabajoTipoEquipo').value.trim(), marca_modelo: document.getElementById('trabajoMarcaModelo').value.trim(), numero_serie: document.getElementById('trabajoNumeroSerie').value.trim(), falla: document.getElementById('trabajoFalla').value.trim(), monto_diagnostico: parseFloat(document.getElementById('trabajoMontoDiagnostico').value) || 0, monto_reparacion: parseFloat(document.getElementById('trabajoMontoReparacion').value) || 0, estado: document.getElementById('trabajoEstado').value, fecha_estimada_entrega: document.getElementById('trabajoFechaEntrega').value || null, observaciones: document.getElementById('trabajoObservaciones').value.trim(), pagado: document.getElementById('trabajoPagado').checked };
-      if (!datos.cliente_id || !datos.fecha_ingreso || !datos.tipo_equipo || !datos.falla) { alert('Completá campos obligatorios (*)'); return; }
+      const data = {
+        cliente_id: document.getElementById('trabajoCliente').value,
+        fecha_ingreso: document.getElementById('trabajoFechaIngreso').value,
+        fecha_entrega_estimada: document.getElementById('trabajoFechaEntrega').value || null,
+        tipo_equipo: document.getElementById('trabajoTipoEquipo').value.trim(),
+        marca_modelo: document.getElementById('trabajoMarcaModelo').value.trim(),
+        numero_serie: document.getElementById('trabajoNumeroSerie').value.trim(),
+        falla: document.getElementById('trabajoFalla').value.trim(),
+        monto_diagnostico: parseFloat(document.getElementById('trabajoMontoDiagnostico').value) || 0,
+        monto_reparacion: parseFloat(document.getElementById('trabajoMontoReparacion').value) || 0,
+        estado: document.getElementById('trabajoEstado').value,
+        observaciones: document.getElementById('trabajoObservaciones').value.trim(),
+        pagado: document.getElementById('trabajoPagado').checked
+      };
+
+      if (!data.cliente_id || !data.fecha_ingreso || !data.tipo_equipo || !data.falla) {
+        alert('Cliente, Fecha de Ingreso, Tipo de Equipo y Falla son obligatorios');
+        return;
+      }
+
       try {
-        const r = id ? await fetch(`${API_URL}/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) }) : await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
-        const result = await r.json();
-        if (result.success) { alert(result.message); bootstrap.Modal.getInstance(document.getElementById('modalTrabajo')).hide(); await cargarDatos(); } else { alert('Error: ' + result.message); }
-      } catch (e) { alert('Error al conectar'); }
+        const url = id ? `${API}/trabajos/${id}` : `${API}/trabajos`;
+        const method = id ? 'PUT' : 'POST';
+        
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await res.json();
+        
+        if (result.success) {
+          bootstrap.Modal.getInstance(document.getElementById('modalTrabajo')).hide();
+          await cargarTrabajos();
+        } else {
+          alert(result.message);
+        }
+      } catch (error) {
+        alert('Error al guardar trabajo');
+      }
     }
 
-    async function cambiarEstado(id, nuevo) {
-      const tr = trabajosGlobal.find(x => x.id === id); if (!tr) return;
-      if (!confirm(`¿Cambiar estado de ${tr.codigo_orden} a "${nuevo}"?`)) return;
-      const datos = { cliente_id: tr.cliente_id, fecha_ingreso: tr.fecha_ingreso, tipo_equipo: tr.tipo_equipo, marca_modelo: tr.marca_modelo, numero_serie: tr.numero_serie, falla: tr.falla, monto_diagnostico: tr.monto_diagnostico, monto_reparacion: tr.monto_reparacion, estado: nuevo, fecha_estimada_entrega: tr.fecha_estimada_entrega, observaciones: tr.observaciones, pagado: tr.pagado };
-      try { const r = await fetch(`${API_URL}/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) }); const result = await r.json(); if (result.success) { alert(`${tr.codigo_orden} → "${nuevo}"`); await cargarDatos(); } else { alert('Error: ' + result.message); } } catch (e) { alert('Error al conectar'); }
+    async function eliminarTrabajo(id, codigo) {
+      if (!confirm(`¿Estás seguro de eliminar el trabajo ${codigo}?`)) return;
+      
+      try {
+        const res = await fetch(`${API}/trabajos/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        
+        if (result.success) {
+          await cargarTrabajos();
+        } else {
+          alert(result.message);
+        }
+      } catch (error) {
+        alert('Error al eliminar trabajo');
+      }
     }
 
-    async function marcarPagado(id) {
-      const tr = trabajosGlobal.find(x => x.id === id); if (!tr) return;
-      const total = tr.monto_diagnostico + tr.monto_reparacion;
-      if (!confirm(`¿Marcar ${tr.codigo_orden} como PAGADO?\nSe registrará $${fn(total)} en Finanzas.`)) return;
-      const datos = { cliente_id: tr.cliente_id, fecha_ingreso: tr.fecha_ingreso, tipo_equipo: tr.tipo_equipo, marca_modelo: tr.marca_modelo, numero_serie: tr.numero_serie, falla: tr.falla, monto_diagnostico: tr.monto_diagnostico, monto_reparacion: tr.monto_reparacion, estado: tr.estado, fecha_estimada_entrega: tr.fecha_estimada_entrega, observaciones: tr.observaciones, pagado: true };
-      try { const r = await fetch(`${API_URL}/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) }); const result = await r.json(); if (result.success) { alert(`✅ ${tr.codigo_orden} PAGADO\nIngreso de $${fn(total)} en Finanzas.`); await cargarDatos(); } else { alert('Error: ' + result.message); } } catch (e) { alert('Error al conectar'); }
+    function getBadgeClass(estado) {
+      switch(estado) {
+        case 'Pendiente': return 'badge-pendiente';
+        case 'En Diagnóstico': return 'badge-diagnostico';
+        case 'En Reparación': return 'badge-reparacion';
+        case 'Terminado': return 'badge-terminado';
+        case 'Entregado': return 'badge-entregado';
+        default: return 'bg-secondary text-white';
+      }
     }
 
-    async function eliminarTrabajo(id) { const tr = trabajosGlobal.find(x => x.id === id); if (!tr) return; if (!confirm(`¿Eliminar ${tr.codigo_orden}?\nCliente: ${tr.cliente ? tr.cliente.nombre : '-'}\nTotal: $${fn(tr.monto_total)}`)) return; try { const r = await fetch(`${API_URL}/${id}`, { method: 'DELETE' }); const result = await r.json(); if (result.success) { alert(result.message); await cargarDatos(); } else { alert('Error: ' + result.message); } } catch (e) { alert('Error al conectar'); } }
-    function fn(num) { return num.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function formatMoney(amount) {
+      return '$' + parseFloat(amount || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      const parts = dateStr.split('T')[0].split('-');
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
   </script>
 </body>
 </html>

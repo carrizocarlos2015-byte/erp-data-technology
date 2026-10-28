@@ -5,277 +5,515 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ERP - Agenda</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .menu-nav { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); padding: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 1000; }
-    .menu-nav .logo { color: white; font-weight: bold; font-size: 1.2rem; text-decoration: none; }
-    .menu-nav .nav-link { color: rgba(255,255,255,0.85); font-weight: 500; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; text-decoration: none; display: flex; align-items: center; gap: 6px; }
-    .menu-nav .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
-    .menu-nav .nav-link.active { background: white; color: #0d6efd; }
-    .menu-nav .nav-link i { font-size: 1.1rem; }
-    @media (max-width: 767px) { .menu-nav .nav-link span { display: none; } .menu-nav .nav-link { padding: 8px 10px; } }
-    .card { border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
-    .kpi-card { border-left: 4px solid; border-radius: 8px; background: white; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .kpi-card.pendiente { border-left-color: #6c757d; }
-    .kpi-card.confirmado { border-left-color: #0d6efd; }
-    .kpi-card.en_curso { border-left-color: #ffc107; }
-    .kpi-card.completado { border-left-color: #198754; }
-    .kpi-card.cancelado { border-left-color: #dc3545; }
-    .kpi-card.proximos { border-left-color: #fd7e14; background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%); }
-    .kpi-card.cobrado { border-left-color: #198754; background: linear-gradient(135deg, #d1e7dd 0%, #ffffff 100%); }
-    .kpi-card.pendiente-cobro { border-left-color: #dc3545; background: linear-gradient(135deg, #f8d7da 0%, #ffffff 100%); }
-    .kpi-card.total { border-left-color: #0d6efd; background: linear-gradient(135deg, #cfe2ff 0%, #ffffff 100%); }
-    .kpi-label { font-size: 0.75rem; color: #6c757d; text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
-    .kpi-value { font-size: 1.5rem; font-weight: bold; margin: 0; }
-    .kpi-sub { font-size: 0.8rem; color: #6c757d; margin-top: 5px; }
-    .btn-accion { padding: 4px 8px; font-size: 0.85rem; margin: 0 2px; }
-    .btn-confirmar { background-color: #0d6efd; color: white; }
-    .btn-iniciar { background-color: #ffc107; color: #000; }
-    .btn-completar { background-color: #198754; color: white; }
-    .btn-cancelar { background-color: #dc3545; color: white; }
-    .btn-cobrar { background-color: #198754; color: white; }
-    .btn-editar { background-color: #0d6efd; color: white; }
-    .btn-eliminar { background-color: #6c757d; color: white; }
-    .badge-pendiente { background-color: #6c757d; color: white; }
-    .badge-confirmado { background-color: #0d6efd; color: white; }
-    .badge-en_curso { background-color: #ffc107; color: #000; }
-    .badge-completado { background-color: #198754; color: white; }
-    .badge-cancelado { background-color: #dc3545; color: white; }
-    .badge-cobrado { background-color: #198754; color: white; }
-    .badge-impago { background-color: #dc3545; color: white; }
-    .table th { background-color: #f8f9fa; font-weight: 600; font-size: 0.9rem; }
-    .alerta-proximo { background-color: #fff3e0; border-left: 4px solid #fd7e14; }
-    .alerta-vencido { background-color: #fff3f3; border-left: 4px solid #dc3545; }
-    .filtro-estado { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
-    .filtro-estado .btn-filtro { padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; border: 2px solid #dee2e6; background: white; color: #495057; cursor: pointer; transition: all 0.2s; }
-    .filtro-estado .btn-filtro:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .filtro-estado .btn-filtro.active { color: white; border-color: transparent; }
-    .filtro-estado .btn-filtro[data-filtro="todos"].active { background: #6c757d; }
-    .filtro-estado .btn-filtro[data-filtro="Pendiente"].active { background: #6c757d; }
-    .filtro-estado .btn-filtro[data-filtro="Confirmado"].active { background: #0d6efd; }
-    .filtro-estado .btn-filtro[data-filtro="En Curso"].active { background: #ffc107; color: #000; }
-    .filtro-estado .btn-filtro[data-filtro="Completado"].active { background: #198754; }
-    .filtro-estado .btn-filtro[data-filtro="Cancelado"].active { background: #dc3545; }
-    .contador-filtro { background: rgba(255,255,255,0.3); padding: 1px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 4px; }
-    .section-divider { display: flex; align-items: center; margin: 15px 0 10px 0; }
-    .section-divider .line { flex: 1; height: 2px; background: #dee2e6; }
-    .section-divider .label { padding: 4px 16px; font-weight: bold; font-size: 0.95rem; border-radius: 20px; color: white; }
-    .section-divider .label.estado { background: #6c757d; }
-    .section-divider .label.finanzas { background: #0d6efd; }
-    @media (max-width: 767px) { .table-responsive { font-size: 0.85rem; } .btn-accion { padding: 3px 6px; font-size: 0.75rem; } .kpi-value { font-size: 1.2rem; } }
+    body { background-color: #f8f9fa; }
+    .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .kpi-card {
+      background: white; border-radius: 12px; padding: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08); text-align: center; height: 100%;
+    }
+    .kpi-value { font-size: 1.5rem; font-weight: bold; margin: 5px 0; }
+    .kpi-label { font-size: 0.8rem; color: #6c757d; text-transform: uppercase; }
+    .table-container {
+      background: white; border-radius: 12px; padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-top: 20px;
+    }
+    .badge-pendiente { background-color: #ffc107; color: #000; }
+    .badge-confirmado { background-color: #0dcaf0; color: #000; }
+    .badge-en-curso { background-color: #fd7e14; color: #fff; }
+    .badge-completado { background-color: #198754; color: #fff; }
+    .badge-cancelado { background-color: #dc3545; color: #fff; }
   </style>
 </head>
 <body>
-
-  <nav class="menu-nav">
-    <div class="container-fluid px-3">
-      <div class="d-flex align-items-center justify-content-between flex-wrap">
-        <a href="index.html" class="logo me-3"><i class="bi bi-building"></i> ERP Data Technology</a>
-        <div class="d-flex flex-wrap gap-1">
-          <a href="index.html" class="nav-link"><i class="bi bi-house"></i> <span>Inicio</span></a>
-          <a href="clientes.html" class="nav-link"><i class="bi bi-people"></i> <span>Clientes</span></a>
-          <a href="cuenta-corriente.html" class="nav-link"><i class="bi bi-wallet2"></i> <span>Cta. Cte.</span></a>
-          <a href="finanzas.html" class="nav-link"><i class="bi bi-cash-stack"></i> <span>Finanzas</span></a>
-          <a href="cheques.html" class="nav-link"><i class="bi bi-receipt"></i> <span>Cheques</span></a>
-          <a href="trabajos.html" class="nav-link"><i class="bi bi-tools"></i> <span>Trabajos</span></a>
-          <a href="agenda.html" class="nav-link active"><i class="bi bi-calendar-event"></i> <span>Agenda</span></a>
-        </div>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="index.html"><i class="bi bi-building"></i> ERP Data Technology</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html"><i class="bi bi-house"></i> Inicio</a></li>
+          <li class="nav-item"><a class="nav-link" href="clientes.html"><i class="bi bi-people"></i> Clientes</a></li>
+          <li class="nav-item"><a class="nav-link" href="cuenta-corriente.html"><i class="bi bi-wallet2"></i> Cta. Cte.</a></li>
+          <li class="nav-item"><a class="nav-link" href="finanzas.html"><i class="bi bi-cash-stack"></i> Finanzas</a></li>
+          <li class="nav-item"><a class="nav-link" href="cheques.html"><i class="bi bi-receipt"></i> Cheques</a></li>
+          <li class="nav-item"><a class="nav-link" href="trabajos.html"><i class="bi bi-briefcase"></i> Trabajos</a></li>
+          <li class="nav-item"><a class="nav-link active" href="agenda.html"><i class="bi bi-calendar"></i> Agenda</a></li>
+          <li class="nav-item"><a class="nav-link" href="reportes.html"><i class="bi bi-bar-chart"></i> Reportes</a></li>
+          <li class="nav-item"><a class="nav-link" href="empresa.html"><i class="bi bi-building"></i> Empresa</a></li>
+          <li class="nav-item"><a class="nav-link" href="presupuestos.html"><i class="bi bi-pc-display"></i> PC Builder</a></li>
+        </ul>
       </div>
     </div>
   </nav>
 
-  <div class="container-fluid px-3 py-3">
-    <div class="section-divider"><div class="line"></div><div class="label estado"> ESTADOS DE EVENTOS</div><div class="line"></div></div>
-    <div class="row g-2 mb-3">
-      <div class="col-md-2 col-6"><div class="kpi-card pendiente"><div class="kpi-label">⏳ Pendiente</div><div class="kpi-value" style="color:#6c757d;" id="kpiPendiente">0</div><div class="kpi-sub" id="kpiPendienteTotal">$0,00</div></div></div>
-      <div class="col-md-2 col-6"><div class="kpi-card confirmado"><div class="kpi-label">✅ Confirmado</div><div class="kpi-value text-primary" id="kpiConfirmado">0</div><div class="kpi-sub" id="kpiConfirmadoTotal">$0,00</div></div></div>
-      <div class="col-md-2 col-6"><div class="kpi-card en_curso"><div class="kpi-label">🔄 En Curso</div><div class="kpi-value" style="color:#ffc107;" id="kpiEnCurso">0</div><div class="kpi-sub" id="kpiEnCursoTotal">$0,00</div></div></div>
-      <div class="col-md-2 col-6"><div class="kpi-card completado"><div class="kpi-label">✅ Completado</div><div class="kpi-value text-success" id="kpiCompletado">0</div><div class="kpi-sub" id="kpiCompletadoTotal">$0,00</div></div></div>
-      <div class="col-md-2 col-6"><div class="kpi-card cancelado"><div class="kpi-label">❌ Cancelado</div><div class="kpi-value text-danger" id="kpiCancelado">0</div><div class="kpi-sub" id="kpiCanceladoTotal">$0,00</div></div></div>
-      <div class="col-md-2 col-6"><div class="kpi-card total"><div class="kpi-label">📊 Total General</div><div class="kpi-value text-primary" id="kpiTotal">0</div><div class="kpi-sub" id="kpiTotalMonto">$0,00</div></div></div>
-    </div>
-
-    <div class="section-divider"><div class="line"></div><div class="label finanzas">⚠️ ALERTAS Y 💰 ESTADO FINANCIERO</div><div class="line"></div></div>
-    <div class="row g-2 mb-3">
-      <div class="col-md-3 col-6"><div class="kpi-card proximos"><div class="kpi-label">⏰ Próximos 24hs</div><div class="kpi-value" style="color:#fd7e14;" id="kpiProximos">0</div><div class="kpi-sub">Eventos inminentes</div></div></div>
-      <div class="col-md-3 col-6"><div class="kpi-card cobrado"><div class="kpi-label">💰 Cobrados</div><div class="kpi-value text-success" id="kpiCobrados">0</div><div class="kpi-sub" id="kpiCobradosTotal">$0,00</div></div></div>
-      <div class="col-md-3 col-6"><div class="kpi-card pendiente-cobro"><div class="kpi-label">💸 Pendientes de Cobro</div><div class="kpi-value text-danger" id="kpiPendientesCobro">0</div><div class="kpi-sub" id="kpiPendientesCobroTotal">$0,00</div></div></div>
-      <div class="col-md-3 col-6"><div class="kpi-card total"><div class="kpi-label">💵 Total Facturado</div><div class="kpi-value text-primary" id="kpiFacturado">$0,00</div><div class="kpi-sub" id="kpiFacturadoCant">0 eventos</div></div></div>
-    </div>
-
-    <div class="card"><div class="card-body"><div class="row g-3">
-      <div class="col-md-4"><label class="form-label fw-bold">🔍 Buscar</label><input type="text" class="form-control" id="filtroBusqueda" placeholder="Título, cliente, tipo..." oninput="aplicarFiltros()"></div>
-      <div class="col-md-8"><label class="form-label fw-bold">Filtrar por Estado</label>
-        <div class="filtro-estado">
-          <button class="btn-filtro active" data-filtro="todos" onclick="setFiltroEstado('todos')">Todos <span class="contador-filtro" id="countTodos">0</span></button>
-          <button class="btn-filtro" data-filtro="Pendiente" onclick="setFiltroEstado('Pendiente')">Pendiente <span class="contador-filtro" id="countPendiente">0</span></button>
-          <button class="btn-filtro" data-filtro="Confirmado" onclick="setFiltroEstado('Confirmado')">Confirmado <span class="contador-filtro" id="countConfirmado">0</span></button>
-          <button class="btn-filtro" data-filtro="En Curso" onclick="setFiltroEstado('En Curso')">En Curso <span class="contador-filtro" id="countEnCurso">0</span></button>
-          <button class="btn-filtro" data-filtro="Completado" onclick="setFiltroEstado('Completado')">Completado <span class="contador-filtro" id="countCompletado">0</span></button>
-          <button class="btn-filtro" data-filtro="Cancelado" onclick="setFiltroEstado('Cancelado')">Cancelado <span class="contador-filtro" id="countCancelado">0</span></button>
+  <div class="container-fluid mt-4 px-4">
+    <!-- KPIs Resumen -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-2 col-6">
+        <div class="kpi-card">
+          <div class="kpi-label">Pendiente</div>
+          <div class="kpi-value text-warning" id="kpiPendiente">0</div>
+          <small class="text-muted" id="cantPendiente">eventos</small>
         </div>
       </div>
-    </div></div></div>
+      <div class="col-md-2 col-6">
+        <div class="kpi-card">
+          <div class="kpi-label">Confirmado</div>
+          <div class="kpi-value text-info" id="kpiConfirmado">0</div>
+          <small class="text-muted" id="cantConfirmado">eventos</small>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="kpi-card">
+          <div class="kpi-label">En Curso</div>
+          <div class="kpi-value text-warning" id="kpiEnCurso">0</div>
+          <small class="text-muted" id="cantEnCurso">eventos</small>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="kpi-card">
+          <div class="kpi-label">Completado</div>
+          <div class="kpi-value text-success" id="kpiCompletado">0</div>
+          <small class="text-muted" id="cantCompletado">eventos</small>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="kpi-card">
+          <div class="kpi-label">Cancelado</div>
+          <div class="kpi-value text-danger" id="kpiCancelado">0</div>
+          <small class="text-muted" id="cantCancelado">eventos</small>
+        </div>
+      </div>
+      <div class="col-md-2 col-6">
+        <div class="kpi-card">
+          <div class="kpi-label">Total General</div>
+          <div class="kpi-value text-primary" id="kpiTotal">0</div>
+          <small class="text-muted" id="cantTotal">eventos</small>
+        </div>
+      </div>
+    </div>
 
-    <div class="card mb-3"><div class="card-body d-flex justify-content-between align-items-center"><h5 class="fw-bold mb-0"><i class="bi bi-calendar-plus"></i> Gestión de Agenda</h5><button class="btn btn-primary btn-lg" onclick="abrirModalNuevo()"><i class="bi bi-plus-circle"></i> Nuevo Evento</button></div></div>
+    <!-- Alertas Próximos 24hs -->
+    <div class="card mb-4 border-warning">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-alarm text-warning"></i> Próximos 24 horas</h5>
+        <p class="card-text" id="alertasProximos">Cargando...</p>
+      </div>
+    </div>
 
-    <div class="card"><div class="card-body p-0"><div class="table-responsive">
-      <table class="table table-hover align-middle mb-0"><thead><tr><th>Código</th><th>Título</th><th>Cliente</th><th>Tipo</th><th>Inicio</th><th>Fin</th><th class="text-end">Monto</th><th>Estado</th><th class="text-center">Cobro</th><th class="text-center">Acciones</th></tr></thead>
-      <tbody id="tablaEventos"><tr><td colspan="10" class="text-center py-4 text-muted">Cargando eventos...</td></tr></tbody></table>
-    </div></div></div>
+    <!-- Filtros y Buscador -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-8">
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" id="buscador" placeholder="Buscar por título, cliente...">
+        </div>
+      </div>
+      <div class="col-md-4">
+        <select class="form-select" id="filtroEstado" onchange="filtrarEventos()">
+          <option value="">Todos los estados</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="Confirmado">Confirmado</option>
+          <option value="En Curso">En Curso</option>
+          <option value="Completado">Completado</option>
+          <option value="Cancelado">Cancelado</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Tabla de Eventos -->
+    <div class="table-container">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Gestión de Agenda</h5>
+        <button class="btn btn-primary" onclick="abrirModalNuevo()">
+          <i class="bi bi-plus-circle"></i> Nuevo Evento
+        </button>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Título</th>
+              <th>Cliente</th>
+              <th>Tipo</th>
+              <th>Inicio</th>
+              <th>Fin</th>
+              <th>Monto</th>
+              <th>Estado</th>
+              <th>Cobro</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tablaEventos">
+            <tr><td colspan="10" class="text-center text-muted">Cargando eventos...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
+  <!-- Modal Nuevo/Editar Evento -->
   <div class="modal fade" id="modalEvento" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered"><div class="modal-content">
-      <div class="modal-header bg-primary text-white"><h5 class="modal-title" id="modalTitulo"><i class="bi bi-plus-circle"></i> Nuevo Evento</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-      <div class="modal-body"><form id="formEvento"><input type="hidden" id="eventoId"><div class="row g-3">
-        <div class="col-md-8"><label class="form-label fw-bold">Título *</label><input type="text" class="form-control" id="eventoTitulo" required placeholder="Ej: Visita técnica - Instalación de red"></div>
-        <div class="col-md-4"><label class="form-label fw-bold">Tipo de Evento</label><select class="form-select" id="eventoTipo"><option value="Visita Técnica">Visita Técnica</option><option value="Retiro de Equipo">Retiro de Equipo</option><option value="Entrega de Equipo">Entrega de Equipo</option><option value="Diagnóstico">Diagnóstico</option><option value="Instalación">Instalación</option><option value="Mantenimiento">Mantenimiento</option><option value="Reunión">Reunión</option><option value="Otro">Otro</option></select></div>
-        <div class="col-md-6"><label class="form-label fw-bold">Cliente</label><select class="form-select" id="eventoCliente"><option value="">Sin cliente asignado</option></select></div>
-        <div class="col-md-6"><label class="form-label fw-bold">Estado</label><select class="form-select" id="eventoEstado"><option value="Pendiente">Pendiente</option><option value="Confirmado">Confirmado</option><option value="En Curso">En Curso</option><option value="Completado">Completado</option><option value="Cancelado">Cancelado</option></select></div>
-        <div class="col-md-3"><label class="form-label fw-bold">Fecha Inicio *</label><input type="date" class="form-control" id="eventoFechaInicio" required></div>
-        <div class="col-md-3"><label class="form-label fw-bold">Hora Inicio *</label><input type="time" class="form-control" id="eventoHoraInicio" required></div>
-        <div class="col-md-3"><label class="form-label fw-bold">Fecha Fin *</label><input type="date" class="form-control" id="eventoFechaFin" required></div>
-        <div class="col-md-3"><label class="form-label fw-bold">Hora Fin *</label><input type="time" class="form-control" id="eventoHoraFin" required></div>
-        <div class="col-md-4"><label class="form-label fw-bold">Monto Cobrado ($)</label><input type="number" step="0.01" min="0" class="form-control" id="eventoMonto" value="0"></div>
-        <div class="col-md-4"><label class="form-label fw-bold">Método de Pago</label><select class="form-select" id="eventoMetodoPago"><option value="">Sin cobro</option><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia</option><option value="Cheque">Cheque</option><option value="Tarjeta de Crédito">Tarjeta de Crédito</option><option value="Tarjeta de Débito">Tarjeta de Débito</option><option value="Mercado Pago">Mercado Pago</option></select></div>
-        <div class="col-md-4"><div class="form-check form-switch mt-4"><input class="form-check-input" type="checkbox" id="eventoCobrado"><label class="form-check-label fw-bold" for="eventoCobrado">💰 Marcar como COBRADO</label></div></div>
-        <div class="col-12"><label class="form-label fw-bold">Observaciones</label><textarea class="form-control" id="eventoObservaciones" rows="2" placeholder="Detalles adicionales"></textarea></div>
-      </div></form></div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" onclick="guardarEvento()"><i class="bi bi-save"></i> Guardar</button></div>
-    </div></div>
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitulo">Nuevo Evento</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formEvento">
+            <input type="hidden" id="eventoId">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Título *</label>
+                <input type="text" class="form-control" id="eventoTitulo" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Tipo de Evento</label>
+                <select class="form-select" id="eventoTipo">
+                  <option value="Visita Técnica">Visita Técnica</option>
+                  <option value="Retiro de Equipo">Retiro de Equipo</option>
+                  <option value="Entrega de Equipo">Entrega de Equipo</option>
+                  <option value="Diagnóstico">Diagnóstico</option>
+                  <option value="Instalación">Instalación</option>
+                  <option value="Mantenimiento">Mantenimiento</option>
+                  <option value="Reunión">Reunión</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Cliente</label>
+              <select class="form-select" id="eventoCliente">
+                <option value="">Sin cliente asignado</option>
+              </select>
+            </div>
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Fecha Inicio *</label>
+                <input type="date" class="form-control" id="eventoFechaInicio" required>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Hora Inicio *</label>
+                <input type="time" class="form-control" id="eventoHoraInicio" required>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Fecha Fin</label>
+                <input type="date" class="form-control" id="eventoFechaFin">
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Hora Fin</label>
+                <input type="time" class="form-control" id="eventoHoraFin">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Monto Cobrado ($)</label>
+                <input type="number" class="form-control" id="eventoMonto" step="0.01" min="0">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Método de Pago</label>
+                <select class="form-select" id="eventoMetodoPago">
+                  <option value="">Sin cobro</option>
+                  <option value="Efectivo">Efectivo</option>
+                  <option value="Transferencia">Transferencia</option>
+                  <option value="Cheque">Cheque</option>
+                  <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
+                  <option value="Tarjeta de Débito">Tarjeta de Débito</option>
+                  <option value="Mercado Pago">Mercado Pago</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="eventoCobrado">
+              <label class="form-check-label" for="eventoCobrado">💰 Marcar como COBRADO</label>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Estado</label>
+              <select class="form-select" id="eventoEstado">
+                <option value="Pendiente">Pendiente</option>
+                <option value="Confirmado">Confirmado</option>
+                <option value="En Curso">En Curso</option>
+                <option value="Completado">Completado</option>
+                <option value="Cancelado">Cancelado</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Observaciones</label>
+              <textarea class="form-control" id="eventoObservaciones" rows="3"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="guardarEvento()">Guardar</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const API_URL = 'http://localhost:3000/api/agenda';
-    const API_CLIENTES = 'http://localhost:3000/api/clientes';
-    let eventosGlobal = [], clientesGlobal = [], filtroEstadoActual = 'todos';
-    document.addEventListener('DOMContentLoaded', function() { cargarDatos(); });
+    const API = '/api';
+    let eventosData = [];
+    let clientesList = [];
 
-    async function cargarDatos() { await Promise.all([cargarEventos(), cargarClientes(), cargarResumen()]); }
-    async function cargarEventos() { try { const r = await fetch(API_URL); eventosGlobal = await r.json(); aplicarFiltros(); } catch (e) { console.error(e); alert('Error al conectar'); } }
-    async function cargarClientes() { try {
-      const r = await fetch(API_CLIENTES); clientesGlobal = await r.json();
-      const s = document.getElementById('eventoCliente'); s.innerHTML = '<option value="">Sin cliente asignado</option>';
-      clientesGlobal.forEach(c => { const o = document.createElement('option'); o.value = c.id; o.textContent = `${c.codigo} - ${c.nombre}`; s.appendChild(o); });
-    } catch (e) { console.error(e); } }
-    async function cargarResumen() { try {
-      const r = await fetch(`${API_URL}/resumen`); const d = await r.json();
-      document.getElementById('kpiPendiente').textContent = d.pendiente.cantidad; document.getElementById('kpiPendienteTotal').textContent = `$${fn(d.pendiente.total)}`;
-      document.getElementById('kpiConfirmado').textContent = d.confirmado.cantidad; document.getElementById('kpiConfirmadoTotal').textContent = `$${fn(d.confirmado.total)}`;
-      document.getElementById('kpiEnCurso').textContent = d.en_curso.cantidad; document.getElementById('kpiEnCursoTotal').textContent = `$${fn(d.en_curso.total)}`;
-      document.getElementById('kpiCompletado').textContent = d.completado.cantidad; document.getElementById('kpiCompletadoTotal').textContent = `$${fn(d.completado.total)}`;
-      document.getElementById('kpiCancelado').textContent = d.cancelado.cantidad; document.getElementById('kpiCanceladoTotal').textContent = `$${fn(d.cancelado.total)}`;
-      document.getElementById('kpiTotal').textContent = d.cantidad_general; document.getElementById('kpiTotalMonto').textContent = `$${fn(d.total_general)}`;
-      document.getElementById('kpiProximos').textContent = d.proximos_24hs;
-      document.getElementById('kpiCobrados').textContent = d.cobrados.cantidad; document.getElementById('kpiCobradosTotal').textContent = `$${fn(d.cobrados.total)}`;
-      document.getElementById('kpiPendientesCobro').textContent = d.pendientes_cobro.cantidad; document.getElementById('kpiPendientesCobroTotal').textContent = `$${fn(d.pendientes_cobro.total)}`;
-      document.getElementById('kpiFacturado').textContent = `$${fn(d.total_general)}`; document.getElementById('kpiFacturadoCant').textContent = `${d.cantidad_general} eventos`;
-    } catch (e) { console.error(e); } }
+    document.addEventListener('DOMContentLoaded', async () => {
+      await cargarClientes();
+      await cargarEventos();
+      
+      // Buscador en tiempo real
+      document.getElementById('buscador').addEventListener('input', filtrarEventos);
+    });
 
-    function setFiltroEstado(f) { filtroEstadoActual = f; document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('active')); document.querySelector(`[data-filtro="${f}"]`).classList.add('active'); aplicarFiltros(); }
-    function aplicarFiltros() {
-      const busq = document.getElementById('filtroBusqueda').value.toLowerCase().trim();
-      let f = eventosGlobal;
-      if (filtroEstadoActual !== 'todos') f = f.filter(e => e.estado === filtroEstadoActual);
-      if (busq) f = f.filter(e => e.codigo_evento.toLowerCase().includes(busq) || e.titulo.toLowerCase().includes(busq) || e.tipo_evento.toLowerCase().includes(busq) || (e.cliente && e.cliente.nombre.toLowerCase().includes(busq)));
-      actualizarContadores(); renderizarEventos(f);
-    }
-    function actualizarContadores() {
-      const busq = document.getElementById('filtroBusqueda').value.toLowerCase().trim();
-      let b = eventosGlobal; if (busq) b = b.filter(e => e.codigo_evento.toLowerCase().includes(busq) || e.titulo.toLowerCase().includes(busq) || e.tipo_evento.toLowerCase().includes(busq));
-      document.getElementById('countTodos').textContent = b.length;
-      document.getElementById('countPendiente').textContent = b.filter(e => e.estado === 'Pendiente').length;
-      document.getElementById('countConfirmado').textContent = b.filter(e => e.estado === 'Confirmado').length;
-      document.getElementById('countEnCurso').textContent = b.filter(e => e.estado === 'En Curso').length;
-      document.getElementById('countCompletado').textContent = b.filter(e => e.estado === 'Completado').length;
-      document.getElementById('countCancelado').textContent = b.filter(e => e.estado === 'Cancelado').length;
+    async function cargarClientes() {
+      try {
+        const res = await fetch(`${API}/clientes`);
+        clientesList = await res.json();
+        
+        const select = document.getElementById('eventoCliente');
+        clientesList.forEach(c => {
+          const option = document.createElement('option');
+          option.value = c.id;
+          option.textContent = `${c.codigo} - ${c.nombre}`;
+          select.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error al cargar clientes:', error);
+      }
     }
 
-    function renderizarEventos(eventos) {
-      const t = document.getElementById('tablaEventos');
-      if (eventos.length === 0) { t.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-muted">No hay eventos.</td></tr>'; return; }
-      const ahora = new Date(), en24 = new Date(Date.now() + 24*60*60*1000);
-      t.innerHTML = eventos.map(e => {
-        const fi = new Date(e.fecha_inicio);
-        const esProx = fi >= ahora && fi <= en24 && e.estado !== 'Completado' && e.estado !== 'Cancelado';
-        const esVenc = fi < ahora && e.estado !== 'Completado' && e.estado !== 'Cancelado' && e.estado !== 'En Curso';
-        const cf = esProx ? 'alerta-proximo' : (esVenc ? 'alerta-vencido' : '');
-        const be = e.estado === 'Pendiente' ? 'badge-pendiente' : (e.estado === 'Confirmado' ? 'badge-confirmado' : (e.estado === 'En Curso' ? 'badge-en_curso' : (e.estado === 'Completado' ? 'badge-completado' : 'badge-cancelado')));
-        const bc = e.cobrado ? '<span class="badge badge-cobrado">Cobrado</span>' : '<span class="badge badge-impago">Impago</span>';
-        let acc = '';
-        if (e.estado === 'Pendiente') acc = `<button class="btn btn-accion btn-confirmar" onclick="cambiarEstado('${e.id}','Confirmado')" title="Confirmar"><i class="bi bi-check-circle"></i></button>`;
-        else if (e.estado === 'Confirmado') acc = `<button class="btn btn-accion btn-iniciar" onclick="cambiarEstado('${e.id}','En Curso')" title="Iniciar"><i class="bi bi-play-circle"></i></button>`;
-        else if (e.estado === 'En Curso') acc = `<button class="btn btn-accion btn-completar" onclick="cambiarEstado('${e.id}','Completado')" title="Completar"><i class="bi bi-check-all"></i></button><button class="btn btn-accion btn-cancelar" onclick="cambiarEstado('${e.id}','Cancelado')" title="Cancelar"><i class="bi bi-x-circle"></i></button>`;
-        if (e.estado === 'Completado' && !e.cobrado && e.monto_cobrado > 0) acc += `<button class="btn btn-accion btn-cobrar" onclick="marcarCobrado('${e.id}')" title="Marcar Cobrado"><i class="bi bi-cash-coin"></i></button>`;
-        acc += `<button class="btn btn-accion btn-editar" onclick="editarEvento('${e.id}')"><i class="bi bi-pencil"></i></button><button class="btn btn-accion btn-eliminar" onclick="eliminarEvento('${e.id}')"><i class="bi bi-trash"></i></button>`;
-        const cn = e.cliente ? `${e.cliente.codigo} - ${e.cliente.nombre}` : '-';
-        const fiStr = fmtFH(e.fecha_inicio), ffStr = fmtFH(e.fecha_fin);
-        return `<tr class="${cf}"><td><strong>${e.codigo_evento}</strong></td><td>${e.titulo}</td><td>${cn}</td><td><span class="badge bg-info text-dark">${e.tipo_evento}</span></td><td>${fiStr}</td><td>${ffStr}</td><td class="text-end fw-bold">$${fn(e.monto_cobrado)}</td><td><span class="badge ${be}">${e.estado}</span></td><td class="text-center">${bc}</td><td class="text-center">${acc}</td></tr>`;
-      }).join('');
+    async function cargarEventos() {
+      try {
+        const res = await fetch(`${API}/agenda`);
+        eventosData = await res.json();
+        
+        // Cargar resumen KPIs
+        const resKpi = await fetch(`${API}/agenda/resumen`);
+        const kpis = await resKpi.json();
+        
+        actualizarKPIs(kpis);
+        renderizarTabla(eventosData);
+        cargarAlertasProximos();
+      } catch (error) {
+        console.error('Error al cargar eventos:', error);
+        document.getElementById('tablaEventos').innerHTML = 
+          '<tr><td colspan="10" class="text-center text-danger">Error al cargar datos</td></tr>';
+      }
     }
 
-    function fmtFH(s) { if (!s) return '-'; const d = new Date(s); return d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }); }
+    function actualizarKPIs(kpis) {
+      const estados = ['pendiente', 'confirmado', 'en_curso', 'completado', 'cancelado'];
+      estados.forEach(estado => {
+        const key = estado.replace('_', '-');
+        document.getElementById(`kpi${capitalize(key)}`).textContent = kpis[estado]?.cantidad || 0;
+        document.getElementById(`cant${capitalize(key)}`).textContent = `${kpis[estado]?.cantidad || 0} eventos`;
+      });
+      
+      document.getElementById('kpiTotal').textContent = kpis.total_general || 0;
+      document.getElementById('cantTotal').textContent = `${kpis.cantidad_general || 0} eventos`;
+    }
 
-    function abrirModalNuevo() { document.getElementById('formEvento').reset(); document.getElementById('eventoId').value = ''; document.getElementById('modalTitulo').innerHTML = '<i class="bi bi-plus-circle"></i> Nuevo Evento'; const h = new Date().toISOString().split('T')[0]; document.getElementById('eventoFechaInicio').value = h; document.getElementById('eventoFechaFin').value = h; document.getElementById('eventoHoraInicio').value = '09:00'; document.getElementById('eventoHoraFin').value = '10:00'; document.getElementById('eventoMonto').value = '0'; document.getElementById('eventoCobrado').checked = false; new bootstrap.Modal(document.getElementById('modalEvento')).show(); }
+    function capitalize(str) {
+      return str.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
+    }
+
+    function renderizarTabla(eventos) {
+      const tbody = document.getElementById('tablaEventos');
+      
+      if (eventos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">No hay eventos registrados.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = eventos.map(ev => {
+        const cliente = clientesList.find(c => c.id === ev.cliente_id);
+        const clienteNombre = cliente ? `${cliente.codigo} - ${cliente.nombre}` : '-';
+        
+        return `
+        <tr>
+          <td><strong>${ev.codigo}</strong></td>
+          <td>${ev.titulo}</td>
+          <td>${clienteNombre}</td>
+          <td>${ev.tipo}</td>
+          <td>${formatDateTime(ev.fecha_inicio, ev.hora_inicio)}</td>
+          <td>${formatDateTime(ev.fecha_fin, ev.hora_fin)}</td>
+          <td class="text-end">${ev.monto > 0 ? formatMoney(ev.monto) : '-'}</td>
+          <td><span class="badge ${getBadgeClass(ev.estado)}">${ev.estado}</span></td>
+          <td>${ev.cobrado ? '<span class="badge bg-success">Cobrado</span>' : '<span class="badge bg-secondary">Pendiente</span>'}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary me-1" onclick="editarEvento('${ev.id}')">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="eliminarEvento('${ev.id}', '${ev.titulo}')">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `}).join('');
+    }
+
+    function filtrarEventos() {
+      const texto = document.getElementById('buscador').value.toLowerCase().trim();
+      const estado = document.getElementById('filtroEstado').value;
+      
+      let filtrados = eventosData;
+      
+      if (texto) {
+        filtrados = filtrados.filter(ev => 
+          ev.titulo.toLowerCase().includes(texto) ||
+          (ev.cliente_id && clientesList.find(c => c.id === ev.cliente_id)?.nombre.toLowerCase().includes(texto))
+        );
+      }
+      
+      if (estado) {
+        filtrados = filtrados.filter(ev => ev.estado === estado);
+      }
+      
+      renderizarTabla(filtrados);
+    }
+
+    function cargarAlertasProximos() {
+      const ahora = new Date();
+      const en24hs = new Date(ahora.getTime() + 24 * 60 * 60 * 1000);
+      
+      const proximos = eventosData.filter(ev => {
+        const fechaInicio = new Date(`${ev.fecha_inicio}T${ev.hora_inicio}`);
+        return fechaInicio >= ahora && fechaInicio <= en24hs && ev.estado !== 'Cancelado' && ev.estado !== 'Completado';
+      });
+      
+      const alertasEl = document.getElementById('alertasProximos');
+      if (proximos.length === 0) {
+        alertasEl.innerHTML = '<span class="text-muted">No hay eventos próximos en las próximas 24 horas.</span>';
+      } else {
+        alertasEl.innerHTML = proximos.map(ev => {
+          const cliente = clientesList.find(c => c.id === ev.cliente_id);
+          const clienteNombre = cliente ? cliente.nombre : 'Sin cliente';
+          return `<div class="alert alert-warning mb-1"><i class="bi bi-clock"></i> <strong>${ev.titulo}</strong> - ${clienteNombre} (${formatDateTime(ev.fecha_inicio, ev.hora_inicio)})</div>`;
+        }).join('');
+      }
+    }
+
+    function abrirModalNuevo() {
+      document.getElementById('modalTitulo').textContent = 'Nuevo Evento';
+      document.getElementById('formEvento').reset();
+      document.getElementById('eventoId').value = '';
+      document.getElementById('eventoFechaInicio').value = new Date().toISOString().split('T')[0];
+      document.getElementById('eventoHoraInicio').value = '09:00';
+      new bootstrap.Modal(document.getElementById('modalEvento')).show();
+    }
 
     function editarEvento(id) {
-      const e = eventosGlobal.find(x => x.id === id); if (!e) return;
-      document.getElementById('eventoId').value = e.id;
-      document.getElementById('eventoTitulo').value = e.titulo;
-      document.getElementById('eventoTipo').value = e.tipo_evento;
-      document.getElementById('eventoCliente').value = e.cliente_id || '';
-      document.getElementById('eventoEstado').value = e.estado;
-      const fi = new Date(e.fecha_inicio), ff = new Date(e.fecha_fin);
-      document.getElementById('eventoFechaInicio').value = fi.toISOString().split('T')[0];
-      document.getElementById('eventoHoraInicio').value = fi.toTimeString().substring(0,5);
-      document.getElementById('eventoFechaFin').value = ff.toISOString().split('T')[0];
-      document.getElementById('eventoHoraFin').value = ff.toTimeString().substring(0,5);
-      document.getElementById('eventoMonto').value = e.monto_cobrado;
-      document.getElementById('eventoMetodoPago').value = e.metodo_pago || '';
-      document.getElementById('eventoObservaciones').value = e.observaciones || '';
-      document.getElementById('eventoCobrado').checked = e.cobrado;
-      document.getElementById('modalTitulo').innerHTML = '<i class="bi bi-pencil"></i> Editar Evento';
+      const ev = eventosData.find(e => e.id === id);
+      if (!ev) return;
+
+      document.getElementById('modalTitulo').textContent = 'Editar Evento';
+      document.getElementById('eventoId').value = ev.id;
+      document.getElementById('eventoTitulo').value = ev.titulo;
+      document.getElementById('eventoTipo').value = ev.tipo;
+      document.getElementById('eventoCliente').value = ev.cliente_id || '';
+      document.getElementById('eventoFechaInicio').value = ev.fecha_inicio.split('T')[0];
+      document.getElementById('eventoHoraInicio').value = ev.hora_inicio;
+      document.getElementById('eventoFechaFin').value = ev.fecha_fin ? ev.fecha_fin.split('T')[0] : '';
+      document.getElementById('eventoHoraFin').value = ev.hora_fin || '';
+      document.getElementById('eventoMonto').value = ev.monto || 0;
+      document.getElementById('eventoMetodoPago').value = ev.metodo_pago || '';
+      document.getElementById('eventoCobrado').checked = ev.cobrado || false;
+      document.getElementById('eventoEstado').value = ev.estado;
+      document.getElementById('eventoObservaciones').value = ev.observaciones || '';
+      
       new bootstrap.Modal(document.getElementById('modalEvento')).show();
     }
 
     async function guardarEvento() {
       const id = document.getElementById('eventoId').value;
-      const titulo = document.getElementById('eventoTitulo').value.trim();
-      const fechaInicio = document.getElementById('eventoFechaInicio').value;
-      const horaInicio = document.getElementById('eventoHoraInicio').value;
-      const fechaFin = document.getElementById('eventoFechaFin').value;
-      const horaFin = document.getElementById('eventoHoraFin').value;
-      if (!titulo || !fechaInicio || !horaInicio || !fechaFin || !horaFin) { alert('Completá campos obligatorios (*)'); return; }
-      const fi = `${fechaInicio}T${horaInicio}:00`, ff = `${fechaFin}T${horaFin}:00`;
-      if (new Date(ff) <= new Date(fi)) { alert('La fecha/hora fin debe ser posterior a la de inicio'); return; }
-      const datos = { titulo, tipo_evento: document.getElementById('eventoTipo').value, cliente_id: document.getElementById('eventoCliente').value || null, estado: document.getElementById('eventoEstado').value, fecha_inicio: fi, fecha_fin: ff, monto_cobrado: parseFloat(document.getElementById('eventoMonto').value) || 0, metodo_pago: document.getElementById('eventoMetodoPago').value || null, observaciones: document.getElementById('eventoObservaciones').value.trim(), cobrado: document.getElementById('eventoCobrado').checked };
+      const data = {
+        titulo: document.getElementById('eventoTitulo').value.trim(),
+        tipo: document.getElementById('eventoTipo').value,
+        cliente_id: document.getElementById('eventoCliente').value || null,
+        fecha_inicio: document.getElementById('eventoFechaInicio').value,
+        hora_inicio: document.getElementById('eventoHoraInicio').value,
+        fecha_fin: document.getElementById('eventoFechaFin').value || null,
+        hora_fin: document.getElementById('eventoHoraFin').value || null,
+        monto: parseFloat(document.getElementById('eventoMonto').value) || 0,
+        metodo_pago: document.getElementById('eventoMetodoPago').value || null,
+        cobrado: document.getElementById('eventoCobrado').checked,
+        estado: document.getElementById('eventoEstado').value,
+        observaciones: document.getElementById('eventoObservaciones').value.trim()
+      };
+
+      if (!data.titulo || !data.fecha_inicio || !data.hora_inicio) {
+        alert('Título, Fecha Inicio y Hora Inicio son obligatorios');
+        return;
+      }
+
       try {
-        const r = id ? await fetch(`${API_URL}/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) }) : await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
-        const result = await r.json();
-        if (result.success) { alert(result.message); bootstrap.Modal.getInstance(document.getElementById('modalEvento')).hide(); await cargarDatos(); } else { alert('Error: ' + result.message); }
-      } catch (e) { alert('Error al conectar'); }
+        const url = id ? `${API}/agenda/${id}` : `${API}/agenda`;
+        const method = id ? 'PUT' : 'POST';
+        
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await res.json();
+        
+        if (result.success) {
+          bootstrap.Modal.getInstance(document.getElementById('modalEvento')).hide();
+          await cargarEventos();
+        } else {
+          alert(result.message);
+        }
+      } catch (error) {
+        alert('Error al guardar evento');
+      }
     }
 
-    async function cambiarEstado(id, nuevo) {
-      const e = eventosGlobal.find(x => x.id === id); if (!e) return;
-      if (!confirm(`¿Cambiar estado de ${e.codigo_evento} a "${nuevo}"?`)) return;
-      const fi = new Date(e.fecha_inicio), ff = new Date(e.fecha_fin);
-      const datos = { titulo: e.titulo, tipo_evento: e.tipo_evento, cliente_id: e.cliente_id, estado: nuevo, fecha_inicio: e.fecha_inicio, fecha_fin: e.fecha_fin, monto_cobrado: e.monto_cobrado, metodo_pago: e.metodo_pago, observaciones: e.observaciones, cobrado: e.cobrado };
-      try { const r = await fetch(`${API_URL}/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) }); const result = await r.json(); if (result.success) { alert(`${e.codigo_evento} → "${nuevo}"`); await cargarDatos(); } else { alert('Error: ' + result.message); } } catch (e) { alert('Error al conectar'); }
+    async function eliminarEvento(id, titulo) {
+      if (!confirm(`¿Estás seguro de eliminar el evento "${titulo}"?`)) return;
+      
+      try {
+        const res = await fetch(`${API}/agenda/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        
+        if (result.success) {
+          await cargarEventos();
+        } else {
+          alert(result.message);
+        }
+      } catch (error) {
+        alert('Error al eliminar evento');
+      }
     }
 
-    async function marcarCobrado(id) {
-      const e = eventosGlobal.find(x => x.id === id); if (!e) return;
-      if (!confirm(`¿Marcar ${e.codigo_evento} como COBRADO?\nSe registrará $${fn(e.monto_cobrado)} en Finanzas.`)) return;
-      const datos = { titulo: e.titulo, tipo_evento: e.tipo_evento, cliente_id: e.cliente_id, estado: e.estado, fecha_inicio: e.fecha_inicio, fecha_fin: e.fecha_fin, monto_cobrado: e.monto_cobrado, metodo_pago: e.metodo_pago, observaciones: e.observaciones, cobrado: true };
-      try { const r = await fetch(`${API_URL}/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) }); const result = await r.json(); if (result.success) { alert(`✅ ${e.codigo_evento} COBRADO\nIngreso de $${fn(e.monto_cobrado)} en Finanzas.`); await cargarDatos(); } else { alert('Error: ' + result.message); } } catch (e) { alert('Error al conectar'); }
+    function getBadgeClass(estado) {
+      switch(estado) {
+        case 'Pendiente': return 'badge-pendiente';
+        case 'Confirmado': return 'badge-confirmado';
+        case 'En Curso': return 'badge-en-curso';
+        case 'Completado': return 'badge-completado';
+        case 'Cancelado': return 'badge-cancelado';
+        default: return 'bg-secondary text-white';
+      }
     }
 
-    async function eliminarEvento(id) { const e = eventosGlobal.find(x => x.id === id); if (!e) return; if (!confirm(`¿Eliminar ${e.codigo_evento}?\n${e.titulo}`)) return; try { const r = await fetch(`${API_URL}/${id}`, { method: 'DELETE' }); const result = await r.json(); if (result.success) { alert(result.message); await cargarDatos(); } else { alert('Error: ' + result.message); } } catch (e) { alert('Error al conectar'); } }
-    function fn(num) { return num.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function formatMoney(amount) {
+      return '$' + parseFloat(amount || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatDateTime(fecha, hora) {
+      if (!fecha) return '-';
+      const parts = fecha.split('T')[0].split('-');
+      const dateStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      return hora ? `${dateStr} ${hora}` : dateStr;
+    }
   </script>
 </body>
 </html>
