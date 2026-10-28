@@ -5,410 +5,389 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ERP - Cuenta Corriente</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .menu-nav { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); padding: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 1000; }
-    .menu-nav .logo { color: white; font-weight: bold; font-size: 1.2rem; text-decoration: none; }
-    .menu-nav .nav-link { color: rgba(255,255,255,0.85); font-weight: 500; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; text-decoration: none; display: flex; align-items: center; gap: 6px; }
-    .menu-nav .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
-    .menu-nav .nav-link.active { background: white; color: #0d6efd; }
-    .menu-nav .nav-link i { font-size: 1.1rem; }
-    @media (max-width: 767px) { .menu-nav .nav-link span { display: none; } .menu-nav .nav-link { padding: 8px 10px; } }
-    .card { border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
-    .kpi-card { border-left: 4px solid; border-radius: 8px; background: white; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .kpi-card.primary { border-left-color: #0d6efd; }
-    .kpi-card.success { border-left-color: #198754; }
-    .kpi-card.danger { border-left-color: #dc3545; }
-    .kpi-label { font-size: 0.75rem; color: #6c757d; text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
-    .kpi-value { font-size: 1.5rem; font-weight: bold; margin: 0; }
-    .btn-accion { padding: 4px 8px; font-size: 0.85rem; margin: 0 2px; }
-    .btn-cobrar { background-color: #198754; color: white; }
-    .btn-editar { background-color: #0d6efd; color: white; }
-    .btn-eliminar { background-color: #dc3545; color: white; }
-    .badge-manual { background-color: #6c757d; color: white; }
-    .badge-factura { background-color: #0d6efd; color: white; }
-    .badge-cobro { background-color: #198754; color: white; }
-    .badge-pagada { background-color: #198754; color: white; }
-    .badge-parcial { background-color: #fd7e14; color: white; }
-    .badge-pendiente { background-color: #dc3545; color: white; }
-    .table th { background-color: #f8f9fa; font-weight: 600; font-size: 0.9rem; }
-    .saldo-final { font-size: 1.5rem; font-weight: bold; text-align: right; padding: 15px; background: white; border-radius: 8px; margin-top: 10px; }
-    .info-factura { background: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
-    .info-factura .label { font-size: 0.8rem; color: #6c757d; text-transform: uppercase; font-weight: 600; }
-    .info-factura .valor { font-size: 1.1rem; font-weight: bold; }
-    .barra-progreso { height: 10px; border-radius: 5px; background: #e9ecef; margin: 10px 0; overflow: hidden; }
-    .barra-progreso .progreso { height: 100%; background: linear-gradient(90deg, #198754, #20c997); border-radius: 5px; }
-    .metodo-pago-opcion { border: 2px solid #dee2e6; border-radius: 8px; padding: 10px 15px; text-align: center; cursor: pointer; transition: all 0.2s; }
-    .metodo-pago-opcion:hover { border-color: #0d6efd; background: #e7f1ff; }
-    .metodo-pago-opcion.selected { border-color: #0d6efd; background: #e7f1ff; }
-    .metodo-pago-opcion i { font-size: 1.5rem; display: block; margin-bottom: 5px; }
-    .metodo-pago-opcion span { font-size: 0.8rem; font-weight: 600; }
-    .filtro-estado { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
-    .filtro-estado .btn-filtro { padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; border: 2px solid #dee2e6; background: white; color: #495057; cursor: pointer; transition: all 0.2s; }
-    .filtro-estado .btn-filtro:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .filtro-estado .btn-filtro.active { color: white; border-color: transparent; }
-    .filtro-estado .btn-filtro[data-filtro="todos"].active { background: #6c757d; }
-    .filtro-estado .btn-filtro[data-filtro="pendiente"].active { background: #dc3545; }
-    .filtro-estado .btn-filtro[data-filtro="parcial"].active { background: #fd7e14; }
-    .filtro-estado .btn-filtro[data-filtro="pagada"].active { background: #198754; }
-    .filtro-estado .btn-filtro[data-filtro="no-factura"].active { background: #0d6efd; }
-    .contador-filtro { background: rgba(255,255,255,0.3); padding: 1px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 4px; }
-    @media (max-width: 767px) { .table-responsive { font-size: 0.85rem; } .btn-accion { padding: 3px 6px; font-size: 0.75rem; } }
+    body { background-color: #f8f9fa; }
+    .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .kpi-card {
+      background: white; border-radius: 12px; padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08); border-left: 4px solid #198754; height: 100%;
+    }
+    .kpi-value { font-size: 1.8rem; font-weight: bold; margin: 5px 0; }
+    .table-container {
+      background: white; border-radius: 12px; padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-top: 20px;
+    }
+    .saldo-box {
+      background: white; border-radius: 12px; padding: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08); text-align: center;
+    }
+    .badge-pendiente { background-color: #ffc107; color: #000; }
+    .badge-parcial { background-color: #fd7e14; color: #fff; }
+    .badge-pagada { background-color: #198754; color: #fff; }
   </style>
 </head>
 <body>
-
-  <nav class="menu-nav">
-    <div class="container-fluid px-3">
-      <div class="d-flex align-items-center justify-content-between flex-wrap">
-        <a href="index.html" class="logo me-3"><i class="bi bi-building"></i> ERP Data Technology</a>
-        <div class="d-flex flex-wrap gap-1">
-          <a href="index.html" class="nav-link"><i class="bi bi-house"></i> <span>Inicio</span></a>
-          <a href="clientes.html" class="nav-link"><i class="bi bi-people"></i> <span>Clientes</span></a>
-          <a href="cuenta-corriente.html" class="nav-link active"><i class="bi bi-wallet2"></i> <span>Cta. Cte.</span></a>
-          <a href="finanzas.html" class="nav-link"><i class="bi bi-cash-stack"></i> <span>Finanzas</span></a>
-          <a href="cheques.html" class="nav-link"><i class="bi bi-receipt"></i> <span>Cheques</span></a>
-          <a href="trabajos.html" class="nav-link"><i class="bi bi-tools"></i> <span>Trabajos</span></a>
-          <a href="agenda.html" class="nav-link"><i class="bi bi-calendar-event"></i> <span>Agenda</span></a>
-        </div>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="index.html"><i class="bi bi-building"></i> ERP Data Technology</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html"><i class="bi bi-house"></i> Inicio</a></li>
+          <li class="nav-item"><a class="nav-link" href="clientes.html"><i class="bi bi-people"></i> Clientes</a></li>
+          <li class="nav-item"><a class="nav-link active" href="cuenta-corriente.html"><i class="bi bi-wallet2"></i> Cta. Cte.</a></li>
+          <li class="nav-item"><a class="nav-link" href="finanzas.html"><i class="bi bi-cash-stack"></i> Finanzas</a></li>
+          <li class="nav-item"><a class="nav-link" href="cheques.html"><i class="bi bi-receipt"></i> Cheques</a></li>
+          <li class="nav-item"><a class="nav-link" href="trabajos.html"><i class="bi bi-briefcase"></i> Trabajos</a></li>
+          <li class="nav-item"><a class="nav-link" href="agenda.html"><i class="bi bi-calendar"></i> Agenda</a></li>
+          <li class="nav-item"><a class="nav-link" href="reportes.html"><i class="bi bi-bar-chart"></i> Reportes</a></li>
+          <li class="nav-item"><a class="nav-link" href="empresa.html"><i class="bi bi-building"></i> Empresa</a></li>
+          <li class="nav-item"><a class="nav-link" href="presupuestos.html"><i class="bi bi-pc-display"></i> PC Builder</a></li>
+        </ul>
       </div>
     </div>
   </nav>
 
-  <div class="container-fluid px-3 py-3">
-    <div class="card"><div class="card-body"><div class="row g-3">
-      <div class="col-md-4"><label class="form-label fw-bold">Seleccionar Cliente</label><select class="form-select" id="selectCliente" onchange="cargarDetalleCliente()"><option value="">Seleccione un cliente...</option></select></div>
-      <div class="col-md-3"><label class="form-label fw-bold">📅 Desde</label><input type="date" class="form-control" id="filtroDesde" onchange="aplicarFiltros()"></div>
-      <div class="col-md-3"><label class="form-label fw-bold">📅 Hasta</label><input type="date" class="form-control" id="filtroHasta" onchange="aplicarFiltros()"></div>
-      <div class="col-md-2 d-flex align-items-end"><button class="btn btn-outline-secondary w-100" onclick="limpiarFiltros()"><i class="bi bi-trash"></i> Ver Todo</button></div>
-    </div></div></div>
-
-    <div class="filtro-estado" id="filtrosEstado" style="display: none;">
-      <button class="btn-filtro active" data-filtro="todos" onclick="setFiltroEstado('todos')"><i class="bi bi-list-ul"></i> Todos <span class="contador-filtro" id="countTodos">0</span></button>
-      <button class="btn-filtro" data-filtro="pendiente" onclick="setFiltroEstado('pendiente')"><i class="bi bi-exclamation-circle"></i> Pendientes <span class="contador-filtro" id="countPendiente">0</span></button>
-      <button class="btn-filtro" data-filtro="parcial" onclick="setFiltroEstado('parcial')"><i class="bi bi-hourglass-split"></i> Parciales <span class="contador-filtro" id="countParcial">0</span></button>
-      <button class="btn-filtro" data-filtro="pagada" onclick="setFiltroEstado('pagada')"><i class="bi bi-check-circle"></i> Pagadas <span class="contador-filtro" id="countPagada">0</span></button>
-      <button class="btn-filtro" data-filtro="no-factura" onclick="setFiltroEstado('no-factura')"><i class="bi bi-receipt"></i> Otros <span class="contador-filtro" id="countNoFactura">0</span></button>
+  <div class="container-fluid mt-4 px-4">
+    <!-- Selector de Cliente -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <label class="form-label fw-bold">Seleccionar Cliente</label>
+        <select class="form-select form-select-lg" id="selectCliente" onchange="cargarMovimientos()">
+          <option value="">Seleccione un cliente...</option>
+        </select>
+      </div>
     </div>
 
-    <div class="card" id="cardRegistrar" style="display: none;"><div class="card-body">
-      <h5 class="card-title fw-bold mb-3">Registrar Movimiento</h5>
-      <div class="row g-3">
-        <div class="col-md-2"><label class="form-label fw-bold">Fecha</label><input type="date" class="form-control" id="movFecha"></div>
-        <div class="col-md-5"><label class="form-label fw-bold">Descripción</label><input type="text" class="form-control" id="movDescripcion" placeholder="Detalle del movimiento"></div>
-        <div class="col-md-2"><label class="form-label fw-bold">Debe ($)</label><input type="number" step="0.01" min="0" class="form-control" id="movDebe" value="0" oninput="calcularHaber()"></div>
-        <div class="col-md-2"><label class="form-label fw-bold">Haber ($)</label><input type="number" step="0.01" min="0" class="form-control" id="movHaber" value="0" oninput="calcularDebe()"></div>
-        <div class="col-md-1 d-flex align-items-end"><button class="btn btn-success w-100" onclick="registrarMovimiento()"><i class="bi bi-save"></i><br>Registrar</button></div>
+    <!-- KPIs del Cliente Seleccionado -->
+    <div class="row g-3 mb-4" id="kpiContainer" style="display: none;">
+      <div class="col-md-4">
+        <div class="kpi-card" style="border-left-color: #dc3545;">
+          <div class="text-muted small">TOTAL DEBE</div>
+          <div class="kpi-value text-danger" id="kpiDebe">$0,00</div>
+        </div>
       </div>
-    </div></div>
-
-    <div class="row g-2 mb-3" id="kpiCliente" style="display: none;">
-      <div class="col-md-4"><div class="kpi-card danger"><div class="kpi-label">Total Debe</div><div class="kpi-value text-danger" id="kpiDebe">$0,00</div></div></div>
-      <div class="col-md-4"><div class="kpi-card success"><div class="kpi-label">Total Haber</div><div class="kpi-value text-success" id="kpiHaber">$0,00</div></div></div>
-      <div class="col-md-4"><div class="kpi-card" id="kpiSaldoCard"><div class="kpi-label">Saldo</div><div class="kpi-value" id="kpiSaldo">$0,00</div></div></div>
+      <div class="col-md-4">
+        <div class="kpi-card" style="border-left-color: #198754;">
+          <div class="text-muted small">TOTAL HABER</div>
+          <div class="kpi-value text-success" id="kpiHaber">$0,00</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="kpi-card" style="border-left-color: #6f42c1;">
+          <div class="text-muted small">SALDO ACTUAL</div>
+          <div class="kpi-value" id="kpiSaldo">$0,00</div>
+        </div>
+      </div>
     </div>
 
-    <div class="card"><div class="card-body p-0"><div class="table-responsive">
-      <table class="table table-hover align-middle mb-0"><thead><tr>
-        <th>Fecha</th><th>Descripción</th><th class="text-end">Debe</th><th class="text-end">Haber</th><th class="text-end">Saldo</th><th class="text-center">Tipo</th><th class="text-center">Estado</th><th class="text-center">Acciones</th>
-      </tr></thead><tbody id="tablaMovimientos"><tr><td colspan="8" class="text-center py-4 text-muted">Seleccione un cliente para ver sus movimientos.</td></tr></tbody></table>
-    </div></div></div>
-
-    <div class="saldo-final" id="saldoFinal" style="display: none;"><span class="text-muted">Saldo Final del Período: </span><span id="saldoFinalValor" class="text-danger">$0,00</span></div>
-  </div>
-
-  <!-- Modal Cobrar -->
-  <div class="modal fade" id="modalCobrar" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">
-      <div class="modal-header bg-success text-white"><h5 class="modal-title"><i class="bi bi-cash-coin"></i> Registrar Cobro</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-      <div class="modal-body">
-        <div class="info-factura">
-          <div class="row"><div class="col-6"><div class="label">Factura</div><div class="valor" id="cobroFacturaDesc">-</div></div><div class="col-6 text-end"><div class="label">Fecha</div><div class="valor" id="cobroFacturaFecha">-</div></div></div>
-          <div class="row mt-2"><div class="col-4"><div class="label">Monto Original</div><div class="valor text-danger" id="cobroMontoOriginal">$0,00</div></div><div class="col-4"><div class="label">Ya Pagado</div><div class="valor text-success" id="cobroYaPagado">$0,00</div></div><div class="col-4"><div class="label">Saldo Pendiente</div><div class="valor text-primary fw-bold" id="cobroSaldoPendiente">$0,00</div></div></div>
-          <div class="barra-progreso"><div class="progreso" id="cobroBarraProgreso" style="width: 0%"></div></div>
-          <div class="text-center small text-muted" id="cobroPorcentajePagado">0% pagado</div>
-        </div>
-        <div class="mb-3"><label class="form-label fw-bold"> Monto a Cobrar *</label>
-          <div class="input-group"><span class="input-group-text">$</span><input type="number" step="0.01" min="0.01" class="form-control form-control-lg" id="cobroMonto" placeholder="0.00"><button class="btn btn-outline-primary" onclick="cobrarTotal()">Total</button></div>
-          <div class="mt-2"><small class="text-muted">Montos rápidos:</small><br>
-            <button class="btn btn-sm btn-outline-secondary" onclick="setMontoRapido(0.25)">25%</button>
-            <button class="btn btn-sm btn-outline-secondary" onclick="setMontoRapido(0.50)">50%</button>
-            <button class="btn btn-sm btn-outline-secondary" onclick="setMontoRapido(0.75)">75%</button>
-            <button class="btn btn-sm btn-outline-secondary" onclick="setMontoRapido(1)">100%</button>
-          </div>
-        </div>
-        <div class="mb-3"><label class="form-label fw-bold">💳 Método de Pago *</label>
-          <div class="row g-2">
-            <div class="col-3"><div class="metodo-pago-opcion selected" data-metodo="Efectivo" onclick="seleccionarMetodo(this)"><i class="bi bi-cash"></i><span>Efectivo</span></div></div>
-            <div class="col-3"><div class="metodo-pago-opcion" data-metodo="Transferencia" onclick="seleccionarMetodo(this)"><i class="bi bi-bank"></i><span>Transfer.</span></div></div>
-            <div class="col-3"><div class="metodo-pago-opcion" data-metodo="Cheque" onclick="seleccionarMetodo(this)"><i class="bi bi-receipt"></i><span>Cheque</span></div></div>
-            <div class="col-3"><div class="metodo-pago-opcion" data-metodo="Tarjeta" onclick="seleccionarMetodo(this)"><i class="bi bi-credit-card"></i><span>Tarjeta</span></div></div>
-          </div>
-        </div>
-        <div class="mb-3"><label class="form-label fw-bold">📝 Descripción / Nota</label><input type="text" class="form-control" id="cobroDescripcion" placeholder="Ej: Pago parcial factura 2365"></div>
-        <div id="cobroPagosPrevios" style="display: none;"><label class="form-label fw-bold">📋 Pagos Realizados Anteriormente</label><div class="table-responsive" style="max-height: 150px; overflow-y: auto;"><table class="table table-sm table-striped mb-0"><thead><tr><th>Fecha</th><th>Monto</th><th>Método</th><th>Descripción</th></tr></thead><tbody id="cobroTablaPagosPrevios"></tbody></table></div></div>
+    <!-- Tabla de Movimientos -->
+    <div class="table-container">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="bi bi-list-ul"></i> Movimientos</h5>
+        <button class="btn btn-primary btn-sm" onclick="abrirModalNuevo()" id="btnNuevoMov" disabled>
+          <i class="bi bi-plus-circle"></i> Registrar Movimiento
+        </button>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-success btn-lg" onclick="confirmarCobro()"><i class="bi bi-check-circle"></i> Confirmar Cobro</button></div>
-    </div></div>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Descripción</th>
+              <th class="text-end">Debe</th>
+              <th class="text-end">Haber</th>
+              <th class="text-end">Saldo</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tablaMovimientos">
+            <tr><td colspan="8" class="text-center text-muted">Seleccione un cliente para ver sus movimientos.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-3 text-end fw-bold" id="saldoFinalContainer" style="display: none;">
+        Saldo Final del Período: <span id="saldoFinal" class="fs-5">$0,00</span>
+      </div>
+    </div>
   </div>
 
-  <!-- Modal Editar -->
-  <div class="modal fade" id="modalEditar" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-      <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="bi bi-pencil"></i> Editar Movimiento</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-      <div class="modal-body"><form id="formEditar"><input type="hidden" id="editMovId">
-        <div class="mb-3"><label class="form-label fw-bold">Tipo</label><select class="form-select" id="editMovTipo"><option value="Manual">Manual</option><option value="Factura">Factura</option><option value="Cobro">Cobro</option><option value="Nota de Crédito">Nota de Crédito</option><option value="Nota de Débito">Nota de Débito</option><option value="Pago">Pago</option></select></div>
-        <div class="mb-3"><label class="form-label fw-bold">Fecha</label><input type="date" class="form-control" id="editMovFecha"></div>
-        <div class="mb-3"><label class="form-label fw-bold">Descripción</label><input type="text" class="form-control" id="editMovDescripcion"></div>
-        <div class="row g-3"><div class="col-6"><label class="form-label fw-bold">Debe ($)</label><input type="number" step="0.01" min="0" class="form-control" id="editMovDebe"></div><div class="col-6"><label class="form-label fw-bold">Haber ($)</label><input type="number" step="0.01" min="0" class="form-control" id="editMovHaber"></div></div>
-      </form></div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" onclick="guardarEdicion()"><i class="bi bi-save"></i> Guardar</button></div>
-    </div></div>
+  <!-- Modal Nuevo/Editar Movimiento -->
+  <div class="modal fade" id="modalMovimiento" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitulo">Registrar Movimiento</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formMovimiento">
+            <input type="hidden" id="movId">
+            <div class="mb-3">
+              <label class="form-label">Tipo *</label>
+              <select class="form-select" id="movTipo" required>
+                <option value="Manual">Manual</option>
+                <option value="Factura">Factura</option>
+                <option value="Cobro">Cobro</option>
+                <option value="Nota de Crédito">Nota de Crédito</option>
+                <option value="Nota de Débito">Nota de Débito</option>
+                <option value="Pago">Pago</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Fecha *</label>
+              <input type="date" class="form-control" id="movFecha" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Descripción *</label>
+              <input type="text" class="form-control" id="movDescripcion" required>
+            </div>
+            <div class="row">
+              <div class="col-6 mb-3">
+                <label class="form-label">Debe ($)</label>
+                <input type="number" class="form-control" id="movDebe" step="0.01" min="0">
+              </div>
+              <div class="col-6 mb-3">
+                <label class="form-label">Haber ($)</label>
+                <input type="number" class="form-control" id="movHaber" step="0.01" min="0">
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="guardarMovimiento()">Guardar</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const API_URL = 'http://localhost:3000/api/cuenta-corriente';
-    const API_CLIENTES = 'http://localhost:3000/api/clientes';
-    let saldosGlobal = [], movimientosGlobal = [], movimientosFiltrados = [], movimientosConEstado = [];
-    let clienteActualId = null, facturaActualId = null, metodoPagoSeleccionado = 'Efectivo';
-    let saldoPendienteActual = 0, filtroEstadoActual = 'todos';
+    const API = '/api';
+    let clientesList = [];
+    let movimientosData = [];
+    let clienteActualId = null;
 
-    document.addEventListener('DOMContentLoaded', function() { cargarClientesSelect(); });
+    document.addEventListener('DOMContentLoaded', async () => {
+      await cargarClientes();
+    });
 
-    async function cargarClientesSelect() {
+    async function cargarClientes() {
       try {
-        const response = await fetch(API_CLIENTES);
-        const clientes = await response.json();
+        const res = await fetch(`${API}/clientes`);
+        clientesList = await res.json();
+        
         const select = document.getElementById('selectCliente');
-        select.innerHTML = '<option value="">Seleccione un cliente...</option>';
-        clientes.forEach(c => { const o = document.createElement('option'); o.value = c.id; o.textContent = `${c.codigo} - ${c.nombre}`; select.appendChild(o); });
-      } catch (e) { console.error(e); }
+        clientesList.forEach(c => {
+          const option = document.createElement('option');
+          option.value = c.id;
+          option.textContent = `${c.codigo} - ${c.nombre}`;
+          select.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error al cargar clientes:', error);
+      }
     }
 
-    async function cargarDetalleCliente() {
+    async function cargarMovimientos() {
       const clienteId = document.getElementById('selectCliente').value;
+      clienteActualId = clienteId;
+      
       if (!clienteId) {
-        document.getElementById('cardRegistrar').style.display = 'none';
-        document.getElementById('kpiCliente').style.display = 'none';
-        document.getElementById('saldoFinal').style.display = 'none';
-        document.getElementById('filtrosEstado').style.display = 'none';
-        document.getElementById('tablaMovimientos').innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">Seleccione un cliente.</td></tr>';
+        document.getElementById('kpiContainer').style.display = 'none';
+        document.getElementById('saldoFinalContainer').style.display = 'none';
+        document.getElementById('btnNuevoMov').disabled = true;
+        document.getElementById('tablaMovimientos').innerHTML = 
+          '<tr><td colspan="8" class="text-center text-muted">Seleccione un cliente para ver sus movimientos.</td></tr>';
         return;
       }
-      clienteActualId = clienteId;
-      document.getElementById('cardRegistrar').style.display = 'block';
-      document.getElementById('kpiCliente').style.display = 'flex';
 
+      document.getElementById('btnNuevoMov').disabled = false;
+      
       try {
-        const saldoResponse = await fetch(`${API_URL}/saldo/${clienteId}`);
-        const saldo = await saldoResponse.json();
-        document.getElementById('kpiDebe').textContent = `$${formatoNumero(saldo.total_debe)}`;
-        document.getElementById('kpiHaber').textContent = `$${formatoNumero(saldo.total_haber)}`;
-        const saldoEl = document.getElementById('kpiSaldo');
-        const kpiSaldoCard = document.getElementById('kpiSaldoCard');
-        if (saldo.saldo > 0) { saldoEl.textContent = `-$${formatoNumero(saldo.saldo)}`; saldoEl.className = 'kpi-value text-danger'; kpiSaldoCard.className = 'kpi-card danger'; }
-        else if (saldo.saldo < 0) { saldoEl.textContent = `+$${formatoNumero(Math.abs(saldo.saldo))}`; saldoEl.className = 'kpi-value text-success'; kpiSaldoCard.className = 'kpi-card success'; }
-        else { saldoEl.textContent = '$0,00'; saldoEl.className = 'kpi-value text-muted'; kpiSaldoCard.className = 'kpi-card'; }
-        await cargarMovimientosCliente(clienteId);
-      } catch (e) { alert('Error al cargar detalle'); }
-    }
+        // Cargar movimientos del cliente
+        const res = await fetch(`${API}/cuenta-corriente/cliente/${clienteId}`);
+        movimientosData = await res.json();
+        
+        // Calcular saldo acumulado
+        let saldoAcumulado = 0;
+        const tbody = document.getElementById('tablaMovimientos');
+        tbody.innerHTML = '';
 
-    async function cargarMovimientosCliente(clienteId) {
-      try {
-        const response = await fetch(`${API_URL}/cliente/${clienteId}`);
-        movimientosGlobal = await response.json();
-        movimientosConEstado = [];
-        for (const m of movimientosGlobal) {
-          let estado = 'no-factura', saldoPendiente = 0, porcentajePagado = 0;
-          if (m.debe > 0) {
-            try {
-              const r = await fetch(`${API_URL}/factura/${m.id}/saldo`);
-              const d = await r.json();
-              if (d.success) {
-                porcentajePagado = (d.total_pagado / d.monto_original * 100);
-                saldoPendiente = d.saldo_pendiente;
-                estado = d.estado === 'Pagada' ? 'pagada' : (d.estado === 'Pagada parcialmente' ? 'parcial' : 'pendiente');
-              }
-            } catch (e) {}
-          }
-          movimientosConEstado.push({ ...m, estado_pago: estado, saldo_pendiente: saldoPendiente, porcentaje_pagado: porcentajePagado });
+        if (movimientosData.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay movimientos registrados.</td></tr>';
+        } else {
+          movimientosData.forEach(mov => {
+            saldoAcumulado += (mov.debe || 0) - (mov.haber || 0);
+            
+            const estadoClass = getEstadoClass(mov.tipo);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${formatDate(mov.fecha)}</td>
+              <td>${mov.descripcion}</td>
+              <td class="text-end">${mov.debe > 0 ? formatMoney(mov.debe) : '-'}</td>
+              <td class="text-end">${mov.haber > 0 ? formatMoney(mov.haber) : '-'}</td>
+              <td class="text-end fw-bold">${formatMoney(saldoAcumulado)}</td>
+              <td><span class="badge ${estadoClass}">${mov.tipo}</span></td>
+              <td>${getEstadoTexto(mov.tipo)}</td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="editarMovimiento('${mov.id}')">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="eliminarMovimiento('${mov.id}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
         }
-        document.getElementById('filtrosEstado').style.display = 'flex';
-        actualizarContadoresFiltros();
-        aplicarFiltros();
-      } catch (e) { console.error(e); }
-    }
 
-    function actualizarContadoresFiltros() {
-      const desde = document.getElementById('filtroDesde').value;
-      const hasta = document.getElementById('filtroHasta').value;
-      let base = movimientosConEstado;
-      if (desde) base = base.filter(m => m.fecha >= desde);
-      if (hasta) base = base.filter(m => m.fecha <= hasta);
-      document.getElementById('countTodos').textContent = base.length;
-      document.getElementById('countPendiente').textContent = base.filter(m => m.estado_pago === 'pendiente').length;
-      document.getElementById('countParcial').textContent = base.filter(m => m.estado_pago === 'parcial').length;
-      document.getElementById('countPagada').textContent = base.filter(m => m.estado_pago === 'pagada').length;
-      document.getElementById('countNoFactura').textContent = base.filter(m => m.estado_pago === 'no-factura').length;
-    }
+        // Actualizar KPIs
+        const totalDebe = movimientosData.reduce((sum, m) => sum + (m.debe || 0), 0);
+        const totalHaber = movimientosData.reduce((sum, m) => sum + (m.haber || 0), 0);
+        const saldoActual = totalDebe - totalHaber;
 
-    function setFiltroEstado(filtro) {
-      filtroEstadoActual = filtro;
-      document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('active'));
-      document.querySelector(`[data-filtro="${filtro}"]`).classList.add('active');
-      aplicarFiltros();
-    }
+        document.getElementById('kpiDebe').textContent = formatMoney(totalDebe);
+        document.getElementById('kpiHaber').textContent = formatMoney(totalHaber);
+        
+        const saldoEl = document.getElementById('kpiSaldo');
+        saldoEl.textContent = formatMoney(saldoActual);
+        saldoEl.className = `kpi-value ${saldoActual >= 0 ? 'text-danger' : 'text-success'}`;
+        
+        document.getElementById('kpiContainer').style.display = 'flex';
+        
+        const saldoFinalEl = document.getElementById('saldoFinal');
+        saldoFinalEl.textContent = formatMoney(saldoActual);
+        saldoFinalEl.className = saldoActual >= 0 ? 'text-danger fs-5' : 'text-success fs-5';
+        document.getElementById('saldoFinalContainer').style.display = 'block';
 
-    function aplicarFiltros() {
-      const desde = document.getElementById('filtroDesde').value;
-      const hasta = document.getElementById('filtroHasta').value;
-      let filtrados = movimientosConEstado;
-      if (desde) filtrados = filtrados.filter(m => m.fecha >= desde);
-      if (hasta) filtrados = filtrados.filter(m => m.fecha <= hasta);
-      if (filtroEstadoActual !== 'todos') filtrados = filtrados.filter(m => m.estado_pago === filtroEstadoActual);
-      movimientosFiltrados = filtrados;
-      actualizarContadoresFiltros();
-      renderizarMovimientos(movimientosFiltrados);
-    }
-
-    function limpiarFiltros() {
-      document.getElementById('filtroDesde').value = '';
-      document.getElementById('filtroHasta').value = '';
-      setFiltroEstado('todos');
-    }
-
-    async function renderizarMovimientos(movimientos) {
-      const tabla = document.getElementById('tablaMovimientos');
-      const saldoFinal = document.getElementById('saldoFinal');
-      const saldoFinalValor = document.getElementById('saldoFinalValor');
-      if (movimientos.length === 0) { tabla.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">No hay movimientos.</td></tr>'; saldoFinal.style.display = 'none'; return; }
-      let saldoAcumulado = 0, html = '';
-      const ordenados = [...movimientos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-      for (const m of ordenados) {
-        saldoAcumulado += (m.debe - m.haber);
-        const fecha = new Date(m.fecha).toLocaleDateString('es-AR');
-        const claseSaldo = saldoAcumulado > 0 ? 'text-danger' : (saldoAcumulado < 0 ? 'text-success' : 'text-muted');
-        const signoSaldo = saldoAcumulado > 0 ? '-' : (saldoAcumulado < 0 ? '+' : '');
-        const badgeClass = m.tipo === 'Factura' ? 'badge-factura' : (m.tipo === 'Cobro' ? 'badge-cobro' : 'badge-manual');
-        let estadoHtml = '', btnCobrar = '';
-        if (m.estado_pago === 'pendiente') { estadoHtml = '<span class="badge badge-pendiente">Pendiente</span>'; btnCobrar = `<button class="btn btn-accion btn-cobrar" onclick="abrirModalCobro('${m.id}')" title="Cobrar"><i class="bi bi-cash-coin"></i></button>`; }
-        else if (m.estado_pago === 'parcial') { estadoHtml = `<span class="badge badge-parcial">${m.porcentaje_pagado.toFixed(0)}% Pagada</span>`; btnCobrar = `<button class="btn btn-accion btn-cobrar" onclick="abrirModalCobro('${m.id}')" title="Cobrar"><i class="bi bi-cash-coin"></i></button>`; }
-        else if (m.estado_pago === 'pagada') { estadoHtml = '<span class="badge badge-pagada">Pagada</span>'; }
-        html += `<tr><td>${fecha}</td><td>${m.descripcion}</td><td class="text-end text-danger">$${formatoNumero(m.debe)}</td><td class="text-end text-success">$${formatoNumero(m.haber)}</td><td class="text-end ${claseSaldo} fw-bold">${signoSaldo}$${formatoNumero(Math.abs(saldoAcumulado))}</td><td class="text-center"><span class="badge ${badgeClass}">${m.tipo}</span></td><td class="text-center">${estadoHtml}</td><td class="text-center">${btnCobrar}<button class="btn btn-accion btn-editar" onclick="editarMovimiento('${m.id}')"><i class="bi bi-pencil"></i></button><button class="btn btn-accion btn-eliminar" onclick="eliminarMovimiento('${m.id}')"><i class="bi bi-trash"></i></button></td></tr>`;
+      } catch (error) {
+        console.error('Error al cargar movimientos:', error);
+        document.getElementById('tablaMovimientos').innerHTML = 
+          '<tr><td colspan="8" class="text-center text-danger">Error al cargar datos</td></tr>';
       }
-      tabla.innerHTML = html;
-      saldoFinal.style.display = 'block';
-      const claseSaldoFinal = saldoAcumulado > 0 ? 'text-danger' : (saldoAcumulado < 0 ? 'text-success' : 'text-muted');
-      const signoSaldoFinal = saldoAcumulado > 0 ? '-' : (saldoAcumulado < 0 ? '+' : '');
-      saldoFinalValor.textContent = `${signoSaldoFinal}$${formatoNumero(Math.abs(saldoAcumulado))}`;
-      saldoFinalValor.className = claseSaldoFinal;
     }
 
-    function calcularHaber() { const debe = parseFloat(document.getElementById('movDebe').value) || 0; if (debe > 0) document.getElementById('movHaber').value = '0'; }
-    function calcularDebe() { const haber = parseFloat(document.getElementById('movHaber').value) || 0; if (haber > 0) document.getElementById('movDebe').value = '0'; }
-
-    async function registrarMovimiento() {
-      const fecha = document.getElementById('movFecha').value;
-      const descripcion = document.getElementById('movDescripcion').value.trim();
-      const debe = parseFloat(document.getElementById('movDebe').value) || 0;
-      const haber = parseFloat(document.getElementById('movHaber').value) || 0;
-      if (!fecha || !descripcion) { alert('Fecha y descripción obligatorias'); return; }
-      if (debe <= 0 && haber <= 0) { alert('Ingrese un valor en Debe o Haber'); return; }
-      const datos = { cliente_id: clienteActualId, fecha, descripcion, debe, haber, tipo_movimiento: 'Manual' };
-      try {
-        const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
-        const result = await r.json();
-        if (result.success) { alert(result.message); document.getElementById('movDescripcion').value = ''; document.getElementById('movDebe').value = '0'; document.getElementById('movHaber').value = '0'; await cargarDetalleCliente(); }
-        else { alert('Error: ' + result.message); }
-      } catch (e) { alert('Error al conectar'); }
-    }
-
-    async function abrirModalCobro(facturaId) {
-      facturaActualId = facturaId;
-      try {
-        const r = await fetch(`${API_URL}/factura/${facturaId}/saldo`);
-        const d = await r.json();
-        if (!d.success) { alert('Error: ' + d.message); return; }
-        saldoPendienteActual = d.saldo_pendiente;
-        document.getElementById('cobroFacturaDesc').textContent = d.descripcion;
-        document.getElementById('cobroFacturaFecha').textContent = new Date(d.fecha_factura).toLocaleDateString('es-AR');
-        document.getElementById('cobroMontoOriginal').textContent = `$${formatoNumero(d.monto_original)}`;
-        document.getElementById('cobroYaPagado').textContent = `$${formatoNumero(d.total_pagado)}`;
-        document.getElementById('cobroSaldoPendiente').textContent = `$${formatoNumero(d.saldo_pendiente)}`;
-        const porcentaje = (d.total_pagado / d.monto_original * 100).toFixed(0);
-        document.getElementById('cobroBarraProgreso').style.width = `${porcentaje}%`;
-        document.getElementById('cobroPorcentajePagado').textContent = `${porcentaje}% pagado`;
-        document.getElementById('cobroMonto').value = d.saldo_pendiente.toFixed(2);
-        document.getElementById('cobroDescripcion').value = `Cobro: ${d.descripcion}`;
-        metodoPagoSeleccionado = 'Efectivo';
-        document.querySelectorAll('.metodo-pago-opcion').forEach(e => e.classList.remove('selected'));
-        document.querySelector('[data-metodo="Efectivo"]').classList.add('selected');
-        const divPagosPrevios = document.getElementById('cobroPagosPrevios');
-        const tablaPagos = document.getElementById('cobroTablaPagosPrevios');
-        if (d.pagos_realizados && d.pagos_realizados.length > 0) {
-          divPagosPrevios.style.display = 'block';
-          tablaPagos.innerHTML = d.pagos_realizados.map(p => `<tr><td>${new Date(p.fecha).toLocaleDateString('es-AR')}</td><td class="text-success fw-bold">$${formatoNumero(p.monto)}</td><td><span class="badge bg-secondary">${p.metodo_pago}</span></td><td>${p.descripcion}</td></tr>`).join('');
-        } else { divPagosPrevios.style.display = 'none'; }
-        new bootstrap.Modal(document.getElementById('modalCobrar')).show();
-      } catch (e) { alert('Error al cargar factura'); }
-    }
-
-    function cobrarTotal() { document.getElementById('cobroMonto').value = saldoPendienteActual.toFixed(2); }
-    function setMontoRapido(p) { document.getElementById('cobroMonto').value = (saldoPendienteActual * p).toFixed(2); }
-    function seleccionarMetodo(el) { document.querySelectorAll('.metodo-pago-opcion').forEach(e => e.classList.remove('selected')); el.classList.add('selected'); metodoPagoSeleccionado = el.dataset.metodo; }
-
-    async function confirmarCobro() {
-      const monto = parseFloat(document.getElementById('cobroMonto').value) || 0;
-      const descripcion = document.getElementById('cobroDescripcion').value.trim();
-      if (monto <= 0) { alert('El monto debe ser mayor a 0'); return; }
-      const datos = { cliente_id: clienteActualId, fecha: new Date().toISOString().split('T')[0], descripcion: descripcion || 'Cobro parcial', debe: 0, haber: monto, tipo_movimiento: 'Cobro', id_factura_origen: facturaActualId, metodo_pago: metodoPagoSeleccionado };
-      try {
-        const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
-        const result = await r.json();
-        if (result.success) { alert(`✅ Cobro registrado\nMonto: $${formatoNumero(monto)}\nMétodo: ${metodoPagoSeleccionado}`); bootstrap.Modal.getInstance(document.getElementById('modalCobrar')).hide(); await cargarDetalleCliente(); }
-        else { alert('Error: ' + result.message); }
-      } catch (e) { alert('Error al conectar'); }
+    function abrirModalNuevo() {
+      if (!clienteActualId) return;
+      document.getElementById('modalTitulo').textContent = 'Registrar Movimiento';
+      document.getElementById('formMovimiento').reset();
+      document.getElementById('movId').value = '';
+      document.getElementById('movFecha').value = new Date().toISOString().split('T')[0];
+      new bootstrap.Modal(document.getElementById('modalMovimiento')).show();
     }
 
     function editarMovimiento(id) {
-      const m = movimientosGlobal.find(x => x.id === id);
-      if (!m) return;
-      document.getElementById('editMovId').value = m.id;
-      document.getElementById('editMovTipo').value = m.tipo;
-      document.getElementById('editMovFecha').value = m.fecha;
-      document.getElementById('editMovDescripcion').value = m.descripcion;
-      document.getElementById('editMovDebe').value = m.debe;
-      document.getElementById('editMovHaber').value = m.haber;
-      new bootstrap.Modal(document.getElementById('modalEditar')).show();
+      const mov = movimientosData.find(m => m.id === id);
+      if (!mov) return;
+
+      document.getElementById('modalTitulo').textContent = 'Editar Movimiento';
+      document.getElementById('movId').value = mov.id;
+      document.getElementById('movTipo').value = mov.tipo;
+      document.getElementById('movFecha').value = mov.fecha.split('T')[0];
+      document.getElementById('movDescripcion').value = mov.descripcion;
+      document.getElementById('movDebe').value = mov.debe || 0;
+      document.getElementById('movHaber').value = mov.haber || 0;
+      
+      new bootstrap.Modal(document.getElementById('modalMovimiento')).show();
     }
 
-    async function guardarEdicion() {
-      const id = document.getElementById('editMovId').value;
-      const datos = { cliente_id: clienteActualId, fecha: document.getElementById('editMovFecha').value, descripcion: document.getElementById('editMovDescripcion').value.trim(), debe: parseFloat(document.getElementById('editMovDebe').value) || 0, haber: parseFloat(document.getElementById('editMovHaber').value) || 0, tipo_movimiento: document.getElementById('editMovTipo').value };
-      if (!datos.fecha || !datos.descripcion) { alert('Fecha y descripción obligatorias'); return; }
+    async function guardarMovimiento() {
+      const id = document.getElementById('movId').value;
+      const debe = parseFloat(document.getElementById('movDebe').value) || 0;
+      const haber = parseFloat(document.getElementById('movHaber').value) || 0;
+
+      if (debe <= 0 && haber <= 0) {
+        alert('Debe ingresar un valor en Debe o Haber');
+        return;
+      }
+
+      const data = {
+        cliente_id: clienteActualId,
+        fecha: document.getElementById('movFecha').value,
+        descripcion: document.getElementById('movDescripcion').value.trim(),
+        debe: debe,
+        haber: haber,
+        tipo_movimiento: document.getElementById('movTipo').value
+      };
+
       try {
-        const r = await fetch(`${API_URL}/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
-        const result = await r.json();
-        if (result.success) { alert(result.message); bootstrap.Modal.getInstance(document.getElementById('modalEditar')).hide(); await cargarDetalleCliente(); }
-        else { alert('Error: ' + result.message); }
-      } catch (e) { alert('Error al conectar'); }
+        const url = id ? `${API}/cuenta-corriente/${id}` : `${API}/cuenta-corriente`;
+        const method = id ? 'PUT' : 'POST';
+        
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await res.json();
+        
+        if (result.success) {
+          bootstrap.Modal.getInstance(document.getElementById('modalMovimiento')).hide();
+          await cargarMovimientos();
+        } else {
+          alert(result.message);
+        }
+      } catch (error) {
+        alert('Error al guardar movimiento');
+      }
     }
 
     async function eliminarMovimiento(id) {
-      const m = movimientosGlobal.find(x => x.id === id);
-      if (!m) return;
-      if (!confirm(`¿Eliminar "${m.descripcion}"?`)) return;
+      if (!confirm('¿Estás seguro de eliminar este movimiento?')) return;
+      
       try {
-        const r = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-        const result = await r.json();
-        if (result.success) { alert(result.message); await cargarDetalleCliente(); }
-        else { alert('Error: ' + result.message); }
-      } catch (e) { alert('Error al conectar'); }
+        const res = await fetch(`${API}/cuenta-corriente/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        
+        if (result.success) {
+          await cargarMovimientos();
+        } else {
+          alert(result.message);
+        }
+      } catch (error) {
+        alert('Error al eliminar movimiento');
+      }
     }
 
-    function formatoNumero(num) { return num.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function getEstadoClass(tipo) {
+      switch(tipo) {
+        case 'Factura': return 'badge-pendiente';
+        case 'Cobro': return 'badge-pagada';
+        case 'Pago': return 'badge-pagada';
+        case 'Nota de Crédito': return 'badge-parcial';
+        default: return 'bg-secondary text-white';
+      }
+    }
+
+    function getEstadoTexto(tipo) {
+      switch(tipo) {
+        case 'Factura': return 'Pendiente';
+        case 'Cobro': return 'Pagada';
+        case 'Pago': return 'Abonada';
+        case 'Nota de Crédito': return 'Parcial';
+        default: return tipo;
+      }
+    }
+
+    function formatMoney(amount) {
+      return '$' + parseFloat(amount || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      const parts = dateStr.split('T')[0].split('-');
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
   </script>
 </body>
 </html>
