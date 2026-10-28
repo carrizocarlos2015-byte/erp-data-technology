@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERP - Clientes</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <style>
+    body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .menu-nav { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); padding: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 1000; }
+    .menu-nav .logo { color: white; font-weight: bold; font-size: 1.2rem; text-decoration: none; }
+    .menu-nav .nav-link { color: rgba(255,255,255,0.85); font-weight: 500; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; text-decoration: none; display: flex; align-items: center; gap: 6px; }
+    .menu-nav .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
+    .menu-nav .nav-link.active { background: white; color: #0d6efd; }
+    .menu-nav .nav-link i { font-size: 1.1rem; }
+    @media (max-width: 767px) { .menu-nav .nav-link span { display: none; } .menu-nav .nav-link { padding: 8px 10px; } }
+    .card { border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    .kpi-card { border-left: 4px solid; border-radius: 8px; background: white; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .kpi-card.primary { border-left-color: #0d6efd; }
+    .kpi-card.success { border-left-color: #198754; }
+    .kpi-label { font-size: 0.75rem; color: #6c757d; text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
+    .kpi-value { font-size: 1.5rem; font-weight: bold; margin: 0; }
+    .btn-accion { padding: 4px 8px; font-size: 0.85rem; margin: 0 2px; }
+    .btn-editar { background-color: #0d6efd; color: white; }
+    .btn-eliminar { background-color: #dc3545; color: white; }
+    .table th { background-color: #f8f9fa; font-weight: 600; font-size: 0.9rem; }
+    .fab-button { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: #0d6efd; color: white; border: none; box-shadow: 0 4px 12px rgba(13,110,253,0.4); font-size: 1.5rem; display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    @media (max-width: 767px) { .table-responsive { font-size: 0.85rem; } .btn-accion { padding: 3px 6px; font-size: 0.75rem; } }
+  </style>
+</head>
+<body>
+
+  <nav class="menu-nav">
+    <div class="container-fluid px-3">
+      <div class="d-flex align-items-center justify-content-between flex-wrap">
+        <a href="index.html" class="logo me-3"><i class="bi bi-building"></i> ERP Data Technology</a>
+        <div class="d-flex flex-wrap gap-1">
+          <a href="index.html" class="nav-link"><i class="bi bi-house"></i> <span>Inicio</span></a>
+          <a href="clientes.html" class="nav-link active"><i class="bi bi-people"></i> <span>Clientes</span></a>
+          <a href="cuenta-corriente.html" class="nav-link"><i class="bi bi-wallet2"></i> <span>Cta. Cte.</span></a>
+          <a href="finanzas.html" class="nav-link"><i class="bi bi-cash-stack"></i> <span>Finanzas</span></a>
+          <a href="cheques.html" class="nav-link"><i class="bi bi-receipt"></i> <span>Cheques</span></a>
+          <a href="trabajos.html" class="nav-link"><i class="bi bi-tools"></i> <span>Trabajos</span></a>
+          <a href="agenda.html" class="nav-link"><i class="bi bi-calendar-event"></i> <span>Agenda</span></a>
+          <a href="reportes.html" class="nav-link"><i class="bi bi-file-pdf"></i> <span>Reportes</span></a>
+          <a href="empresa.html" class="nav-link"><i class="bi bi-building-gear"></i> <span>Empresa</span></a>
+          <a href="presupuestos.html" class="nav-link"><i class="bi bi-pc-display"></i> <span>PC Builder</span></a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid px-3 py-3">
+    <div class="row g-2 mb-3">
+      <div class="col-md-6"><div class="kpi-card primary"><div class="kpi-label">TOTAL CLIENTES</div><div class="kpi-value text-primary" id="totalClientes">0</div></div></div>
+      <div class="col-md-6"><div class="kpi-card success"><div class="kpi-label">ÚLTIMO CÓDIGO</div><div class="kpi-value text-success" id="ultimoCodigo">-</div></div></div>
+    </div>
+    <div class="card mb-3"><div class="card-body"><input type="text" class="form-control" id="buscarCliente" placeholder="🔍 Buscar por nombre, CUIT/DNI, teléfono..." oninput="filtrarClientes()"></div></div>
+    <div class="card"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-dark"><tr><th>Código</th><th>Nombre</th><th>CUIT/DNI</th><th>Teléfono</th><th>Email</th><th>Dirección</th><th class="text-center">Acciones</th></tr></thead><tbody id="tablaClientes"><tr><td colspan="7" class="text-center py-4 text-muted">Cargando...</td></tr></tbody></table></div></div></div>
+  </div>
+
+  <button class="fab-button" onclick="abrirModalNuevo()"><i class="bi bi-plus-lg"></i></button>
+
+  <div class="modal fade" id="modalCliente" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white"><h5 class="modal-title" id="modalTitulo"><i class="bi bi-person-plus"></i> Nuevo Cliente</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <form id="formCliente"><input type="hidden" id="clienteId">
+            <div class="mb-3"><label class="form-label fw-bold">Nombre / Razón Social *</label><input type="text" class="form-control" id="clienteNombre" required></div>
+            <div class="row g-3 mb-3"><div class="col-md-6"><label class="form-label fw-bold">CUIT / DNI</label><input type="text" class="form-control" id="clienteCuit"></div><div class="col-md-6"><label class="form-label fw-bold">Teléfono</label><input type="text" class="form-control" id="clienteTelefono"></div></div>
+            <div class="mb-3"><label class="form-label fw-bold">Email</label><input type="email" class="form-control" id="clienteEmail"></div>
+            <div class="mb-3"><label class="form-label fw-bold">Dirección</label><input type="text" class="form-control" id="clienteDireccion"></div>
+          </form>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" onclick="guardarCliente()"><i class="bi bi-save"></i> Guardar</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const API_URL = 'http://localhost:3000/api/clientes';
+    let clientesGlobal = [];
+
+    document.addEventListener('DOMContentLoaded', function() { cargarClientes(); });
+
+    async function cargarClientes() {
+      try {
+        const response = await fetch(API_URL);
+        clientesGlobal = await response.json();
+        renderizarClientes(clientesGlobal);
+        document.getElementById('totalClientes').textContent = clientesGlobal.length;
+        if (clientesGlobal.length > 0) {
+          const ultimo = clientesGlobal[clientesGlobal.length - 1];
+          document.getElementById('ultimoCodigo').textContent = ultimo.codigo || '-';
+        }
+      } catch (error) { console.error('Error:', error); }
+    }
+
+    function renderizarClientes(clientes) {
+      const tabla = document.getElementById('tablaClientes');
+      if (clientes.length === 0) { tabla.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No hay clientes.</td></tr>'; return; }
+      let html = '';
+      clientes.forEach(c => {
+        html += `<tr>
+          <td><span class="badge bg-primary">${c.codigo || '-'}</span></td>
+          <td class="fw-bold">${c.nombre || '-'}</td>
+          <td>${c.cuit || '-'}</td>
+          <td>${c.telefono || '-'}</td>
+          <td>${c.email || '-'}</td>
+          <td>${c.direccion || '-'}</td>
+          <td class="text-center">
+            <button class="btn btn-accion btn-editar" onclick="editarCliente('${c.id}')"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-accion btn-eliminar" onclick="eliminarCliente('${c.id}')"><i class="bi bi-trash"></i></button>
+          </td>
+        </tr>`;
+      });
+      tabla.innerHTML = html;
+    }
+
+    function filtrarClientes() {
+      const busqueda = document.getElementById('buscarCliente').value.toLowerCase().trim();
+      if (!busqueda) { renderizarClientes(clientesGlobal); return; }
+      const filtrados = clientesGlobal.filter(c =>
+        (c.nombre || '').toLowerCase().includes(busqueda) ||
+        (c.cuit && c.cuit.toLowerCase().includes(busqueda)) ||
+        (c.telefono && c.telefono.toLowerCase().includes(busqueda))
+      );
+      renderizarClientes(filtrados);
+    }
+
+    function abrirModalNuevo() {
+      document.getElementById('formCliente').reset();
+      document.getElementById('clienteId').value = '';
+      document.getElementById('modalTitulo').innerHTML = '<i class="bi bi-person-plus"></i> Nuevo Cliente';
+      new bootstrap.Modal(document.getElementById('modalCliente')).show();
+    }
+
+    function editarCliente(id) {
+      const c = clientesGlobal.find(x => x.id === id);
+      if (!c) return;
+      document.getElementById('clienteId').value = c.id;
+      document.getElementById('clienteNombre').value = c.nombre || '';
+      document.getElementById('clienteCuit').value = c.cuit || '';
+      document.getElementById('clienteTelefono').value = c.telefono || '';
+      document.getElementById('clienteEmail').value = c.email || '';
+      document.getElementById('clienteDireccion').value = c.direccion || '';
+      document.getElementById('modalTitulo').innerHTML = '<i class="bi bi-pencil"></i> Editar Cliente';
+      new bootstrap.Modal(document.getElementById('modalCliente')).show();
+    }
+
+    async function guardarCliente() {
+      const id = document.getElementById('clienteId').value;
+      const nombre = document.getElementById('clienteNombre').value.trim();
+      if (!nombre) { alert('El nombre es obligatorio'); return; }
+      const datos = {
+        nombre: nombre,
+        cuit: document.getElementById('clienteCuit').value.trim(),
+        telefono: document.getElementById('clienteTelefono').value.trim(),
+        email: document.getElementById('clienteEmail').value.trim(),
+        direccion: document.getElementById('clienteDireccion').value.trim()
+      };
+      try {
+        let response;
+        if (id) {
+          response = await fetch(`${API_URL}/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
+        } else {
+          response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
+        }
+        const result = await response.json();
+        if (result.success) {
+          alert(result.message);
+          bootstrap.Modal.getInstance(document.getElementById('modalCliente')).hide();
+          await cargarClientes();
+        } else { alert('Error: ' + result.message); }
+      } catch (error) { alert('Error al conectar'); }
+    }
+
+    async function eliminarCliente(id) {
+      const c = clientesGlobal.find(x => x.id === id);
+      if (!c) return;
+      if (!confirm(`¿Eliminar a ${c.nombre}?`)) return;
+      try {
+        const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        const result = await response.json();
+        if (result.success) { alert(result.message); await cargarClientes(); }
+        else { alert('Error: ' + result.message); }
+      } catch (error) { alert('Error al conectar'); }
+    }
+  </script>
+</body>
+</html>

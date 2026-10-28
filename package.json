@@ -1,0 +1,26 @@
+{
+  "name": "erp-data-technology",
+  "version": "1.0.0",
+  "description": "Sistema ERP Data Technology - Backend Node.js",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "erp",
+    "nodejs",
+    "postgresql",
+    "supabase"
+  ],
+  "author": "Data Technology",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.9",
+    "pg": "^8.13.0"
+  }
+}

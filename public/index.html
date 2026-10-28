@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERP Data Technology - Dashboard</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+  <style>
+    body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+    .menu-nav {
+      background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+      padding: 10px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .menu-nav .logo { color: white; font-weight: bold; font-size: 1.2rem; text-decoration: none; }
+    .menu-nav .nav-link {
+      color: rgba(255,255,255,0.85);
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 8px;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .menu-nav .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
+    .menu-nav .nav-link.active { background: white; color: #0d6efd; }
+    .menu-nav .nav-link i { font-size: 1.1rem; }
+
+    .welcome-banner {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    .welcome-banner h1 { font-size: 1.8rem; font-weight: bold; margin-bottom: 5px; }
+    .welcome-banner p { margin: 0; opacity: 0.9; }
+
+    .modulo-card {
+      border-radius: 12px;
+      background: white;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border-left: 5px solid;
+      transition: transform 0.2s;
+      cursor: pointer;
+      height: 100%;
+    }
+    .modulo-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+    .modulo-card.clientes { border-left-color: #0d6efd; }
+    .modulo-card.cuenta-corriente { border-left-color: #198754; }
+    .modulo-card.finanzas { border-left-color: #6f42c1; }
+    .modulo-card.cheques { border-left-color: #fd7e14; }
+    .modulo-card.trabajos { border-left-color: #0dcaf0; }
+    .modulo-card.agenda { border-left-color: #e83e8c; }
+
+    .modulo-card .titulo { font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .modulo-card .kpi { font-size: 1.8rem; font-weight: bold; margin: 5px 0; }
+    .modulo-card .sub { font-size: 0.85rem; color: #6c757d; }
+
+    .alerta-card { border-radius: 10px; padding: 15px; background: white; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 10px; border-left: 4px solid; }
+    .alerta-card.urgente { border-left-color: #dc3545; background: #fff5f5; }
+    .alerta-card.atencion { border-left-color: #fd7e14; background: #fff8f0; }
+    .alerta-card.info { border-left-color: #0d6efd; background: #f0f7ff; }
+
+    .alerta-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e9ecef; }
+    .alerta-item:last-child { border-bottom: none; }
+    .alerta-item .texto { font-size: 0.9rem; }
+    .alerta-item .valor { font-weight: bold; font-size: 0.95rem; }
+
+    .acceso-rapido { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+    .acceso-rapido a {
+      background: white; padding: 15px; border-radius: 10px; text-decoration: none; color: #333;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 10px;
+      transition: all 0.2s; border: 2px solid transparent;
+    }
+    .acceso-rapido a:hover { border-color: #0d6efd; transform: translateY(-2px); }
+    .acceso-rapido a i { font-size: 1.5rem; color: #0d6efd; }
+    .acceso-rapido a span { font-weight: 600; font-size: 0.9rem; }
+
+    @media (max-width: 767px) {
+      .menu-nav .nav-link span { display: none; }
+      .menu-nav .nav-link { padding: 8px 10px; }
+      .welcome-banner h1 { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MENÚ DE NAVEGACIÓN -->
+  <nav class="menu-nav">
+    <div class="container-fluid px-3">
+      <div class="d-flex align-items-center justify-content-between flex-wrap">
+        <a href="index.html" class="logo me-3"><i class="bi bi-building"></i> ERP Data Technology</a>
+        <div class="d-flex flex-wrap gap-1">
+          <a href="index.html" class="nav-link active"><i class="bi bi-house"></i> <span>Inicio</span></a>
+          <a href="clientes.html" class="nav-link"><i class="bi bi-people"></i> <span>Clientes</span></a>
+          <a href="cuenta-corriente.html" class="nav-link"><i class="bi bi-wallet2"></i> <span>Cta. Cte.</span></a>
+          <a href="finanzas.html" class="nav-link"><i class="bi bi-cash-stack"></i> <span>Finanzas</span></a>
+          <a href="cheques.html" class="nav-link"><i class="bi bi-receipt"></i> <span>Cheques</span></a>
+          <a href="trabajos.html" class="nav-link"><i class="bi bi-tools"></i> <span>Trabajos</span></a>
+          <a href="agenda.html" class="nav-link"><i class="bi bi-calendar-event"></i> <span>Agenda</span></a>
+          <a href="reportes.html" class="nav-link"><i class="bi bi-file-pdf"></i> <span>Reportes</span></a>
+          <a href="empresa.html" class="nav-link"><i class="bi bi-building-gear"></i> <span>Empresa</span></a>
+          <a href="presupuestos.html" class="nav-link"><i class="bi bi-pc-display"></i> <span>PC Builder</span></a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid px-3 py-3">
+
+    <!-- BANNER DE BIENVENIDA -->
+    <div class="welcome-banner">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h1><i class="bi bi-speedometer2"></i> Dashboard General</h1>
+          <p id="fechaHoy">Cargando fecha...</p>
+        </div>
+        <div class="col-md-4 text-end">
+          <button class="btn btn-light" onclick="cargarTodo()">
+            <i class="bi bi-arrow-clockwise"></i> Actualizar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MÓDULOS RESUMEN -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4 col-lg-2">
+        <div class="modulo-card clientes" onclick="location.href='clientes.html'">
+          <div class="titulo"><i class="bi bi-people text-primary"></i> Clientes</div>
+          <div class="kpi text-primary" id="modClientes">-</div>
+          <div class="sub">Clientes activos</div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <div class="modulo-card cuenta-corriente" onclick="location.href='cuenta-corriente.html'">
+          <div class="titulo"><i class="bi bi-wallet2 text-success"></i> Cta. Cte.</div>
+          <div class="kpi text-success" id="modCtaCte">-</div>
+          <div class="sub">A cobrar</div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <div class="modulo-card finanzas" onclick="location.href='finanzas.html'">
+          <div class="titulo"><i class="bi bi-cash-stack" style="color:#6f42c1;"></i> Finanzas</div>
+          <div class="kpi" id="modFinanzas" style="color:#6f42c1;">-</div>
+          <div class="sub">Balance del mes</div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <div class="modulo-card cheques" onclick="location.href='cheques.html'">
+          <div class="titulo"><i class="bi bi-receipt" style="color:#fd7e14;"></i> Cheques</div>
+          <div class="kpi" id="modCheques" style="color:#fd7e14;">-</div>
+          <div class="sub">En cartera</div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <div class="modulo-card trabajos" onclick="location.href='trabajos.html'">
+          <div class="titulo"><i class="bi bi-tools" style="color:#0dcaf0;"></i> Trabajos</div>
+          <div class="kpi" id="modTrabajos" style="color:#0dcaf0;">-</div>
+          <div class="sub">Pendientes</div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <div class="modulo-card agenda" onclick="location.href='agenda.html'">
+          <div class="titulo"><i class="bi bi-calendar-event" style="color:#e83e8c;"></i> Agenda</div>
+          <div class="kpi" id="modAgenda" style="color:#e83e8c;">-</div>
+          <div class="sub">Próximos 24hs</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERTAS Y ACCESOS RÁPIDOS -->
+    <div class="row g-3">
+
+      <!-- ALERTAS IMPORTANTES -->
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header bg-white fw-bold">
+            <i class="bi bi-bell text-warning"></i> Alertas y Avisos Importantes
+          </div>
+          <div class="card-body" id="panelAlertas">
+            <div class="text-center text-muted py-4">Cargando alertas...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCESOS RÁPIDOS -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-white fw-bold">
+            <i class="bi bi-lightning-charge text-primary"></i> Accesos Rápidos
+          </div>
+          <div class="card-body">
+            <div class="acceso-rapido">
+              <a href="clientes.html"><i class="bi bi-person-plus"></i> <span>Nuevo Cliente</span></a>
+              <a href="cuenta-corriente.html"><i class="bi bi-cash-coin"></i> <span>Registrar Cobro</span></a>
+              <a href="finanzas.html"><i class="bi bi-plus-circle"></i> <span>Nuevo Movimiento</span></a>
+              <a href="cheques.html"><i class="bi bi-receipt"></i> <span>Nuevo Cheque</span></a>
+              <a href="trabajos.html"><i class="bi bi-tools"></i> <span>Nuevo Trabajo</span></a>
+              <a href="agenda.html"><i class="bi bi-calendar-plus"></i> <span>Nuevo Evento</span></a>
+              <a href="reportes.html"><i class="bi bi-file-pdf"></i> <span>Ver Reportes</span></a>
+              <a href="empresa.html"><i class="bi bi-building-gear"></i> <span>Config. Empresa</span></a>
+              <a href="presupuestos.html"><i class="bi bi-pc-display"></i> <span>PC Builder</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const hoy = new Date();
+    const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('fechaHoy').textContent = hoy.toLocaleDateString('es-AR', opciones).replace(/^\w/, c => c.toUpperCase());
+
+    async function cargarTodo() {
+      await Promise.all([cargarClientes(), cargarCtaCte(), cargarFinanzas(), cargarCheques(), cargarTrabajos(), cargarAgenda()]);
+      renderizarAlertas();
+    }
+
+    async function cargarClientes() {
+      try { const res = await fetch('http://localhost:3000/api/clientes'); const data = await res.json(); document.getElementById('modClientes').textContent = data.length; } catch (e) { console.error(e); }
+    }
+    async function cargarCtaCte() {
+      try { const res = await fetch('http://localhost:3000/api/cuenta-corriente/saldos'); const data = await res.json(); const aCobrar = data.filter(s => s.saldo > 0).reduce((sum, s) => sum + s.saldo, 0); document.getElementById('modCtaCte').textContent = '$' + formatoNumero(aCobrar); } catch (e) { console.error(e); }
+    }
+    async function cargarFinanzas() {
+      try { const res = await fetch('http://localhost:3000/api/finanzas/resumen'); const data = await res.json(); const signo = data.balance >= 0 ? '+' : '-'; document.getElementById('modFinanzas').textContent = `${signo}$${formatoNumero(Math.abs(data.balance))}`; } catch (e) { console.error(e); }
+    }
+    async function cargarCheques() {
+      try { const res = await fetch('http://localhost:3000/api/cheques/resumen'); const data = await res.json(); document.getElementById('modCheques').textContent = `${data.en_cartera.cantidad} / $${formatoNumero(data.en_cartera.total)}`; } catch (e) { console.error(e); }
+    }
+    async function cargarTrabajos() {
+      try { const res = await fetch('http://localhost:3000/api/trabajos/resumen'); const data = await res.json(); const pendientes = data.pendiente.cantidad + data.en_diagnostico.cantidad + data.en_reparacion.cantidad; document.getElementById('modTrabajos').textContent = pendientes; } catch (e) { console.error(e); }
+    }
+    async function cargarAgenda() {
+      try { const res = await fetch('http://localhost:3000/api/agenda/resumen'); const data = await res.json(); document.getElementById('modAgenda').textContent = data.proximos_24hs || 0; } catch (e) { console.error(e); }
+    }
+
+    async function renderizarAlertas() {
+      const alertas = [];
+      try {
+        const res = await fetch('http://localhost:3000/api/cheques/resumen'); const data = await res.json();
+        if (data.vencidos.cantidad > 0) alertas.push({ tipo: 'urgente', icono: 'bi-exclamation-triangle', texto: `${data.vencidos.cantidad} cheque(s) vencido(s)`, valor: `$${formatoNumero(data.vencidos.total)}`, link: 'cheques.html' });
+        if (data.proximos_a_vencer.cantidad > 0) alertas.push({ tipo: 'atencion', icono: 'bi-clock', texto: `${data.proximos_a_vencer.cantidad} cheque(s) por vencer (7 días)`, valor: `$${formatoNumero(data.proximos_a_vencer.total)}`, link: 'cheques.html' });
+      } catch (e) {}
+      try {
+        const res = await fetch('http://localhost:3000/api/trabajos/resumen'); const data = await res.json();
+        const pendientes = data.pendiente.cantidad + data.en_diagnostico.cantidad + data.en_reparacion.cantidad;
+        if (pendientes > 0) alertas.push({ tipo: 'info', icono: 'bi-tools', texto: `${pendientes} trabajo(s) en proceso`, valor: `$${formatoNumero(data.total_general)}`, link: 'trabajos.html' });
+      } catch (e) {}
+      try {
+        const res = await fetch('http://localhost:3000/api/agenda/resumen'); const data = await res.json();
+        if (data.proximos_24hs > 0) alertas.push({ tipo: 'atencion', icono: 'bi-calendar-event', texto: `${data.proximos_24hs} evento(s) en las próximas 24hs`, valor: 'Revisar agenda', link: 'agenda.html' });
+      } catch (e) {}
+      try {
+        const res = await fetch('http://localhost:3000/api/cuenta-corriente/saldos'); const data = await res.json();
+        const conSaldo = data.filter(s => s.saldo > 0).length;
+        if (conSaldo > 0) { const total = data.filter(s => s.saldo > 0).reduce((sum, s) => sum + s.saldo, 0); alertas.push({ tipo: 'info', icono: 'bi-wallet2', texto: `${conSaldo} cliente(s) con saldo pendiente`, valor: `$${formatoNumero(total)}`, link: 'cuenta-corriente.html' }); }
+      } catch (e) {}
+
+      const panel = document.getElementById('panelAlertas');
+      if (alertas.length === 0) { panel.innerHTML = '<div class="text-center text-success py-4"><i class="bi bi-check-circle" style="font-size:2rem;"></i><p class="mt-2">¡Todo en orden! No hay alertas pendientes.</p></div>'; return; }
+      let html = '';
+      alertas.forEach(a => { html += `<a href="${a.link}" style="text-decoration:none;color:inherit;"><div class="alerta-item alerta-card ${a.tipo}"><div class="d-flex align-items-center gap-2"><i class="bi ${a.icono} fs-4"></i><div class="texto">${a.texto}</div></div><div class="valor">${a.valor} <i class="bi bi-arrow-right"></i></div></div></a>`; });
+      panel.innerHTML = html;
+    }
+
+    function formatoNumero(num) { return num.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+    cargarTodo();
+  </script>
+
+</body>
+</html>

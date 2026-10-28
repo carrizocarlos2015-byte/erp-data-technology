@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERP - Cheques</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <style>
+    body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .menu-nav { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); padding: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 1000; }
+    .menu-nav .logo { color: white; font-weight: bold; font-size: 1.2rem; text-decoration: none; }
+    .menu-nav .nav-link { color: rgba(255,255,255,0.85); font-weight: 500; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; text-decoration: none; display: flex; align-items: center; gap: 6px; }
+    .menu-nav .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
+    .menu-nav .nav-link.active { background: white; color: #0d6efd; }
+    .menu-nav .nav-link i { font-size: 1.1rem; }
+    @media (max-width: 767px) { .menu-nav .nav-link span { display: none; } .menu-nav .nav-link { padding: 8px 10px; } }
+    .card { border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    .kpi-card { border-left: 4px solid; border-radius: 8px; background: white; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .kpi-card.cartera { border-left-color: #0d6efd; }
+    .kpi-card.depositado { border-left-color: #ffc107; }
+    .kpi-card.cobrado { border-left-color: #198754; }
+    .kpi-card.rechazado { border-left-color: #dc3545; }
+    .kpi-card.proximo { border-left-color: #fd7e14; }
+    .kpi-card.vencido { border-left-color: #dc3545; background: #fff3f3; }
+    .kpi-label { font-size: 0.75rem; color: #6c757d; text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
+    .kpi-value { font-size: 1.5rem; font-weight: bold; margin: 0; }
+    .kpi-sub { font-size: 0.8rem; color: #6c757d; margin-top: 5px; }
+    .btn-accion { padding: 4px 8px; font-size: 0.85rem; margin: 0 2px; }
+    .btn-depositar { background-color: #ffc107; color: #000; }
+    .btn-cobrar { background-color: #198754; color: white; }
+    .btn-rechazar { background-color: #dc3545; color: white; }
+    .btn-editar { background-color: #0d6efd; color: white; }
+    .btn-eliminar { background-color: #6c757d; color: white; }
+    .badge-cartera { background-color: #0d6efd; color: white; }
+    .badge-depositado { background-color: #ffc107; color: #000; }
+    .badge-cobrado { background-color: #198754; color: white; }
+    .badge-rechazado { background-color: #dc3545; color: white; }
+    .table th { background-color: #f8f9fa; font-weight: 600; font-size: 0.9rem; }
+    .alerta-vencido { background-color: #fff3f3; border-left: 4px solid #dc3545; }
+    .alerta-proximo { background-color: #fff8e1; border-left: 4px solid #fd7e14; }
+    .filtro-estado { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
+    .filtro-estado .btn-filtro { padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; border: 2px solid #dee2e6; background: white; color: #495057; cursor: pointer; transition: all 0.2s; }
+    .filtro-estado .btn-filtro:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .filtro-estado .btn-filtro.active { color: white; border-color: transparent; }
+    .filtro-estado .btn-filtro[data-filtro="todos"].active { background: #6c757d; }
+    .filtro-estado .btn-filtro[data-filtro="En Cartera"].active { background: #0d6efd; }
+    .filtro-estado .btn-filtro[data-filtro="Depositado"].active { background: #ffc107; color: #000; }
+    .filtro-estado .btn-filtro[data-filtro="Cobrado"].active { background: #198754; }
+    .filtro-estado .btn-filtro[data-filtro="Rechazado"].active { background: #dc3545; }
+    .contador-filtro { background: rgba(255,255,255,0.3); padding: 1px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 4px; }
+    @media (max-width: 767px) { .table-responsive { font-size: 0.85rem; } .btn-accion { padding: 3px 6px; font-size: 0.75rem; } .kpi-value { font-size: 1.2rem; } }
+  </style>
+</head>
+<body>
+
+  <nav class="menu-nav">
+    <div class="container-fluid px-3">
+      <div class="d-flex align-items-center justify-content-between flex-wrap">
+        <a href="index.html" class="logo me-3"><i class="bi bi-building"></i> ERP Data Technology</a>
+        <div class="d-flex flex-wrap gap-1">
+          <a href="index.html" class="nav-link"><i class="bi bi-house"></i> <span>Inicio</span></a>
+          <a href="clientes.html" class="nav-link"><i class="bi bi-people"></i> <span>Clientes</span></a>
+          <a href="cuenta-corriente.html" class="nav-link"><i class="bi bi-wallet2"></i> <span>Cta. Cte.</span></a>
+          <a href="finanzas.html" class="nav-link"><i class="bi bi-cash-stack"></i> <span>Finanzas</span></a>
+          <a href="cheques.html" class="nav-link active"><i class="bi bi-receipt"></i> <span>Cheques</span></a>
+          <a href="trabajos.html" class="nav-link"><i class="bi bi-tools"></i> <span>Trabajos</span></a>
+          <a href="agenda.html" class="nav-link"><i class="bi bi-calendar-event"></i> <span>Agenda</span></a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid px-3 py-3">
+    <div class="row g-2 mb-3">
+      <div class="col-md-2 col-6"><div class="kpi-card cartera"><div class="kpi-label"> En Cartera</div><div class="kpi-value text-primary" id="kpiCartera">$0,00</div><div class="kpi-sub" id="kpiCarteraCant">0 cheques</div></div></div>
+      <div class="col-md-2 col-6"><div class="kpi-card depositado"><div class="kpi-label">🏦 Depositado</div><div class="kpi-value" id="kpiDepositado" style="color:#ffc107;">$0,00</div><div class="kpi-sub" id="kpiDepositadoCant">0 cheques</div></div></div>
+      <div class="col-md-2 col-6"><div class="kpi-card cobrado"><div class="kpi-label">✅ Cobrado</div><div class="kpi-value text-success" id="kpiCobrado">$0,00</div><div class="kpi-sub" id="kpiCobradoCant">0 cheques</div></div></div>
+      <div class="col-md-2 col-6"><div class="kpi-card rechazado"><div class="kpi-label">❌ Rechazado</div><div class="kpi-value text-danger" id="kpiRechazado">$0,00</div><div class="kpi-sub" id="kpiRechazadoCant">0 cheques</div></div></div>
+      <div class="col-md-2 col-6"><div class="kpi-card proximo"><div class="kpi-label">⚠️ Próximos a Vencer</div><div class="kpi-value" id="kpiProximo" style="color:#fd7e14;">$0,00</div><div class="kpi-sub" id="kpiProximoCant">0 cheques</div></div></div>
+      <div class="col-md-2 col-6"><div class="kpi-card vencido"><div class="kpi-label"> Vencidos</div><div class="kpi-value text-danger" id="kpiVencido">$0,00</div><div class="kpi-sub" id="kpiVencidoCant">0 cheques</div></div></div>
+    </div>
+
+    <div class="card mb-3"><div class="card-body"><div class="row"><div class="col-md-6"><h5 class="fw-bold">Total General</h5><div class="kpi-value text-primary" id="kpiTotal">$0,00</div><div class="kpi-sub" id="kpiTotalCant">0 cheques en total</div></div><div class="col-md-6 text-end"><button class="btn btn-primary btn-lg" onclick="abrirModalNuevo()"><i class="bi bi-plus-circle"></i> Nuevo Cheque</button></div></div></div></div>
+
+    <div class="card"><div class="card-body"><div class="row g-3">
+      <div class="col-md-4"><label class="form-label fw-bold">🔍 Buscar</label><input type="text" class="form-control" id="filtroBusqueda" placeholder="Número, banco, librador..." oninput="aplicarFiltros()"></div>
+      <div class="col-md-8"><label class="form-label fw-bold">Filtrar por Estado</label>
+        <div class="filtro-estado">
+          <button class="btn-filtro active" data-filtro="todos" onclick="setFiltroEstado('todos')">Todos <span class="contador-filtro" id="countTodos">0</span></button>
+          <button class="btn-filtro" data-filtro="En Cartera" onclick="setFiltroEstado('En Cartera')">En Cartera <span class="contador-filtro" id="countCartera">0</span></button>
+          <button class="btn-filtro" data-filtro="Depositado" onclick="setFiltroEstado('Depositado')">Depositado <span class="contador-filtro" id="countDepositado">0</span></button>
+          <button class="btn-filtro" data-filtro="Cobrado" onclick="setFiltroEstado('Cobrado')">Cobrado <span class="contador-filtro" id="countCobrado">0</span></button>
+          <button class="btn-filtro" data-filtro="Rechazado" onclick="setFiltroEstado('Rechazado')">Rechazado <span class="contador-filtro" id="countRechazado">0</span></button>
+        </div>
+      </div>
+    </div></div></div>
+
+    <div class="card"><div class="card-body p-0"><div class="table-responsive">
+      <table class="table table-hover align-middle mb-0"><thead><tr><th>N° Cheque</th><th>Banco</th><th>Librador</th><th class="text-end">Monto</th><th>Emisión</th><th>Vencimiento</th><th>Estado</th><th class="text-center">Acciones</th></tr></thead>
+      <tbody id="tablaCheques"><tr><td colspan="8" class="text-center py-4 text-muted">Cargando cheques...</td></tr></tbody></table>
+    </div></div></div>
+  </div>
+
+  <div class="modal fade" id="modalCheque" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">
+      <div class="modal-header bg-primary text-white"><h5 class="modal-title" id="modalTitulo"><i class="bi bi-plus-circle"></i> Nuevo Cheque</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body"><form id="formCheque"><input type="hidden" id="chequeId"><div class="row g-3">
+        <div class="col-md-6"><label class="form-label fw-bold">N° de Cheque *</label><input type="text" class="form-control" id="chequeNumero" required></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Banco *</label><input type="text" class="form-control" id="chequeBanco" required placeholder="Ej: Banco Nación, Galicia"></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Librador *</label><input type="text" class="form-control" id="chequeLibrador" required placeholder="Quién emite el cheque"></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Monto ($) *</label><input type="number" step="0.01" min="0.01" class="form-control" id="chequeMonto" required></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Fecha de Emisión *</label><input type="date" class="form-control" id="chequeEmision" required></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Fecha de Vencimiento *</label><input type="date" class="form-control" id="chequeVencimiento" required></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Estado</label><select class="form-select" id="chequeEstado"><option value="En Cartera">En Cartera</option><option value="Depositado">Depositado</option><option value="Cobrado">Cobrado</option><option value="Rechazado">Rechazado</option></select></div>
+      </div></form></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" onclick="guardarCheque()"><i class="bi bi-save"></i> Guardar</button></div>
+    </div></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const API_URL = 'http://localhost:3000/api/cheques';
+    let chequesGlobal = [], filtroEstadoActual = 'todos';
+    document.addEventListener('DOMContentLoaded', function() { cargarDatos(); });
+
+    async function cargarDatos() { await Promise.all([cargarCheques(), cargarResumen()]); }
+    async function cargarCheques() { try { const r = await fetch(API_URL); chequesGlobal = await r.json(); aplicarFiltros(); } catch (e) { console.error(e); alert('Error al conectar'); } }
+    async function cargarResumen() { try {
+      const r = await fetch(`${API_URL}/resumen`); const d = await r.json();
+      document.getElementById('kpiCartera').textContent = `$${fn(d.en_cartera.total)}`; document.getElementById('kpiCarteraCant').textContent = `${d.en_cartera.cantidad} cheques`;
+      document.getElementById('kpiDepositado').textContent = `$${fn(d.depositado.total)}`; document.getElementById('kpiDepositadoCant').textContent = `${d.depositado.cantidad} cheques`;
+      document.getElementById('kpiCobrado').textContent = `$${fn(d.cobrado.total)}`; document.getElementById('kpiCobradoCant').textContent = `${d.cobrado.cantidad} cheques`;
+      document.getElementById('kpiRechazado').textContent = `$${fn(d.rechazado.total)}`; document.getElementById('kpiRechazadoCant').textContent = `${d.rechazado.cantidad} cheques`;
+      document.getElementById('kpiProximo').textContent = `$${fn(d.proximos_a_vencer.total)}`; document.getElementById('kpiProximoCant').textContent = `${d.proximos_a_vencer.cantidad} cheques`;
+      document.getElementById('kpiVencido').textContent = `$${fn(d.vencidos.total)}`; document.getElementById('kpiVencidoCant').textContent = `${d.vencidos.cantidad} cheques`;
+      document.getElementById('kpiTotal').textContent = `$${fn(d.total_general)}`; document.getElementById('kpiTotalCant').textContent = `${d.cantidad_general} cheques en total`;
+    } catch (e) { console.error(e); } }
+
+    function setFiltroEstado(f) { filtroEstadoActual = f; document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('active')); document.querySelector(`[data-filtro="${f}"]`).classList.add('active'); aplicarFiltros(); }
+    function aplicarFiltros() {
+      const busq = document.getElementById('filtroBusqueda').value.toLowerCase().trim();
+      let f = chequesGlobal;
+      if (filtroEstadoActual !== 'todos') f = f.filter(c => c.estado === filtroEstadoActual);
+      if (busq) f = f.filter(c => c.numero_cheque.toLowerCase().includes(busq) || c.banco.toLowerCase().includes(busq) || c.librador.toLowerCase().includes(busq));
+      actualizarContadores(); renderizarCheques(f);
+    }
+    function actualizarContadores() {
+      const busq = document.getElementById('filtroBusqueda').value.toLowerCase().trim();
+      let b = chequesGlobal; if (busq) b = b.filter(c => c.numero_cheque.toLowerCase().includes(busq) || c.banco.toLowerCase().includes(busq) || c.librador.toLowerCase().includes(busq));
+      document.getElementById('countTodos').textContent = b.length;
+      document.getElementById('countCartera').textContent = b.filter(c => c.estado === 'En Cartera').length;
+      document.getElementById('countDepositado').textContent = b.filter(c => c.estado === 'Depositado').length;
+      document.getElementById('countCobrado').textContent = b.filter(c => c.estado === 'Cobrado').length;
+      document.getElementById('countRechazado').textContent = b.filter(c => c.estado === 'Rechazado').length;
+    }
+
+    function renderizarCheques(cheques) {
+      const t = document.getElementById('tablaCheques');
+      if (cheques.length === 0) { t.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">No hay cheques.</td></tr>'; return; }
+      const hoy = new Date(), en7 = new Date(Date.now() + 7*24*60*60*1000);
+      t.innerHTML = cheques.map(c => {
+        const v = new Date(c.fecha_vencimiento);
+        const esVencido = v < hoy && c.estado !== 'Cobrado' && c.estado !== 'Rechazado';
+        const esProx = v >= hoy && v <= en7 && c.estado !== 'Cobrado' && c.estado !== 'Rechazado';
+        const cf = esVencido ? 'alerta-vencido' : (esProx ? 'alerta-proximo' : '');
+        const bc = c.estado === 'En Cartera' ? 'badge-cartera' : (c.estado === 'Depositado' ? 'badge-depositado' : (c.estado === 'Cobrado' ? 'badge-cobrado' : 'badge-rechazado'));
+        let acc = '';
+        if (c.estado === 'En Cartera') acc = `<button class="btn btn-accion btn-depositar" onclick="cambiarEstado('${c.id}','Depositado')" title="Depositar"><i class="bi bi-bank"></i></button>`;
+        else if (c.estado === 'Depositado') acc = `<button class="btn btn-accion btn-cobrar" onclick="cambiarEstado('${c.id}','Cobrado')" title="Cobrar"><i class="bi bi-check-circle"></i></button><button class="btn btn-accion btn-rechazar" onclick="cambiarEstado('${c.id}','Rechazado')" title="Rechazar"><i class="bi bi-x-circle"></i></button>`;
+        acc += `<button class="btn btn-accion btn-editar" onclick="editarCheque('${c.id}')"><i class="bi bi-pencil"></i></button><button class="btn btn-accion btn-eliminar" onclick="eliminarCheque('${c.id}')"><i class="bi bi-trash"></i></button>`;
+        return `<tr class="${cf}"><td><strong>${c.numero_cheque}</strong></td><td>${c.banco}</td><td>${c.librador}</td><td class="text-end fw-bold">$${fn(c.monto)}</td><td>${new Date(c.fecha_emision).toLocaleDateString('es-AR')}</td><td>${new Date(c.fecha_vencimiento).toLocaleDateString('es-AR')}</td><td><span class="badge ${bc}">${c.estado}</span></td><td class="text-center">${acc}</td></tr>`;
+      }).join('');
+    }
+
+    function abrirModalNuevo() { document.getElementById('formCheque').reset(); document.getElementById('chequeId').value = ''; document.getElementById('modalTitulo').innerHTML = '<i class="bi bi-plus-circle"></i> Nuevo Cheque'; document.getElementById('chequeEmision').value = new Date().toISOString().split('T')[0]; new bootstrap.Modal(document.getElementById('modalCheque')).show(); }
+    function editarCheque(id) { const c = chequesGlobal.find(x => x.id === id); if (!c) return; document.getElementById('chequeId').value = c.id; document.getElementById('chequeNumero').value = c.numero_cheque; document.getElementById('chequeBanco').value = c.banco; document.getElementById('chequeLibrador').value = c.librador; document.getElementById('chequeMonto').value = c.monto; document.getElementById('chequeEmision').value = c.fecha_emision; document.getElementById('chequeVencimiento').value = c.fecha_vencimiento; document.getElementById('chequeEstado').value = c.estado; document.getElementById('modalTitulo').innerHTML = '<i class="bi bi-pencil"></i> Editar Cheque'; new bootstrap.Modal(document.getElementById('modalCheque')).show(); }
+
+    async function guardarCheque() {
+      const id = document.getElementById('chequeId').value;
+      const datos = { numero_cheque: document.getElementById('chequeNumero').value.trim(), banco: document.getElementById('chequeBanco').value.trim(), librador: document.getElementById('chequeLibrador').value.trim(), monto: parseFloat(document.getElementById('chequeMonto').value), fecha_emision: document.getElementById('chequeEmision').value, fecha_vencimiento: document.getElementById('chequeVencimiento').value, estado: document.getElementById('chequeEstado').value };
+      if (!datos.numero_cheque || !datos.banco || !datos.librador || !datos.monto || !datos.fecha_emision || !datos.fecha_vencimiento) { alert('Completá todos los campos obligatorios'); return; }
+      try {
+        const r = id ? await fetch(`${API_URL}/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) }) : await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
+        const result = await r.json();
+        if (result.success) { alert(result.message); bootstrap.Modal.getInstance(document.getElementById('modalCheque')).hide(); await cargarDatos(); } else { alert('Error: ' + result.message); }
+      } catch (e) { alert('Error al conectar'); }
+    }
+
+    async function cambiarEstado(id, nuevo) {
+      const c = chequesGlobal.find(x => x.id === id); if (!c) return;
+      if (!confirm(`¿Cambiar estado del cheque ${c.numero_cheque} a "${nuevo}"?`)) return;
+      const datos = { numero_cheque: c.numero_cheque, banco: c.banco, librador: c.librador, monto: c.monto, fecha_emision: c.fecha_emision, fecha_vencimiento: c.fecha_vencimiento, estado: nuevo };
+      try { const r = await fetch(`${API_URL}/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) }); const result = await r.json(); if (result.success) { alert(`Cheque ${c.numero_cheque} → "${nuevo}"`); await cargarDatos(); } else { alert('Error: ' + result.message); } } catch (e) { alert('Error al conectar'); }
+    }
+
+    async function eliminarCheque(id) { const c = chequesGlobal.find(x => x.id === id); if (!c) return; if (!confirm(`¿Eliminar cheque ${c.numero_cheque} por $${fn(c.monto)}?`)) return; try { const r = await fetch(`${API_URL}/${id}`, { method: 'DELETE' }); const result = await r.json(); if (result.success) { alert(result.message); await cargarDatos(); } else { alert('Error: ' + result.message); } } catch (e) { alert('Error al conectar'); } }
+    function fn(num) { return num.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  </script>
+</body>
+</html>

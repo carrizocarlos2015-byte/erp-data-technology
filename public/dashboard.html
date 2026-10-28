@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Financiero - ERP Data Technology</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --dark: #1e293b;
+      --light: #f8fafc;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .dashboard-container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      margin: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    .kpi-card {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+      border-left: 5px solid var(--primary);
+    }
+    
+    .kpi-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .kpi-card.ingresos { border-left-color: var(--success); }
+    .kpi-card.egresos { border-left-color: var(--danger); }
+    .kpi-card.balance { border-left-color: var(--primary); }
+    .kpi-card.operaciones { border-left-color: var(--warning); }
+    
+    .kpi-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--dark);
+    }
+    
+    .kpi-label {
+      color: #64748b;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .chart-container {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+    
+    .filter-panel {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+    
+    .alert-item {
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      border-left: 4px solid;
+    }
+    
+    .alert-warning { background: #fef3c7; border-color: var(--warning); }
+    .alert-danger { background: #fee2e2; border-color: var(--danger); }
+    
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    
+    .spinner-custom {
+      width: 60px;
+      height: 60px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .categoria-chip {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 15px;
+      margin: 3px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .categoria-chip:hover {
+      transform: scale(1.05);
+    }
+    
+    .categoria-chip.selected {
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+    }
+    
+    .caja-chica-widget {
+      border-left: 5px solid #8b5cf6 !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="text-center">
+      <div class="spinner-custom"></div>
+      <p class="mt-3">Cargando dashboard...</p>
+    </div>
+  </div>
+
+  <div class="dashboard-container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="mb-0"><i class="bi bi-graph-up"></i> Dashboard Financiero</h1>
+        <p class="text-muted mb-0">Análisis completo de ingresos y egresos</p>
+      </div>
+      <a href="finanzas.html" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Volver a Finanzas
+      </a>
+    </div>
+
+    <!-- Panel de Filtros -->
+    <div class="filter-panel">
+      <h5 class="mb-3"><i class="bi bi-funnel"></i> Filtros</h5>
+      <div class="row g-3">
+        <div class="col-md-2">
+          <label class="form-label">Vista</label>
+          <select class="form-select" id="filtroVista">
+            <option value="mensual">Mensual</option>
+            <option value="anual">Anual</option>
+            <option value="personalizado">Personalizado</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Año</label>
+          <select class="form-select" id="filtroAnio"></select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Mes</label>
+          <select class="form-select" id="filtroMes">
+            <option value="1">Enero</option>
+            <option value="2">Febrero</option>
+            <option value="3">Marzo</option>
+            <option value="4">Abril</option>
+            <option value="5">Mayo</option>
+            <option value="6">Junio</option>
+            <option value="7">Julio</option>
+            <option value="8">Agosto</option>
+            <option value="9">Septiembre</option>
+            <option value="10" selected>Octubre</option>
+            <option value="11">Noviembre</option>
+            <option value="12">Diciembre</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Ámbito</label>
+          <select class="form-select" id="filtroAmbito">
+            <option value="GENERAL">General</option>
+            <option value="CASA">Casa</option>
+            <option value="EMPRESA">Empresa</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Desde</label>
+          <input type="date" class="form-control" id="filtroFechaInicio">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Hasta</label>
+          <input type="date" class="form-control" id="filtroFechaFin">
+        </div>
+      </div>
+      <div class="mt-3">
+        <button class="btn btn-primary" onclick="actualizarDashboard()">
+          <i class="bi bi-arrow-clockwise"></i> Actualizar
+        </button>
+        <button class="btn btn-outline-secondary" onclick="exportarCSV()">
+          <i class="bi bi-download"></i> Exportar CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- Widget de Caja Chica -->
+    <div class="chart-container caja-chica-widget mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="bi bi-wallet2"></i> Caja Chica</h5>
+        <button class="btn btn-sm btn-outline-primary" onclick="mostrarModalConfigCajaChica()">
+          <i class="bi bi-gear"></i> Configurar
+        </button>
+      </div>
+      
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="text-muted small">MONTO CONVENIDO</div>
+          <div class="h4 mb-0" id="cajaChicaConvenido">$0</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small">TOTAL APORTADO</div>
+          <div class="h4 mb-0 text-success" id="cajaChicaAportado">$0</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small">TOTAL GASTADO</div>
+          <div class="h4 mb-0 text-danger" id="cajaChicaGastado">$0</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small">SALDO DISPONIBLE</div>
+          <div class="h4 mb-0 text-primary" id="cajaChicaSaldo">$0</div>
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <div class="d-flex justify-content-between mb-1">
+          <small class="text-muted">Progreso de gasto</small>
+          <small class="fw-bold" id="cajaChicaPorcentaje">0%</small>
+        </div>
+        <div class="progress" style="height: 25px;">
+          <div class="progress-bar bg-success" id="cajaChicaBarraAportado" style="width: 0%"></div>
+          <div class="progress-bar bg-danger" id="cajaChicaBarraGastado" style="width: 0%"></div>
+        </div>
+        <div class="d-flex justify-content-between mt-1">
+          <small class="text-success">Aportado: <span id="cajaChicaPctAportado">0%</span></small>
+          <small class="text-danger">Gastado: <span id="cajaChicaPctGastado">0%</span></small>
+        </div>
+      </div>
+
+      <div class="mt-3 d-flex gap-2">
+        <button class="btn btn-success btn-sm" onclick="registrarAporteCajaChica()">
+          <i class="bi bi-plus-circle"></i> Registrar Aporte
+        </button>
+        <button class="btn btn-outline-primary btn-sm" onclick="verHistorialCajaChica()">
+          <i class="bi bi-clock-history"></i> Ver Historial
+        </button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-3">
+        <div class="kpi-card ingresos">
+          <div class="kpi-label">Ingresos</div>
+          <div class="kpi-value" id="kpiIngresos">$0</div>
+          <div class="text-success" id="kpiIngresosVar"></div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="kpi-card egresos">
+          <div class="kpi-label">Egresos</div>
+          <div class="kpi-value" id="kpiEgresos">$0</div>
+          <div class="text-danger" id="kpiEgresosVar"></div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="kpi-card balance">
+          <div class="kpi-label">Balance</div>
+          <div class="kpi-value" id="kpiBalance">$0</div>
+          <div class="text-muted" id="kpiBalanceLabel"></div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="kpi-card operaciones">
+          <div class="kpi-label">Operaciones</div>
+          <div class="kpi-value" id="kpiOperaciones">0</div>
+          <div class="text-muted" id="kpiTicketPromedio"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alertas -->
+    <div id="alertasContainer" class="mb-4"></div>
+
+    <!-- Selector de rango para evolución -->
+    <div class="chart-container">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="bi bi-graph-up"></i> Evolución (comparativa 2 años)</h5>
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="cambiarRangoEvolucion(6)">6 meses</button>
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="cambiarRangoEvolucion(12)">12 meses</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="cambiarRangoEvolucion(24)">24 meses</button>
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="cambiarRangoEvolucion(36)">36 meses</button>
+        </div>
+      </div>
+      <canvas id="chartEvolucion" height="100"></canvas>
+    </div>
+
+    <!-- Gráficos de categorías -->
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="chart-container">
+          <h5><i class="bi bi-pie-chart"></i> Egresos por Categoría</h5>
+          <canvas id="chartCategoriasEgresos"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="chart-container">
+          <h5><i class="bi bi-pie-chart"></i> Ingresos por Categoría</h5>
+          <canvas id="chartCategoriasIngresos"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-3">
+      <div class="col-md-6">
+        <div class="chart-container">
+          <h5><i class="bi bi-credit-card"></i> Métodos de Pago</h5>
+          <canvas id="chartMetodosPago"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="chart-container">
+          <h5><i class="bi bi-bar-chart"></i> Comparativa por Método</h5>
+          <canvas id="chartComparativa"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selector de categorías para análisis detallado -->
+    <div class="chart-container mt-4">
+      <h5><i class="bi bi-funnel"></i> Análisis Detallado por Categorías</h5>
+      <p class="text-muted">Seleccioná múltiples categorías para comparar su evolución</p>
+      <div id="categoriasSelector" class="mb-3"></div>
+      <button class="btn btn-primary" onclick="analizarCategoriasSeleccionadas()">
+        <i class="bi bi-search"></i> Analizar seleccionadas
+      </button>
+      <div id="analisisContainer" class="mt-4"></div>
+    </div>
+
+    <!-- Top Movimientos -->
+    <div class="chart-container mt-4">
+      <h5><i class="bi bi-star"></i> Top 20 Movimientos del Período</h5>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Tipo</th>
+              <th>Categoría</th>
+              <th>Descripción</th>
+              <th>Monto</th>
+              <th>Método</th>
+            </tr>
+          </thead>
+          <tbody id="topMovimientosBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Configurar Caja Chica -->
+  <div class="modal fade" id="modalConfigCajaChica" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Configurar Caja Chica</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Monto Convenido Mensual ($)</label>
+            <input type="number" class="form-control" id="inputMontoConvenido" step="0.01">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="guardarConfigCajaChica()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Registrar Aporte -->
+  <div class="modal fade" id="modalAporteCajaChica" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Registrar Aporte de Caja Chica</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formAporteCajaChica">
+            <div class="mb-3">
+              <label class="form-label">Fecha *</label>
+              <input type="date" class="form-control" id="aporteFecha" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Monto ($) *</label>
+              <input type="number" class="form-control" id="aporteMonto" step="0.01" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Método de Pago *</label>
+              <select class="form-select" id="aporteMetodo" required></select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Descripción *</label>
+              <textarea class="form-control" id="aporteDescripcion" rows="2" required></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-success" onclick="guardarAporteCajaChica()">Registrar Aporte</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Historial Caja Chica -->
+  <div class="modal fade" id="modalHistorialCajaChica" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Historial de Caja Chica</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-4">
+            <h6 class="text-success"><i class="bi bi-arrow-down-circle"></i> Aportes</h6>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Monto</th>
+                    <th>Descripción</th>
+                    <th>Método</th>
+                  </tr>
+                </thead>
+                <tbody id="tablaAportesCajaChica"></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <h6 class="text-danger"><i class="bi bi-arrow-up-circle"></i> Gastos</h6>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Categoría</th>
+                    <th>Descripción</th>
+                    <th>Monto</th>
+                    <th>Método</th>
+                  </tr>
+                </thead>
+                <tbody id="tablaGastosCajaChica"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const API_BASE = '/api/finanzas/dashboard';
+    let charts = {};
+    let categoriasDisponibles = [];
+    let rangoEvolucion = 24;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      inicializarFiltros();
+      await actualizarDashboard();
+    });
+
+    function inicializarFiltros() {
+      const anioSelect = document.getElementById('filtroAnio');
+      const anioActual = new Date().getFullYear();
+      for (let i = anioActual - 2; i <= anioActual + 1; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        if (i === anioActual) option.selected = true;
+        anioSelect.appendChild(option);
+      }
+
+      document.getElementById('filtroVista').addEventListener('change', (e) => {
+        const vista = e.target.value;
+        document.getElementById('filtroMes').disabled = vista !== 'mensual';
+        document.getElementById('filtroFechaInicio').disabled = vista !== 'personalizado';
+        document.getElementById('filtroFechaFin').disabled = vista !== 'personalizado';
+      });
+    }
+
+    async function actualizarDashboard() {
+      showLoading(true);
+      const params = obtenerParametros();
+      
+      try {
+        await cargarKPIs(params);
+        await cargarEvolucion(params);
+        await cargarCategorias(params);
+        await cargarMetodosPago(params);
+        await cargarAlertas(params);
+        await cargarTopMovimientos(params);
+        await cargarSelectorCategorias();
+        await cargarCajaChica();
+      } catch (error) {
+        console.error('Error al cargar dashboard:', error);
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    function obtenerParametros() {
+      const vista = document.getElementById('filtroVista').value;
+      const params = { ambito: document.getElementById('filtroAmbito').value };
+
+      if (vista === 'mensual') {
+        params.anio = document.getElementById('filtroAnio').value;
+        params.mes = document.getElementById('filtroMes').value;
+      } else if (vista === 'anual') {
+        params.anio = document.getElementById('filtroAnio').value;
+      } else if (vista === 'personalizado') {
+        params.fecha_inicio = document.getElementById('filtroFechaInicio').value;
+        params.fecha_fin = document.getElementById('filtroFechaFin').value;
+      }
+
+      return params;
+    }
+
+    function cambiarRangoEvolucion(meses) {
+      rangoEvolucion = meses;
+      document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-outline-primary');
+      });
+      event.target.classList.remove('btn-outline-primary');
+      event.target.classList.add('btn-primary');
+      cargarEvolucion(obtenerParametros());
+    }
+
+    async function cargarKPIs(params) {
+      try {
+        const res = await fetch(`${API_BASE}/kpis?${new URLSearchParams(params)}`);
+        const data = await res.json();
+        
+        if (data.success) {
+          const { kpis, comparativa } = data.data;
+          document.getElementById('kpiIngresos').textContent = formatMoney(kpis.ingresos);
+          document.getElementById('kpiEgresos').textContent = formatMoney(kpis.egresos);
+          document.getElementById('kpiBalance').textContent = formatMoney(kpis.balance);
+          document.getElementById('kpiOperaciones').textContent = kpis.operaciones;
+          document.getElementById('kpiTicketPromedio').textContent = `Ticket: ${formatMoney(kpis.ticketPromedio)}`;
+          
+          const balanceEl = document.getElementById('kpiBalance');
+          balanceEl.className = 'kpi-value ' + (kpis.balance >= 0 ? 'text-success' : 'text-danger');
+          
+          if (comparativa.hayComparativa) {
+            const varIng = comparativa.variacionIngresosPct.toFixed(1);
+            const varEgr = comparativa.variacionEgresosPct.toFixed(1);
+            document.getElementById('kpiIngresosVar').innerHTML = 
+              `<i class="bi bi-arrow-${varIng >= 0 ? 'up' : 'down'}"></i> ${Math.abs(varIng)}% vs mes anterior`;
+            document.getElementById('kpiEgresosVar').innerHTML = 
+              `<i class="bi bi-arrow-${varEgr >= 0 ? 'up' : 'down'}"></i> ${Math.abs(varEgr)}% vs mes anterior`;
+          }
+        }
+      } catch (error) {
+        console.error('Error al cargar KPIs:', error);
+      }
+    }
+
+    async function cargarEvolucion(params) {
+      try {
+        const paramsEvolucion = { ambito: params.ambito, meses: rangoEvolucion };
+        const res = await fetch(`${API_BASE}/evolucion?${new URLSearchParams(paramsEvolucion)}`);
+        const data = await res.json();
+        
+        if (!data.success) return;
+        
+        if (charts.evolucion) charts.evolucion.destroy();
+        
+        const ctx = document.getElementById('chartEvolucion').getContext('2d');
+        charts.evolucion = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: data.data.map(d => d.mes_label),
+            datasets: [
+              {
+                label: 'Ingresos',
+                data: data.data.map(d => d.ingresos),
+                backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                borderColor: '#10b981',
+                borderWidth: 1,
+                order: 2
+              },
+              {
+                label: 'Egresos',
+                data: data.data.map(d => d.egresos),
+                backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                borderColor: '#ef4444',
+                borderWidth: 1,
+                order: 2
+              },
+              {
+                label: 'Balance',
+                data: data.data.map(d => d.balance),
+                type: 'line',
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                borderWidth: 3,
+                pointRadius: 4,
+                pointBackgroundColor: '#6366f1',
+                tension: 0.3,
+                fill: false,
+                order: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            interaction: {
+              mode: 'index',
+              intersect: false
+            },
+            plugins: {
+              legend: { position: 'top' },
+              tooltip: {
+                callbacks: {
+                  label: context => `${context.dataset.label}: ${formatMoney(context.raw)}`
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { callback: value => formatMoney(value) }
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Error al cargar evolución:', error);
+      }
+    }
+
+    async function cargarCategorias(params) {
+      try {
+        const resEgr = await fetch(`${API_BASE}/categorias?${new URLSearchParams({ ...params, tipo: 'Egreso' })}`);
+        const dataEgr = await resEgr.json();
+        
+        if (dataEgr.success) {
+          if (charts.categoriasEgresos) charts.categoriasEgresos.destroy();
+          const ctxEgr = document.getElementById('chartCategoriasEgresos').getContext('2d');
+          charts.categoriasEgresos = new Chart(ctxEgr, {
+            type: 'doughnut',
+            data: {
+              labels: dataEgr.data.categorias.map(c => c.nombre),
+              datasets: [{
+                data: dataEgr.data.categorias.map(c => c.total),
+                backgroundColor: dataEgr.data.categorias.map(c => c.color || getRandomColor()),
+                borderColor: '#fff',
+                borderWidth: 2
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                  callbacks: {
+                    label: context => {
+                      const total = dataEgr.data.total;
+                      const pct = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
+                      return `${context.label}: ${formatMoney(context.raw)} (${pct}%)`;
+                    }
+                  }
+                }
+              }
+            }
+          });
+        }
+
+        const resIng = await fetch(`${API_BASE}/categorias?${new URLSearchParams({ ...params, tipo: 'Ingreso' })}`);
+        const dataIng = await resIng.json();
+        
+        if (dataIng.success) {
+          if (charts.categoriasIngresos) charts.categoriasIngresos.destroy();
+          const ctxIng = document.getElementById('chartCategoriasIngresos').getContext('2d');
+          charts.categoriasIngresos = new Chart(ctxIng, {
+            type: 'doughnut',
+            data: {
+              labels: dataIng.data.categorias.map(c => c.nombre),
+              datasets: [{
+                data: dataIng.data.categorias.map(c => c.total),
+                backgroundColor: dataIng.data.categorias.map(c => c.color || getRandomColor()),
+                borderColor: '#fff',
+                borderWidth: 2
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                  callbacks: {
+                    label: context => {
+                      const total = dataIng.data.total;
+                      const pct = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
+                      return `${context.label}: ${formatMoney(context.raw)} (${pct}%)`;
+                    }
+                  }
+                }
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error al cargar categorías:', error);
+      }
+    }
+
+    async function cargarMetodosPago(params) {
+      try {
+        const res = await fetch(`${API_BASE}/metodos-pago?${new URLSearchParams(params)}`);
+        const data = await res.json();
+        
+        if (data.success) {
+          if (charts.metodosPago) charts.metodosPago.destroy();
+          const ctx = document.getElementById('chartMetodosPago').getContext('2d');
+          charts.metodosPago = new Chart(ctx, {
+            type: 'pie',
+            data: {
+              labels: data.data.metodos.map(m => m.nombre),
+              datasets: [{
+                data: data.data.metodos.map(m => m.total),
+                backgroundColor: data.data.metodos.map(m => m.color || getRandomColor()),
+                borderColor: '#fff',
+                borderWidth: 2
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { position: 'bottom' }
+              }
+            }
+          });
+
+          if (charts.comparativa) charts.comparativa.destroy();
+          const ctxComp = document.getElementById('chartComparativa').getContext('2d');
+          charts.comparativa = new Chart(ctxComp, {
+            type: 'bar',
+            data: {
+              labels: data.data.metodos.map(m => m.nombre),
+              datasets: [{
+                label: 'Total',
+                data: data.data.metodos.map(m => m.total),
+                backgroundColor: data.data.metodos.map(m => m.color || getRandomColor())
+              }]
+            },
+            options: {
+              responsive: true,
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: { callback: value => formatMoney(value) }
+                }
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error al cargar métodos de pago:', error);
+      }
+    }
+
+    async function cargarAlertas(params) {
+      try {
+        const res = await fetch(`${API_BASE}/alertas?${new URLSearchParams(params)}`);
+        const data = await res.json();
+        const container = document.getElementById('alertasContainer');
+        container.innerHTML = '';
+        
+        if (data.data && data.data.length > 0) {
+          data.data.forEach(alerta => {
+            const div = document.createElement('div');
+            div.className = `alert-item alert-${alerta.tipo}`;
+            div.innerHTML = `<i class="bi bi-exclamation-triangle"></i> <strong>${alerta.mensaje}</strong>`;
+            container.appendChild(div);
+          });
+        }
+      } catch (error) {
+        console.error('Error al cargar alertas:', error);
+      }
+    }
+
+    async function cargarTopMovimientos(params) {
+      try {
+        const res = await fetch(`${API_BASE}/top-movimientos?${new URLSearchParams(params)}`);
+        const data = await res.json();
+        const tbody = document.getElementById('topMovimientosBody');
+        tbody.innerHTML = '';
+        
+        if (data.data) {
+          data.data.forEach(mov => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${formatDate(mov.fecha)}</td>
+              <td><span class="badge bg-${mov.tipo === 'Ingreso' ? 'success' : 'danger'}">${mov.tipo}</span></td>
+              <td>${mov.categoria_icono || ''} ${mov.categoria}</td>
+              <td>${mov.descripcion}</td>
+              <td class="fw-bold ${mov.tipo === 'Ingreso' ? 'text-success' : 'text-danger'}">${formatMoney(mov.monto)}</td>
+              <td>${mov.metodo_pago || '-'}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (error) {
+        console.error('Error al cargar top movimientos:', error);
+      }
+    }
+
+    async function cargarSelectorCategorias() {
+      try {
+        const res = await fetch(`${API_BASE}/categorias`);
+        const data = await res.json();
+        categoriasDisponibles = data.data.categorias;
+        const container = document.getElementById('categoriasSelector');
+        container.innerHTML = '';
+        
+        categoriasDisponibles.forEach(cat => {
+          const chip = document.createElement('span');
+          chip.className = 'categoria-chip';
+          chip.style.background = cat.color || '#6c757d';
+          chip.style.color = '#fff';
+          chip.dataset.id = cat.id;
+          chip.textContent = `${cat.icono || ''} ${cat.nombre}`;
+          chip.onclick = () => chip.classList.toggle('selected');
+          container.appendChild(chip);
+        });
+      } catch (error) {
+        console.error('Error al cargar selector:', error);
+      }
+    }
+
+    async function analizarCategoriasSeleccionadas() {
+      const seleccionadas = Array.from(document.querySelectorAll('.categoria-chip.selected')).map(c => c.dataset.id);
+      if (seleccionadas.length === 0) { alert('Seleccioná al menos una categoría'); return; }
+
+      const fechaInicio = document.getElementById('filtroFechaInicio').value || '2025-01-01';
+      const fechaFin = document.getElementById('filtroFechaFin').value || '2026-12-31';
+      const ambito = document.getElementById('filtroAmbito').value;
+
+      const res = await fetch(`${API_BASE}/analisis-categorias?${new URLSearchParams({
+        ids: seleccionadas.join(','),
+        fecha_inicio: fechaInicio,
+        fecha_fin: fechaFin,
+        ambito: ambito
+      })}`);
+      const data = await res.json();
+
+      const container = document.getElementById('analisisContainer');
+      container.innerHTML = '';
+
+      if (data.success && data.data.length > 0) {
+        data.data.forEach(cat => {
+          const div = document.createElement('div');
+          div.className = 'chart-container mt-3';
+          div.innerHTML = `<h6>${cat.icono} ${cat.nombre} <span class="badge bg-secondary">${cat.ambito}</span></h6>
+            <canvas id="chartAnalisis_${cat.id}"></canvas>`;
+          container.appendChild(div);
+
+          const ctx = div.querySelector('canvas').getContext('2d');
+          new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: cat.evolucion.map(e => e.mes),
+              datasets: [
+                { label: 'Ingresos', data: cat.evolucion.map(e => e.ingresos), borderColor: '#10b981', tension: 0.4 },
+                { label: 'Egresos', data: cat.evolucion.map(e => e.egresos), borderColor: '#ef4444', tension: 0.4 }
+              ]
+            },
+            options: {
+              responsive: true,
+              scales: { y: { beginAtZero: true, ticks: { callback: v => formatMoney(v) } } }
+            }
+          });
+        });
+      }
+    }
+
+    function exportarCSV() {
+      const params = obtenerParametros();
+      window.open(`${API_BASE}/top-movimientos?${new URLSearchParams(params)}`, '_blank');
+    }
+
+    function showLoading(show) {
+      document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+    }
+
+    function formatMoney(amount) {
+      return '$' + parseFloat(amount || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      const parts = dateStr.split('T')[0].split('-');
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    function getRandomColor() {
+      const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    // ========================================
+    // CAJA CHICA - Funciones
+    // ========================================
+
+    async function cargarCajaChica() {
+      try {
+        const anio = document.getElementById('filtroAnio').value;
+        const mes = document.getElementById('filtroMes').value;
+        
+        const res = await fetch(`/api/finanzas/caja-chica/estado?anio=${anio}&mes=${mes}`);
+        const data = await res.json();
+        
+        if (data.success) {
+          const { configuracion, estado } = data.data;
+          
+          document.getElementById('cajaChicaConvenido').textContent = formatMoney(configuracion.monto_convenido);
+          document.getElementById('cajaChicaAportado').textContent = formatMoney(estado.total_aportado);
+          document.getElementById('cajaChicaGastado').textContent = formatMoney(estado.total_gastado);
+          document.getElementById('cajaChicaSaldo').textContent = formatMoney(estado.saldo_disponible);
+          
+          const pctUsado = estado.porcentaje_usado.toFixed(1);
+          const pctAportado = estado.porcentaje_aportado.toFixed(1);
+          
+          document.getElementById('cajaChicaPorcentaje').textContent = `${pctUsado}%`;
+          document.getElementById('cajaChicaPctAportado').textContent = `${pctAportado}%`;
+          document.getElementById('cajaChicaPctGastado').textContent = `${pctUsado}%`;
+          
+          const barraAportado = document.getElementById('cajaChicaBarraAportado');
+          const barraGastado = document.getElementById('cajaChicaBarraGastado');
+          
+          barraAportado.style.width = `${Math.min(pctAportado, 100)}%`;
+          barraGastado.style.width = `${Math.min(pctUsado, 100)}%`;
+          
+          const saldoEl = document.getElementById('cajaChicaSaldo');
+          if (estado.saldo_disponible < 0) {
+            saldoEl.className = 'h4 mb-0 text-danger';
+          } else if (estado.saldo_disponible < configuracion.monto_convenido * 0.2) {
+            saldoEl.className = 'h4 mb-0 text-warning';
+          } else {
+            saldoEl.className = 'h4 mb-0 text-primary';
+          }
+        }
+      } catch (error) {
+        console.error('Error al cargar caja chica:', error);
+      }
+    }
+
+    function mostrarModalConfigCajaChica() {
+      const montoActual = document.getElementById('cajaChicaConvenido').textContent.replace(/[^0-9.-]+/g, '');
+      document.getElementById('inputMontoConvenido').value = montoActual;
+      new bootstrap.Modal(document.getElementById('modalConfigCajaChica')).show();
+    }
+
+    async function guardarConfigCajaChica() {
+      const monto = parseFloat(document.getElementById('inputMontoConvenido').value);
+      
+      if (!monto || monto <= 0) {
+        alert('El monto debe ser mayor a 0');
+        return;
+      }
+      
+      try {
+        const res = await fetch('/api/finanzas/caja-chica/configuracion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ monto_convenido: monto })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          bootstrap.Modal.getInstance(document.getElementById('modalConfigCajaChica')).hide();
+          await cargarCajaChica();
+        } else {
+          alert(data.message);
+        }
+      } catch (error) {
+        alert('Error al guardar configuración');
+      }
+    }
+
+    function registrarAporteCajaChica() {
+      fetch('/api/finanzas/metodos-pago')
+        .then(res => res.json())
+        .then(data => {
+          const select = document.getElementById('aporteMetodo');
+          select.innerHTML = '';
+          data.forEach(mp => {
+            const option = document.createElement('option');
+            option.value = mp.id;
+            option.textContent = `${mp.icono} ${mp.nombre}`;
+            select.appendChild(option);
+          });
+        });
+      
+      document.getElementById('aporteFecha').value = new Date().toISOString().split('T')[0];
+      new bootstrap.Modal(document.getElementById('modalAporteCajaChica')).show();
+    }
+
+    async function guardarAporteCajaChica() {
+      const data = {
+        fecha: document.getElementById('aporteFecha').value,
+        tipo: 'Ingreso',
+        categoria_id: null,
+        subcategoria_id: null,
+        metodo_pago_id: document.getElementById('aporteMetodo').value,
+        descripcion: document.getElementById('aporteDescripcion').value,
+        monto: parseFloat(document.getElementById('aporteMonto').value),
+        es_transferencia_interna: true,
+        es_gasto_caja_chica: false
+      };
+      
+      if (!data.fecha || !data.monto || !data.metodo_pago_id || !data.descripcion) {
+        alert('Todos los campos son obligatorios');
+        return;
+      }
+      
+      try {
+        const catRes = await fetch('/api/finanzas/categorias');
+        const categorias = await catRes.json();
+        const catTransf = categorias.find(c => c.nombre === 'Transferencias Internas');
+        
+        if (!catTransf) {
+          alert('No se encontró la categoría "Transferencias Internas"');
+          return;
+        }
+        
+        const subAporte = catTransf.subcategorias.find(s => s.nombre.includes('Aporte Empresa'));
+        
+        if (!subAporte) {
+          alert('No se encontró la subcategoría "Aporte Empresa → Casa"');
+          return;
+        }
+        
+        data.categoria_id = catTransf.id;
+        data.subcategoria_id = subAporte.id;
+        
+        const res = await fetch('/api/finanzas/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        
+        if (result.success) {
+          bootstrap.Modal.getInstance(document.getElementById('modalAporteCajaChica')).hide();
+          document.getElementById('formAporteCajaChica').reset();
+          await cargarCajaChica();
+          await cargarKPIs(obtenerParametros());
+        } else {
+          alert(result.message);
+        }
+      } catch (error) {
+        alert('Error al registrar aporte');
+      }
+    }
+
+    async function verHistorialCajaChica() {
+      const anio = document.getElementById('filtroAnio').value;
+      const mes = document.getElementById('filtroMes').value;
+      
+      try {
+        const res = await fetch(`/api/finanzas/caja-chica/historial?anio=${anio}&mes=${mes}`);
+        const data = await res.json();
+        
+        if (data.success) {
+          const tbodyAportes = document.getElementById('tablaAportesCajaChica');
+          tbodyAportes.innerHTML = '';
+          
+          if (data.data.aportes.length === 0) {
+            tbodyAportes.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay aportes este mes</td></tr>';
+          } else {
+            data.data.aportes.forEach(aporte => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td>${formatDate(aporte.fecha)}</td>
+                <td class="text-success fw-bold">${formatMoney(aporte.monto)}</td>
+                <td>${aporte.descripcion}</td>
+                <td>${aporte.metodo_pago || '-'}</td>
+              `;
+              tbodyAportes.appendChild(tr);
+            });
+          }
+          
+          const tbodyGastos = document.getElementById('tablaGastosCajaChica');
+          tbodyGastos.innerHTML = '';
+          
+          if (data.data.gastos.length === 0) {
+            tbodyGastos.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No hay gastos este mes</td></tr>';
+          } else {
+            data.data.gastos.forEach(gasto => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td>${formatDate(gasto.fecha)}</td>
+                <td>${gasto.categoria || '-'}</td>
+                <td>${gasto.descripcion}</td>
+                <td class="text-danger fw-bold">${formatMoney(gasto.monto)}</td>
+                <td>${gasto.metodo_pago || '-'}</td>
+              `;
+              tbodyGastos.appendChild(tr);
+            });
+          }
+          
+          new bootstrap.Modal(document.getElementById('modalHistorialCajaChica')).show();
+        }
+      } catch (error) {
+        alert('Error al cargar historial');
+      }
+    }
+  </script>
+</body>
+</html>

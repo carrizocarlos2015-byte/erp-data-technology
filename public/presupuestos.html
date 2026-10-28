@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERP - PC Builder Pro</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body { background-color: #0f172a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #e2e8f0; }
+    .menu-nav { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); padding: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 1000; }
+    .menu-nav .logo { color: white; font-weight: bold; font-size: 1.2rem; text-decoration: none; }
+    .menu-nav .nav-link { color: rgba(255,255,255,0.85); font-weight: 500; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; text-decoration: none; display: flex; align-items: center; gap: 6px; }
+    .menu-nav .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
+    .menu-nav .nav-link.active { background: white; color: #0d6efd; }
+    .menu-nav .nav-link i { font-size: 1.1rem; }
+    @media (max-width: 767px) { .menu-nav .nav-link span { display: none; } .menu-nav .nav-link { padding: 8px 10px; } }
+
+    .card-dark { background: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+    .bg-slate-900 { background-color: #0f172a !important; }
+    .bg-slate-800 { background-color: #1e293b !important; }
+    .border-slate-700 { border-color: #334155 !important; }
+    .text-slate-200 { color: #e2e8f0 !important; }
+    .text-slate-300 { color: #cbd5e1 !important; }
+    .text-slate-400 { color: #94a3b8 !important; }
+    .text-blue-400 { color: #60a5fa !important; }
+    .text-emerald-400 { color: #34d399 !important; }
+
+    .form-control-dark, .form-select-dark { background-color: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+    .form-control-dark:focus, .form-select-dark:focus { background-color: #0f172a !important; color: #e2e8f0 !important; border-color: #3b82f6 !important; box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25); }
+    .form-control-dark option, .form-select-dark option { background-color: #0f172a; color: #e2e8f0; }
+
+    .logo-dt-text { font-size: 2.2rem; font-weight: 900; color: #4a90e2; text-shadow: 2px 2px 0px #2a6bb2; font-style: italic; line-height: 1; }
+    .logo-dt-sub { font-size: 0.55rem; letter-spacing: 0.18em; font-weight: bold; text-transform: uppercase; color: #cbd5e1; margin-top: 2px; }
+
+    .btn-primary-dark { background-color: #2563eb; border: none; }
+    .btn-primary-dark:hover { background-color: #1d4ed8; }
+    .btn-success-dark { background-color: #059669; border: none; }
+    .btn-success-dark:hover { background-color: #047857; }
+    .btn-danger-dark { background-color: #dc2626; border: none; }
+    .btn-danger-dark:hover { background-color: #b91c1c; }
+
+    .resumen-item { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; margin-bottom: 6px; }
+    .extra-fila { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+
+    /* ✅ CSS DE IMPRESIÓN */
+    @media print {
+      body { background: white !important; color: black !important; }
+      .menu-nav, .no-print, header, .modal { display: none !important; }
+      #pres-hoja-clasica { display: block !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; padding: 20px 30px !important; background: white !important; color: black !important; }
+      #pres-hoja-clasica * { color: black !important; }
+      #pres-hoja-clasica .tabla-clasica { width: 100% !important; border-collapse: collapse !important; }
+      #pres-hoja-clasica .tabla-clasica th, #pres-hoja-clasica .tabla-clasica td { border: 1px solid #000 !important; padding: 8px 10px !important; font-size: 12px !important; }
+      #pres-hoja-clasica .tabla-clasica th { background-color: #f0f0f0 !important; font-weight: bold !important; }
+      @page { margin: 1cm; size: A4; }
+    }
+
+    #pres-hoja-clasica { display: none; background: white; padding: 20px; max-width: 800px; margin: 0 auto; color: black; }
+    #pres-hoja-clasica .tabla-clasica { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    #pres-hoja-clasica .tabla-clasica th, #pres-hoja-clasica .tabla-clasica td { border: 1px solid #000; padding: 8px 10px; font-size: 12px; }
+    #pres-hoja-clasica .tabla-clasica th { background-color: #f0f0f0; font-weight: bold; text-align: center; }
+    #pres-hoja-clasica .tabla-clasica td:first-child { text-align: center; width: 80px; }
+    #pres-hoja-clasica .tabla-clasica td:last-child { text-align: right; width: 120px; }
+    #pres-hoja-clasica .tabla-clasica tfoot td { background-color: #f0f0f0; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <!-- MENÚ DE NAVEGACIÓN -->
+  <nav class="menu-nav">
+    <div class="container-fluid px-3">
+      <div class="d-flex align-items-center justify-content-between flex-wrap">
+        <a href="index.html" class="logo me-3"><i class="bi bi-building"></i> ERP Data Technology</a>
+        <div class="d-flex flex-wrap gap-1">
+          <a href="index.html" class="nav-link"><i class="bi bi-house"></i> <span>Inicio</span></a>
+          <a href="clientes.html" class="nav-link"><i class="bi bi-people"></i> <span>Clientes</span></a>
+          <a href="cuenta-corriente.html" class="nav-link"><i class="bi bi-wallet2"></i> <span>Cta. Cte.</span></a>
+          <a href="finanzas.html" class="nav-link"><i class="bi bi-cash-stack"></i> <span>Finanzas</span></a>
+          <a href="cheques.html" class="nav-link"><i class="bi bi-receipt"></i> <span>Cheques</span></a>
+          <a href="trabajos.html" class="nav-link"><i class="bi bi-tools"></i> <span>Trabajos</span></a>
+          <a href="agenda.html" class="nav-link"><i class="bi bi-calendar-event"></i> <span>Agenda</span></a>
+          <a href="reportes.html" class="nav-link"><i class="bi bi-file-pdf"></i> <span>Reportes</span></a>
+          <a href="empresa.html" class="nav-link"><i class="bi bi-building-gear"></i> <span>Empresa</span></a>
+          <a href="presupuestos.html" class="nav-link active"><i class="bi bi-pc-display"></i> <span>PC Builder</span></a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid py-3">
+
+    <!-- HEADER -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mb-4 no-print">
+      <h1 class="text-blue-400 fw-bold mb-0"><i class="bi bi-pc-display"></i> PC BUILDER PRO</h1>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-outline-light btn-sm" onclick="abrirModalConfig()"><i class="bi bi-building"></i> Empresa</button>
+        <button class="btn btn-primary btn-sm" onclick="abrirModalArticulo()"><i class="bi bi-plus-circle"></i> Nuevo Artículo</button>
+        <div class="d-flex align-items-center bg-dark border border-secondary rounded px-3 py-2">
+          <span class="text-slate-400 me-2 small">Dólar:</span>
+          <span id="pres-valor-dolar" class="fw-bold text-emerald-400" data-valor="0">Cargando...</span>
+          <button class="btn btn-sm btn-outline-secondary ms-2" onclick="consultarDolar()"><i class="bi bi-arrow-clockwise"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+
+      <!-- COLUMNA IZQUIERDA: Componentes -->
+      <div class="col-lg-8">
+        <div class="card-dark p-4 mb-4">
+          <h2 class="fw-bold mb-3 text-slate-200 border-bottom border-slate-700 pb-2">1. Componentes Base</h2>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-slate-300">Procesador (CPU)</label>
+              <select id="pres-cpu" class="form-select form-select-dark" onchange="calcular()"><option value="0" data-nombre="Ninguno">Seleccione un procesador...</option></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-slate-300">Placa Madre</label>
+              <select id="pres-mother" class="form-select form-select-dark" onchange="calcular()"><option value="0" data-nombre="Ninguno">Seleccione placa madre...</option></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-slate-300">Memoria RAM</label>
+              <select id="pres-ram" class="form-select form-select-dark" onchange="calcular()"><option value="0" data-nombre="Ninguno">Seleccione memoria RAM...</option></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-slate-300">Almacenamiento (SSD/HDD)</label>
+              <select id="pres-storage" class="form-select form-select-dark" onchange="calcular()"><option value="0" data-nombre="Ninguno">Seleccione almacenamiento...</option></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-slate-300">Placa de Video (GPU)</label>
+              <select id="pres-gpu" class="form-select form-select-dark" onchange="calcular()"><option value="0" data-nombre="Ninguno">Sin placa dedicada (Gráficos integrados)</option></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-slate-300">Gabinete</label>
+              <select id="pres-gabinete" class="form-select form-select-dark" onchange="calcular()"><option value="0" data-nombre="Ninguno">Seleccione gabinete...</option></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-slate-300">Monitor</label>
+              <select id="pres-monitor" class="form-select form-select-dark" onchange="calcular()"><option value="0" data-nombre="Ninguno">Sin monitor...</option></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-slate-300">Impresora</label>
+              <select id="pres-impresora" class="form-select form-select-dark" onchange="calcular()"><option value="0" data-nombre="Ninguno">Sin impresora...</option></select>
+            </div>
+          </div>
+
+          <div class="mt-4 border-top border-slate-700 pt-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h2 class="fw-bold text-slate-200 mb-0">2. Accesorios Extras</h2>
+              <button class="btn btn-success-dark btn-sm" onclick="agregarFilaExtra()"><i class="bi bi-plus-circle"></i> Añadir Artículo</button>
+            </div>
+            <div id="pres-contenedor-extras"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUMNA DERECHA: Resumen -->
+      <div class="col-lg-4">
+        <div class="card-dark p-4 sticky-top" style="top: 80px;">
+
+          <!-- Encabezado empresa -->
+          <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom border-slate-700">
+            <div class="cursor-pointer" onclick="document.getElementById('pres-cfg-logo-file').click()" style="cursor: pointer;">
+              <div id="pres-logo-container">
+                <div style="display:inline-flex;flex-direction:column;align-items:center;">
+                  <span class="logo-dt-text">DT</span>
+                  <span class="logo-dt-sub">DATA TECHNOLOGY</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex-grow-1 text-center text-xs text-slate-300" style="font-size: 0.85rem;">
+              <div id="pres-empresa-nombre" class="fw-bold text-uppercase mb-1">DATA TECHNOLOGY</div>
+              <div><span id="pres-empresa-direccion">Jujuy 1156 - Ciudad</span> | <span id="pres-empresa-telefono">Cel 261-6080860</span></div>
+              <div class="mt-1"><span id="pres-cuit-normal"></span><span id="pres-email-normal"></span></div>
+            </div>
+          </div>
+
+          <h2 class="text-center text-lg fw-bold text-uppercase text-blue-400 mb-2">PRESUPUESTO</h2>
+          <div class="text-end text-slate-400 mb-3 small" id="pres-fecha-impresion">Mendoza, ...</div>
+          <div class="text-slate-300 mb-3 small">
+            <p class="mb-1"><strong>Sr.:</strong> <span id="pres-nombre-cliente-display" class="fw-bold text-uppercase">CLIENTE GENERAL</span></p>
+          </div>
+
+          <!-- Historial -->
+          <div class="bg-dark p-3 rounded border border-slate-700 mb-3 no-print">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <label class="small fw-bold text-blue-400 mb-0">Cargar Presupuesto Anterior</label>
+              <button class="btn btn-sm btn-outline-secondary" onclick="cargarListaHistorial()"><i class="bi bi-arrow-clockwise"></i></button>
+            </div>
+            <select id="pres-select-historial" class="form-select form-select-dark form-select-sm" onchange="seleccionarHistorial(this.value)">
+              <option value="">Seleccionar presupuesto guardado...</option>
+            </select>
+          </div>
+
+          <!-- Cliente -->
+          <div class="no-print mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="small fw-bold text-slate-300">Cliente</label>
+              <button class="btn btn-sm btn-link text-blue-400 p-0" onclick="cargarClientes()"><i class="bi bi-arrow-clockwise"></i> Recargar</button>
+            </div>
+            <select id="pres-select-cliente" class="form-select form-select-dark" onchange="actualizarCliente(this)">
+              <option value="">Seleccione un cliente...</option>
+            </select>
+          </div>
+
+          <!-- Moneda -->
+          <div class="d-flex justify-content-between align-items-center bg-dark p-2 rounded border border-slate-700 mb-3 no-print">
+            <span class="small fw-bold text-slate-300">Moneda:</span>
+            <div class="btn-group btn-group-sm">
+              <button id="pres-btn-usd" class="btn btn-primary" onclick="cambiarMoneda('USD')">U$S</button>
+              <button id="pres-btn-ars" class="btn btn-outline-secondary" onclick="cambiarMoneda('ARS')">$ Pesos</button>
+            </div>
+          </div>
+
+          <!-- Lista resumen -->
+          <ul id="pres-lista-resumen" class="list-unstyled small mb-3" style="max-height: 200px; overflow-y: auto;">
+            <li class="text-slate-500 fst-italic">No hay componentes seleccionados</li>
+          </ul>
+
+          <!-- Descuento -->
+          <div class="bg-dark p-3 rounded border border-slate-700 mb-3 no-print">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="small fw-bold text-slate-300">Descuento (%)</span>
+              <input type="number" id="pres-input-descuento" value="0" min="0" max="100" step="0.5" oninput="calcular()" class="form-control form-control-dark form-control-sm" style="width: 80px;">
+            </div>
+            <div>
+              <label class="small text-slate-400">Motivo / Condición:</label>
+              <input type="text" id="pres-input-motivo" placeholder="Ej: Pagando en efectivo" oninput="calcular()" class="form-control form-control-dark form-control-sm">
+            </div>
+          </div>
+
+          <!-- Totales -->
+          <div class="border-top border-slate-700 pt-3">
+            <div class="d-flex justify-content-between small text-slate-400">
+              <span>Subtotal:</span>
+              <span id="pres-subtotal-resumen">$0</span>
+            </div>
+            <div id="pres-fila-desc-resumen" class="d-flex justify-content-between small text-emerald-400 d-none">
+              <span id="pres-texto-desc-resumen">Descuento:</span>
+              <span id="pres-monto-desc-resumen">-$0</span>
+            </div>
+            <div id="pres-fila-motivo-resumen" class="small text-slate-400 fst-italic d-none">
+              Motivo: <span id="pres-texto-motivo-resumen"></span>
+            </div>
+            <div class="d-flex justify-content-between fw-bold fs-5 pt-2 border-top border-slate-700 mt-2">
+              <span>Total Final:</span>
+              <span id="pres-total" class="text-emerald-400">$0</span>
+            </div>
+            <div class="small text-blue-400 mt-1">
+              <span id="pres-leyenda-dolar-texto">1 u$s = cargando...</span>
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="mt-3 d-grid gap-2 no-print">
+            <button class="btn btn-success-dark" onclick="guardarHistorial()"><i class="bi bi-save"></i> Guardar Presupuesto</button>
+            <button class="btn btn-primary" onclick="copiarWhatsapp()"><i class="bi bi-whatsapp"></i> Copiar para WhatsApp</button>
+            <button class="btn btn-outline-light" onclick="imprimirPDF()"><i class="bi bi-printer"></i> Imprimir / Guardar PDF</button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ✅ HOJA CLÁSICA PARA IMPRESIÓN -->
+  <div id="pres-hoja-clasica">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #2c6cb8;padding-bottom:10px;margin-bottom:15px;">
+      <div style="flex-shrink:0;width:30%;">
+        <img id="pres-logo-clasica" src="" alt="Logo" style="max-width:150px;max-height:100px;object-fit:contain;display:none;">
+        <div id="pres-logo-fallback" style="font-size:40px;font-weight:900;color:#4a90e2;font-style:italic;line-height:1;">DT</div>
+      </div>
+      <div style="text-align:center;flex-grow:1;font-size:12px;line-height:1.6;color:#000;margin-top:10px;">
+        <div style="font-weight:bold;font-size:16px;text-transform:uppercase;margin-bottom:3px;" id="pres-emp-nombre-clasica">DATA TECHNOLOGY</div>
+        <div id="pres-emp-dir-clasica" style="margin-bottom:2px;">Jujuy 1156 - Ciudad | Cel 261-6080860</div>
+        <div style="font-size:11px;"><span id="pres-cuit-clasica"></span><span id="pres-email-clasica"></span></div>
+      </div>
+    </div>
+    <h1 style="text-align:center;font-size:20px;font-weight:bold;margin:12px 0 10px;text-transform:uppercase;letter-spacing:3px;color:#000;">PRESUPUESTO</h1>
+    <div style="text-align:right;margin-bottom:15px;font-size:13px;color:#000;" id="pres-fecha-clasica">Mendoza, ...</div>
+    <div style="margin-bottom:15px;font-size:13px;color:#000;">
+      <p style="margin:0 0 5px;"><strong>Sr.:</strong> <span id="pres-cliente-clasica" style="border-bottom:1px dotted #000;padding:0 50px 0 5px;">______________________</span></p>
+      <p style="margin:0 0 5px;font-size:12px;color:#666;">S//D:</p>
+      <p style="margin:5px 0 0;font-size:12px;color:#000;">De nuestra mayor consideración:</p>
+    </div>
+    <table class="tabla-clasica">
+      <thead><tr><th style="width:80px;">Cantidad</th><th>Descripción</th><th style="width:120px;">Total</th></tr></thead>
+      <tbody id="pres-tbody-clasica"></tbody>
+      <tfoot>
+        <tr><td colspan="2" style="text-align:right;padding:8px;">SUBTOTAL:</td><td style="text-align:right;padding:8px;"><span id="pres-subtotal-clasica">$0</span></td></tr>
+        <tr id="pres-fila-desc-clasica" style="display:none;"><td colspan="2" style="text-align:right;padding:8px;">DESCUENTO (<span id="pres-porc-desc-clasica">0</span>%):</td><td style="text-align:right;padding:8px;color:#16a34a;">- <span id="pres-monto-desc-clasica">$0</span></td></tr>
+        <tr><td colspan="2" style="text-align:right;padding:10px;font-size:14px;">TOTAL FINAL:</td><td style="text-align:right;padding:10px;font-size:14px;"><span id="pres-total-clasica">$0</span></td></tr>
+      </tfoot>
+    </table>
+    <div style="margin-top:20px;font-size:11px;line-height:1.6;color:#000;">
+      <p style="margin:0 0 8px;font-weight:bold;text-align:center;" id="pres-leyenda-dolar-clasica">Precio sujeto a stock y variación del dólar.</p>
+      <p style="margin:0 0 6px;"><strong>Nota:</strong> Los precios incluyen IVA. Están expresados en dólares estadounidenses según cotización oficial del BNA (tipo venta).</p>
+      <p style="margin:0 0 6px;"><strong>Mantenimiento de Oferta:</strong> 48 días corridos a partir de la fecha.</p>
+      <p style="margin:0 0 6px;"><strong>Plazo de Entrega:</strong> A coordinar con el vendedor.</p>
+      <p style="margin:0 0 15px;"><strong>Forma de pago:</strong> Contado, transferencia.</p>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:50px;font-size:12px;color:#000;">
+      <div style="flex:1;"><p style="margin:0;">Sin otro particular saluda atte.</p><p style="margin:0;height:35px;"></p></div>
+      <div style="text-align:center;min-width:200px;">
+        <p style="margin:0;font-weight:bold;font-size:14px;" id="pres-firma-nombre">Carlos Carrizo</p>
+        <p style="margin:3px 0 0 0;font-size:12px;color:#000;" id="pres-firma-empresa">Data Technology</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONFIG EMPRESA -->
+  <div class="modal fade" id="modalConfig" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-slate-800 border-slate-700 text-slate-200">
+        <div class="modal-header border-slate-700">
+          <h5 class="modal-title"><i class="bi bi-building"></i> Configuración Empresa</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label small">Nombre</label><input type="text" id="pres-cfg-nombre" class="form-control form-control-dark"></div>
+            <div class="col-md-6"><label class="form-label small">Teléfono</label><input type="text" id="pres-cfg-telefono" class="form-control form-control-dark"></div>
+            <div class="col-12"><label class="form-label small">Dirección</label><input type="text" id="pres-cfg-direccion" class="form-control form-control-dark"></div>
+            <div class="col-md-6"><label class="form-label small">Email</label><input type="text" id="pres-cfg-email" class="form-control form-control-dark"></div>
+            <div class="col-md-6"><label class="form-label small">CUIT</label><input type="text" id="pres-cfg-cuit" class="form-control form-control-dark"></div>
+            <div class="col-12"><label class="form-label small">Logo</label><input type="file" id="pres-cfg-logo-file" accept="image/*" class="form-control form-control-dark"></div>
+          </div>
+          <div id="pres-modal-config-msg" class="mt-3 small d-none"></div>
+        </div>
+        <div class="modal-footer border-slate-700">
+          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-success-dark" onclick="guardarConfig()"><i class="bi bi-save"></i> Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CARGAR ARTÍCULO -->
+  <div class="modal fade" id="modalArticulo" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-slate-800 border-slate-700 text-slate-200">
+        <div class="modal-header border-slate-700">
+          <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Cargar Artículo</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label small mb-0">Categoría</label>
+                <button class="btn btn-sm btn-outline-success" onclick="nuevaCategoria()"><i class="bi bi-plus"></i> Nueva</button>
+              </div>
+              <select id="pres-nuevo-categoria" class="form-select form-select-dark">
+                <option value="Procesador">Procesador (CPU)</option>
+                <option value="Motherboard">Placa Madre</option>
+                <option value="Memoria RAM">Memoria RAM</option>
+                <option value="Almacenamiento">Almacenamiento (SSD/HDD)</option>
+                <option value="Placa de Video">Placa de Video (GPU)</option>
+                <option value="Gabinete">Gabinete</option>
+                <option value="Monitor">Monitor</option>
+                <option value="Impresora">Impresora</option>
+                <option value="Insumos">Insumos</option>
+                <option value="Periféricos">Periféricos</option>
+              </select>
+            </div>
+            <div class="col-12"><label class="form-label small">Nombre del Producto</label><input type="text" id="pres-nuevo-detalle" placeholder="Ej: AMD Ryzen 5 5600X" class="form-control form-control-dark"></div>
+            <div class="col-12"><label class="form-label small">Marca</label><input type="text" id="pres-nuevo-marca" placeholder="Ej: AMD, Intel, NVIDIA" class="form-control form-control-dark"></div>
+            <div class="col-12"><label class="form-label small">Costo Base (USD) - Sin IVA</label><input type="number" id="pres-nuevo-costo" placeholder="0.00" step="0.01" oninput="calcularPreciosModal()" class="form-control form-control-dark"></div>
+            <div class="col-12">
+              <label class="form-label small">IVA a aplicar</label>
+              <div class="btn-group w-100">
+                <button type="button" class="btn btn-primary" id="pres-modal-iva-105" onclick="setIvaModal(10.5)">10.5%</button>
+                <button type="button" class="btn btn-outline-secondary" id="pres-modal-iva-21" onclick="setIvaModal(21)">21%</button>
+              </div>
+            </div>
+            <div class="col-12 bg-dark p-3 rounded border border-slate-700">
+              <div class="d-flex justify-content-between small"><span class="text-slate-400">Precio sin IVA:</span><span id="pres-modal-precio-sin-iva" class="fw-bold">$0.00</span></div>
+              <div class="d-flex justify-content-between small"><span class="text-slate-400">Precio Final (con IVA):</span><span id="pres-modal-precio-final" class="fw-bold text-emerald-400">$0.00</span></div>
+            </div>
+            <div class="col-12"><label class="form-label small">Margen de Ganancia (%)</label><input type="number" id="pres-nuevo-ganancia" value="30" step="0.1" oninput="calcularPreciosModal()" class="form-control form-control-dark"></div>
+          </div>
+          <div id="pres-modal-art-msg" class="mt-3 small d-none"></div>
+        </div>
+        <div class="modal-footer border-slate-700">
+          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-success-dark" onclick="guardarArticulo()"><i class="bi bi-save"></i> Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const API_INVENTARIO = 'http://localhost:3000/api/inventario';
+    const API_PRESUPUESTOS = 'http://localhost:3000/api/presupuestos';
+    const API_EMPRESA = 'http://localhost:3000/api/empresa';
+    const API_CLIENTES = 'http://localhost:3000/api/clientes';
+
+    let inventario = [];
+    let configEmpresa = {};
+    let historial = [];
+    let moneda = 'USD';
+    let ivaModal = 10.5;
+    let listaClientesGlobal = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+      init();
+    });
+
+    async function init() {
+      await Promise.all([consultarDolar(), cargarConfig(), cargarInventario(), cargarClientes(), cargarListaHistorial()]);
+      mostrarFecha();
+      document.getElementById('pres-cfg-logo-file').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(ev) {
+            const b64 = ev.target.result;
+            document.getElementById('pres-cfg-logo-base64').value = b64;
+            document.getElementById('pres-logo-container').innerHTML = '<img src="' + b64 + '" alt="Logo" style="max-height:110px;max-width:160px;object-fit:contain;">';
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    function mostrarFecha() {
+      const fecha = new Date().toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('pres-fecha-impresion').innerText = 'Mendoza, ' + fecha;
+      document.getElementById('pres-fecha-clasica').innerText = 'Mendoza, ' + fecha;
+    }
+
+    async function consultarDolar() {
+      const lbl = document.getElementById('pres-valor-dolar');
+      lbl.innerText = 'Cargando...';
+      try {
+        const res = await fetch('https://dolarapi.com/v1/dolares/oficial');
+        const data = await res.json();
+        if (data && data.venta) {
+          const val = data.venta;
+          const formatted = val.toLocaleString('es-AR');
+          lbl.innerText = '$' + formatted;
+          lbl.setAttribute('data-valor', val);
+          document.getElementById('pres-leyenda-dolar-texto').innerText = '1 u$s = $' + formatted + ' (BNA Oficial)';
+          calcular();
+        } else { lbl.innerText = 'No disponible'; }
+      } catch (e) { lbl.innerText = 'Error'; }
+    }
+
+    function cambiarMoneda(m) {
+      moneda = m;
+      const btnUsd = document.getElementById('pres-btn-usd');
+      const btnArs = document.getElementById('pres-btn-ars');
+      if (m === 'USD') { btnUsd.className = 'btn btn-primary btn-sm'; btnArs.className = 'btn btn-outline-secondary btn-sm'; }
+      else { btnArs.className = 'btn btn-success btn-sm'; btnUsd.className = 'btn btn-outline-secondary btn-sm'; }
+      calcular();
+    }
+
+    async function cargarConfig() {
+      try {
+        const res = await fetch(API_EMPRESA);
+        configEmpresa = await res.json();
+        const tel = (configEmpresa.telefono || '261-6080860').trim();
+        const telDisplay = /^\d/.test(tel) ? 'Cel ' + tel : tel;
+        document.getElementById('pres-empresa-nombre').innerText = (configEmpresa.nombre || 'DATA TECHNOLOGY').toUpperCase();
+        document.getElementById('pres-empresa-direccion').innerText = configEmpresa.direccion || 'Jujuy 1156 - Ciudad';
+        document.getElementById('pres-empresa-telefono').innerText = telDisplay;
+        document.getElementById('pres-cuit-normal').innerText = configEmpresa.cuit ? 'CUIT: ' + configEmpresa.cuit : '';
+        document.getElementById('pres-email-normal').innerText = (configEmpresa.cuit && configEmpresa.email) ? ' | Email: ' + configEmpresa.email : (configEmpresa.email ? 'Email: ' + configEmpresa.email : '');
+        document.getElementById('pres-emp-nombre-clasica').innerText = (configEmpresa.nombre || 'DATA TECHNOLOGY').toUpperCase();
+        document.getElementById('pres-emp-dir-clasica').innerText = (configEmpresa.direccion || 'Jujuy 1156 - Ciudad') + ' | ' + telDisplay;
+        document.getElementById('pres-cuit-clasica').innerText = configEmpresa.cuit ? 'CUIT: ' + configEmpresa.cuit : '';
+        document.getElementById('pres-email-clasica').innerText = (configEmpresa.cuit && configEmpresa.email) ? ' | Email: ' + configEmpresa.email : (configEmpresa.email ? 'Email: ' + configEmpresa.email : '');
+        document.getElementById('pres-firma-nombre').innerText = 'Carlos Carrizo';
+        document.getElementById('pres-firma-empresa').innerText = configEmpresa.nombre || 'Data Technology';
+        const logoImg = document.getElementById('pres-logo-clasica');
+        const logoFallback = document.getElementById('pres-logo-fallback');
+        if (configEmpresa.logo_base64) {
+          logoImg.src = configEmpresa.logo_base64;
+          logoImg.style.display = 'block';
+          logoFallback.style.display = 'none';
+          document.getElementById('pres-logo-container').innerHTML = '<img src="' + configEmpresa.logo_base64 + '" alt="Logo" style="max-height:110px;max-width:160px;object-fit:contain;">';
+        } else {
+          logoImg.style.display = 'none';
+          logoFallback.style.display = 'block';
+        }
+      } catch (e) { console.error('Error cargar config:', e); }
+    }
+
+    function abrirModalConfig() {
+      document.getElementById('pres-cfg-nombre').value = configEmpresa.nombre || '';
+      document.getElementById('pres-cfg-direccion').value = configEmpresa.direccion || '';
+      document.getElementById('pres-cfg-telefono').value = configEmpresa.telefono || '';
+      document.getElementById('pres-cfg-email').value = configEmpresa.email || '';
+      document.getElementById('pres-cfg-cuit').value = configEmpresa.cuit || '';
+      document.getElementById('pres-cfg-logo-file').value = '';
+      document.getElementById('pres-cfg-logo-base64').value = configEmpresa.logo_base64 || '';
+      document.getElementById('pres-modal-config-msg').classList.add('d-none');
+      new bootstrap.Modal(document.getElementById('modalConfig')).show();
+    }
+
+    async function guardarConfig() {
+      const datos = {
+        nombre: document.getElementById('pres-cfg-nombre').value.trim(),
+        direccion: document.getElementById('pres-cfg-direccion').value.trim(),
+        telefono: document.getElementById('pres-cfg-telefono').value.trim(),
+        email: document.getElementById('pres-cfg-email').value.trim(),
+        cuit: document.getElementById('pres-cfg-cuit').value.trim(),
+        logo_base64: document.getElementById('pres-cfg-logo-base64').value
+      };
+      const msg = document.getElementById('pres-modal-config-msg');
+      try {
+        const res = await fetch(API_EMPRESA, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
+        const result = await res.json();
+        if (result.success) {
+          msg.innerText = 'Configuración guardada!';
+          msg.className = 'mt-3 small alert alert-success';
+          msg.classList.remove('d-none');
+          await cargarConfig();
+          setTimeout(() => { bootstrap.Modal.getInstance(document.getElementById('modalConfig')).hide(); }, 1200);
+        } else { throw new Error(result.message); }
+      } catch (e) {
+        msg.innerText = 'Error: ' + e.message;
+        msg.className = 'mt-3 small alert alert-danger';
+        msg.classList.remove('d-none');
+      }
+    }
+
+    async function cargarClientes() {
+      try {
+        const res = await fetch(API_CLIENTES);
+        listaClientesGlobal = await res.json();
+        const sel = document.getElementById('pres-select-cliente');
+        while (sel.options.length > 1) sel.remove(1);
+        if (listaClientesGlobal && listaClientesGlobal.length > 0) {
+          listaClientesGlobal.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.text = c.codigo + ' - ' + c.nombre + (c.cuit ? ' - ' + c.cuit : '');
+            sel.appendChild(opt);
+          });
+        }
+      } catch (e) { console.error('Error cargar clientes:', e); }
+    }
+
+    function actualizarCliente(sel) {
+      const idCliente = sel.value;
+      let nombreMostrar = 'CLIENTE GENERAL';
+      let cuitCliente = '';
+      let telCliente = '';
+      if (idCliente && listaClientesGlobal.length > 0) {
+        const clienteEncontrado = listaClientesGlobal.find(c => c.id === idCliente);
+        if (clienteEncontrado) {
+          nombreMostrar = clienteEncontrado.nombre;
+          cuitCliente = clienteEncontrado.cuit || '';
+          telCliente = clienteEncontrado.telefono || '';
+        }
+      }
+      document.getElementById('pres-nombre-cliente-display').innerText = nombreMostrar;
+      document.getElementById('pres-cliente-clasica').innerText = nombreMostrar !== 'CLIENTE GENERAL' ? nombreMostrar : '______________________';
+      sel.setAttribute('data-cuit', cuitCliente);
+      sel.setAttribute('data-telefono', telCliente);
+    }
+
+    async function cargarInventario() {
+      try {
+        const res = await fetch(API_INVENTARIO);
+        inventario = await res.json();
+        const ids = ['cpu', 'mother', 'ram', 'storage', 'gpu', 'gabinete', 'monitor', 'impresora'];
+        for (let i = 0; i < ids.length; i++) {
+          const sel = document.getElementById('pres-' + ids[i]);
+          while (sel.options.length > 1) sel.remove(1);
+        }
+        for (let j = 0; j < inventario.length; j++) {
+          const item = inventario[j];
+          let selectId = '';
+          const cat = item.categoria.toLowerCase();
+          if (cat.includes('procesador')) selectId = 'cpu';
+          else if (cat.includes('mother') || cat.includes('placa madre')) selectId = 'mother';
+          else if (cat.includes('ram') || cat.includes('memoria')) selectId = 'ram';
+          else if (cat.includes('almacenamiento') || cat.includes('ssd') || cat.includes('disco')) selectId = 'storage';
+          else if (cat.includes('grafico') || cat.includes('video') || cat.includes('gpu')) selectId = 'gpu';
+          else if (cat.includes('gabinete')) selectId = 'gabinete';
+          else if (cat.includes('monitor')) selectId = 'monitor';
+          else if (cat.includes('impresora')) selectId = 'impresora';
+          if (selectId) {
+            const sel = document.getElementById('pres-' + selectId);
+            const precioFinal = item.precioFinal;
+            const opt = document.createElement('option');
+            opt.value = precioFinal;
+            opt.setAttribute('data-nombre', item.detalle);
+            opt.setAttribute('data-preciofinal', precioFinal);
+            opt.text = item.detalle + ' - U$S ' + precioFinal.toFixed(2);
+            sel.appendChild(opt);
+          }
+        }
+        actualizarSelectsExtras();
+      } catch (e) { console.error('Error cargar inventario:', e); }
+    }
+
+    function actualizarSelectsExtras() {
+      const extras = document.querySelectorAll('.pres-select-extra');
+      for (let e = 0; e < extras.length; e++) {
+        const sel = extras[e];
+        const val = sel.value;
+        while (sel.options.length > 1) sel.remove(1);
+        for (let i = 0; i < inventario.length; i++) {
+          const item = inventario[i];
+          const opt = document.createElement('option');
+          opt.value = item.precioFinal;
+          opt.setAttribute('data-nombre', item.detalle);
+          opt.setAttribute('data-preciofinal', item.precioFinal);
+          opt.text = item.detalle + ' (' + item.categoria + ') - U$S ' + item.precioFinal.toFixed(2);
+          sel.appendChild(opt);
+        }
+        sel.value = val;
+      }
+    }
+
+    function abrirModalArticulo() {
+      document.getElementById('pres-nuevo-detalle').value = '';
+      document.getElementById('pres-nuevo-marca').value = '';
+      document.getElementById('pres-nuevo-costo').value = '';
+      document.getElementById('pres-nuevo-ganancia').value = '30';
+      ivaModal = 10.5;
+      setIvaModalUI(10.5);
+      calcularPreciosModal();
+      document.getElementById('pres-modal-art-msg').classList.add('d-none');
+      cargarCategoriasEnSelect();
+      new bootstrap.Modal(document.getElementById('modalArticulo')).show();
+    }
+
+    function setIvaModal(porcentaje) { ivaModal = porcentaje; setIvaModalUI(porcentaje); calcularPreciosModal(); }
+    function setIvaModalUI(porcentaje) {
+      document.getElementById('pres-modal-iva-105').className = 'btn ' + (porcentaje === 10.5 ? 'btn-primary' : 'btn-outline-secondary');
+      document.getElementById('pres-modal-iva-21').className = 'btn ' + (porcentaje === 21 ? 'btn-primary' : 'btn-outline-secondary');
+    }
+
+    function calcularPreciosModal() {
+      const costo = parseFloat(document.getElementById('pres-nuevo-costo').value) || 0;
+      const ganancia = parseFloat(document.getElementById('pres-nuevo-ganancia').value) || 0;
+      const precioSinIva = costo * (1 + ganancia / 100);
+      const precioFinal = precioSinIva * (1 + ivaModal / 100);
+      document.getElementById('pres-modal-precio-sin-iva').innerText = 'U$S ' + precioSinIva.toFixed(2);
+      document.getElementById('pres-modal-precio-final').innerText = 'U$S ' + precioFinal.toFixed(2);
+    }
+
+    async function cargarCategoriasEnSelect() {
+      try {
+        const res = await fetch(API_INVENTARIO + '/categorias');
+        const cats = await res.json();
+        const sel = document.getElementById('pres-nuevo-categoria');
+        const baseCats = ['Procesador', 'Motherboard', 'Memoria RAM', 'Almacenamiento', 'Placa de Video', 'Gabinete', 'Monitor', 'Impresora', 'Insumos', 'Periféricos'];
+        for (let i = 0; i < cats.length; i++) {
+          const c = cats[i];
+          if (!baseCats.includes(c)) {
+            let existe = false;
+            for (let j = 0; j < sel.options.length; j++) { if (sel.options[j].value === c) { existe = true; break; } }
+            if (!existe) { const opt = document.createElement('option'); opt.value = c; opt.text = c; sel.appendChild(opt); }
+          }
+        }
+      } catch (e) { console.error('Error cargar categorías:', e); }
+    }
+
+    function nuevaCategoria() {
+      const nueva = prompt('Nombre de la nueva categoría (Ej: UPS, Silla Gamer):');
+      if (nueva && nueva.trim()) {
+        const cat = nueva.trim();
+        const sel = document.getElementById('pres-nuevo-categoria');
+        let existe = false;
+        for (let i = 0; i < sel.options.length; i++) { if (sel.options[i].value.toLowerCase() === cat.toLowerCase()) { existe = true; break; } }
+        if (!existe) { const opt = document.createElement('option'); opt.value = cat; opt.text = cat; sel.appendChild(opt); }
+        sel.value = cat;
+      }
+    }
+
+    async function guardarArticulo() {
+      const categoria = document.getElementById('pres-nuevo-categoria').value;
+      const detalle = document.getElementById('pres-nuevo-detalle').value.trim();
+      const marca = document.getElementById('pres-nuevo-marca').value.trim();
+      const costo = parseFloat(document.getElementById('pres-nuevo-costo').value);
+      const ganancia = parseFloat(document.getElementById('pres-nuevo-ganancia').value) || 0;
+      const msg = document.getElementById('pres-modal-art-msg');
+      if (!detalle || isNaN(costo)) {
+        msg.innerText = 'Completá detalle y costo válido.';
+        msg.className = 'mt-3 small alert alert-danger';
+        msg.classList.remove('d-none');
+        return;
+      }
+      try {
+        const res = await fetch(API_INVENTARIO, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ categoria, detalle, marca, costo, ganancia, iva: ivaModal }) });
+        const result = await res.json();
+        if (result.success) {
+          msg.innerText = 'Artículo guardado!';
+          msg.className = 'mt-3 small alert alert-success';
+          msg.classList.remove('d-none');
+          await cargarInventario();
+          setTimeout(() => { bootstrap.Modal.getInstance(document.getElementById('modalArticulo')).hide(); }, 1500);
+        } else { throw new Error(result.message); }
+      } catch (e) {
+        msg.innerText = 'Error: ' + e.message;
+        msg.className = 'mt-3 small alert alert-danger';
+        msg.classList.remove('d-none');
+      }
+    }
+
+    function agregarFilaExtra() {
+      const cont = document.getElementById('pres-contenedor-extras');
+      const id = 'pres_extra_' + Date.now();
+      if (!inventario || inventario.length === 0) { alert('No hay artículos en el inventario. Cargue artículos primero.'); return; }
+      let opts = '<option value="0" data-nombre="">Seleccione artículo...</option>';
+      for (let i = 0; i < inventario.length; i++) {
+        const item = inventario[i];
+        opts += '<option value="' + item.precioFinal + '" data-nombre="' + item.detalle + '">' + item.detalle + ' (' + item.categoria + ') - U$S ' + item.precioFinal.toFixed(2) + '</option>';
+      }
+      const div = document.createElement('div');
+      div.className = 'extra-fila d-flex gap-2 align-items-center';
+      div.id = id;
+      div.innerHTML = '<select class="form-select form-select-dark form-select-sm flex-grow-1 pres-select-extra" onchange="calcular()">' + opts + '</select><div class="d-flex align-items-center gap-1"><span class="small text-slate-400">Cant:</span><input type="number" value="1" min="1" class="form-control form-control-dark pres-input-cant" style="width: 70px;" oninput="calcular()"></div><button onclick="document.getElementById(\'' + id + '\').remove();calcular();" class="btn btn-sm btn-danger"><i class="bi bi-x"></i></button>';
+      cont.appendChild(div);
+    }
+
+    function calcular() {
+      const selectsBase = ['cpu', 'mother', 'ram', 'storage', 'gpu', 'gabinete', 'monitor', 'impresora'];
+      let subtotalUsd = 0;
+      let resumenHTML = '';
+      let itemsClasica = [];
+      const dolar = parseFloat(document.getElementById('pres-valor-dolar').getAttribute('data-valor')) || 1;
+
+      for (let i = 0; i < selectsBase.length; i++) {
+        const id = selectsBase[i];
+        const sel = document.getElementById('pres-' + id);
+        const precio = parseFloat(sel.value);
+        if (precio > 0) {
+          const nombre = sel.options[sel.selectedIndex].getAttribute('data-nombre');
+          subtotalUsd += precio;
+          const precioTxt = moneda === 'USD' ? 'U$S ' + precio.toFixed(2) : '$' + Math.round(precio * dolar).toLocaleString('es-AR');
+          resumenHTML += '<li class="resumen-item d-flex justify-content-between align-items-center"><span class="fw-medium">' + nombre + '</span></li>';
+          itemsClasica.push({ nombre: nombre, cantidad: 1, precioUsd: precio, precioStr: precioTxt });
+        }
+      }
+
+      const extras = document.querySelectorAll('.pres-select-extra');
+      for (let e = 0; e < extras.length; e++) {
+        const sel = extras[e];
+        const precio = parseFloat(sel.value);
+        if (precio > 0) {
+          const fila = sel.closest('.extra-fila');
+          const cantInput = fila ? fila.querySelector('.pres-input-cant') : null;
+          const cant = cantInput ? (parseInt(cantInput.value) || 1) : 1;
+          const subItem = precio * cant;
+          const nombre = sel.options[sel.selectedIndex].getAttribute('data-nombre');
+          subtotalUsd += subItem;
+          const precioTxt = moneda === 'USD' ? 'U$S ' + subItem.toFixed(2) : '$' + Math.round(subItem * dolar).toLocaleString('es-AR');
+          const textoItem = cant > 1 ? cant + 'x ' + nombre : nombre;
+          resumenHTML += '<li class="resumen-item d-flex justify-content-between align-items-center"><span class="fw-medium">' + textoItem + '</span><span class="fw-bold">' + precioTxt + '</span></li>';
+          itemsClasica.push({ nombre: textoItem, cantidad: cant, precioUsd: subItem, precioStr: precioTxt });
+        }
+      }
+
+      if (!resumenHTML) resumenHTML = '<li class="text-slate-500 fst-italic">No hay componentes seleccionados</li>';
+
+      const porcDesc = parseFloat(document.getElementById('pres-input-descuento').value) || 0;
+      const motivoDesc = document.getElementById('pres-input-motivo').value.trim();
+      const montoDesc = subtotalUsd * (porcDesc / 100);
+      const totalFinal = Math.max(0, subtotalUsd - montoDesc);
+
+      const fmt = function(val) { return moneda === 'USD' ? 'U$S ' + val.toFixed(2) : '$' + Math.round(val * dolar).toLocaleString('es-AR'); };
+
+      document.getElementById('pres-lista-resumen').innerHTML = resumenHTML;
+      document.getElementById('pres-subtotal-resumen').innerText = fmt(subtotalUsd);
+
+      const filaDesc = document.getElementById('pres-fila-desc-resumen');
+      const filaMotivo = document.getElementById('pres-fila-motivo-resumen');
+      if (porcDesc > 0) {
+        filaDesc.classList.remove('d-none');
+        document.getElementById('pres-texto-desc-resumen').innerText = 'Descuento (' + porcDesc + '%):';
+        document.getElementById('pres-monto-desc-resumen').innerText = '-' + fmt(montoDesc);
+        if (motivoDesc) { filaMotivo.classList.remove('d-none'); document.getElementById('pres-texto-motivo-resumen').innerText = motivoDesc; }
+        else { filaMotivo.classList.add('d-none'); }
+      } else { filaDesc.classList.add('d-none'); filaMotivo.classList.add('d-none'); }
+
+      document.getElementById('pres-total').innerText = fmt(totalFinal);
+
+      // Actualizar tabla clásica
+      const tbody = document.getElementById('pres-tbody-clasica');
+      tbody.innerHTML = '';
+      for (let k = 0; k < itemsClasica.length; k++) {
+        const item = itemsClasica[k];
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + item.cantidad + '</td><td>' + item.nombre + '</td><td>' + item.precioStr + '</td>';
+        tbody.appendChild(tr);
+      }
+      document.getElementById('pres-subtotal-clasica').innerText = fmt(subtotalUsd);
+      const filaDescClasica = document.getElementById('pres-fila-desc-clasica');
+      if (porcDesc > 0) {
+        filaDescClasica.style.display = 'table-row';
+        document.getElementById('pres-porc-desc-clasica').innerText = porcDesc;
+        document.getElementById('pres-monto-desc-clasica').innerText = fmt(montoDesc);
+      } else { filaDescClasica.style.display = 'none'; }
+      document.getElementById('pres-total-clasica').innerText = fmt(totalFinal);
+
+      const leyendaDolar = document.getElementById('pres-leyenda-dolar-clasica');
+      if (leyendaDolar) { leyendaDolar.innerText = 'Precio sujeto a stock y variación del dólar. Presupuesto a dólar oficial 1u$S=$' + dolar.toFixed(0); }
+    }
+
+    function imprimirPDF() {
+      calcular();
+      setTimeout(() => { window.print(); }, 100);
+    }
+
+    async function cargarListaHistorial() {
+      const sel = document.getElementById('pres-select-historial');
+      sel.options[0].text = 'Buscando...';
+      try {
+        const res = await fetch(API_PRESUPUESTOS);
+        historial = await res.json();
+        while (sel.options.length > 1) sel.remove(1);
+        sel.options[0].text = 'Seleccionar presupuesto guardado...';
+        if (Array.isArray(historial) && historial.length) {
+          for (let i = 0; i < historial.length; i++) {
+            const p = historial[i];
+            const opt = document.createElement('option');
+            opt.value = p.numero;
+            const totalFmt = p.moneda === 'USD' ? 'U$S ' + (p.totalUsd || 0).toFixed(2) : '$' + Math.round((p.totalUsd || 0) * (p.cotizacionDolar || 1)).toLocaleString('es-AR');
+            opt.text = p.numero + ' - ' + p.cliente + ' (' + p.fecha + ') - ' + totalFmt;
+            sel.appendChild(opt);
+          }
+        }
+      } catch (e) { sel.options[0].text = 'Error al cargar'; }
+    }
+
+    function seleccionarHistorial(num) {
+      if (!num) return;
+      const enc = historial.find(p => p.numero === num);
+      if (!enc) return;
+      const selCli = document.getElementById('pres-select-cliente');
+      if (enc.cliente_id) {
+        for (let i = 0; i < selCli.options.length; i++) {
+          if (selCli.options[i].value === enc.cliente_id) { selCli.selectedIndex = i; actualizarCliente(selCli); break; }
+        }
+      }
+      if (enc.moneda) cambiarMoneda(enc.moneda);
+      if (enc.motivoDescuento) document.getElementById('pres-input-motivo').value = enc.motivoDescuento;
+      if (enc.descuentoPorcentaje !== undefined) document.getElementById('pres-input-descuento').value = enc.descuentoPorcentaje;
+    }
+
+    async function guardarHistorial() {
+      const selCliente = document.getElementById('pres-select-cliente');
+      const idCliente = selCliente.value || '';
+      const cliente = document.getElementById('pres-nombre-cliente-display').innerText;
+      const cuitReal = selCliente.getAttribute('data-cuit') || '';
+      const telefonoReal = selCliente.getAttribute('data-telefono') || '';
+      let subtotalUsd = 0;
+      const detalle = [];
+      const dolar = parseFloat(document.getElementById('pres-valor-dolar').getAttribute('data-valor')) || 1;
+
+      const ids = ['cpu', 'mother', 'ram', 'storage', 'gpu', 'gabinete', 'monitor', 'impresora'];
+      for (let i = 0; i < ids.length; i++) {
+        const sel = document.getElementById('pres-' + ids[i]);
+        const precio = parseFloat(sel.value);
+        if (precio > 0) {
+          const nombre = sel.options[sel.selectedIndex].getAttribute('data-nombre');
+          subtotalUsd += precio;
+          detalle.push({ nombre: nombre, cantidad: 1, precioUsd: precio });
+        }
+      }
+
+      const extras = document.querySelectorAll('.pres-select-extra');
+      for (let e = 0; e < extras.length; e++) {
+        const sel = extras[e];
+        const precio = parseFloat(sel.value);
+        if (precio > 0) {
+          const fila = sel.closest('.extra-fila');
+          const cant = fila ? (parseInt(fila.querySelector('.pres-input-cant').value) || 1) : 1;
+          const nombre = sel.options[sel.selectedIndex].getAttribute('data-nombre');
+          const subItem = precio * cant;
+          subtotalUsd += subItem;
+          detalle.push({ nombre: nombre, cantidad: cant, precioUsd: subItem });
+        }
+      }
+
+      if (!detalle.length) { alert('No hay productos seleccionados.'); return; }
+
+      const porcDesc = parseFloat(document.getElementById('pres-input-descuento').value) || 0;
+      const motivoDesc = document.getElementById('pres-input-motivo').value.trim();
+      const totalUsd = Math.max(0, subtotalUsd - (subtotalUsd * porcDesc / 100));
+
+      try {
+        const res = await fetch(API_PRESUPUESTOS, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cliente_id: idCliente || null,
+            cliente_nombre: cliente,
+            cliente_cuit: cuitReal,
+            cliente_telefono: telefonoReal,
+            detalle: detalle,
+            moneda: moneda,
+            subtotal_usd: subtotalUsd,
+            descuento_porcentaje: porcDesc,
+            motivo_descuento: motivoDesc,
+            total_usd: totalUsd,
+            cotizacion_dolar: dolar,
+            estado: 'Pendiente',
+            observaciones: ''
+          })
+        });
+        const result = await res.json();
+        if (result.success) {
+          alert('Presupuesto guardado! N°: ' + result.numeroPresupuesto);
+          await cargarListaHistorial();
+        } else { throw new Error(result.message); }
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    function copiarWhatsapp() {
+      const selCliente = document.getElementById('pres-select-cliente');
+      const cliente = document.getElementById('pres-nombre-cliente-display').innerText;
+      const cuitReal = selCliente.getAttribute('data-cuit') || '';
+      const subtotalTxt = document.getElementById('pres-subtotal-resumen').innerText;
+      const totalTxt = document.getElementById('pres-total').innerText;
+      const porcDesc = parseFloat(document.getElementById('pres-input-descuento').value) || 0;
+      const motivoDesc = document.getElementById('pres-input-motivo').value.trim();
+      const dolarTxt = document.getElementById('pres-valor-dolar').innerText;
+      const dolarVal = parseFloat(document.getElementById('pres-valor-dolar').getAttribute('data-valor')) || 1;
+      const empresa = configEmpresa.nombre || 'Data Technology';
+
+      let texto = '*' + empresa + '*\n*PRESUPUESTO*\nCliente: ' + cliente;
+      if (cuitReal) texto += '\nCUIT: ' + cuitReal;
+      texto += '\nDólar BNA: ' + dolarTxt + '\n-----------------------------------\n*Detalle:*\n';
+
+      const ids = ['cpu', 'mother', 'ram', 'storage', 'gpu', 'gabinete', 'monitor', 'impresora'];
+      for (let i = 0; i < ids.length; i++) {
+        const sel = document.getElementById('pres-' + ids[i]);
+        const precio = parseFloat(sel.value);
+        if (precio > 0) {
+          const nombre = sel.options[sel.selectedIndex].getAttribute('data-nombre');
+          texto += '- ' + nombre + '\n';
+        }
+      }
+
+      const extras = document.querySelectorAll('.pres-select-extra');
+      for (let e = 0; e < extras.length; e++) {
+        const sel = extras[e];
+        const precio = parseFloat(sel.value);
+        if (precio > 0) {
+          const fila = sel.closest('.extra-fila');
+          const cant = fila ? (parseInt(fila.querySelector('.pres-input-cant').value) || 1) : 1;
+          const nombre = sel.options[sel.selectedIndex].getAttribute('data-nombre');
+          const subItem = precio * cant;
+          const precioTxt = moneda === 'USD' ? 'U$S ' + subItem.toFixed(2) : '$' + Math.round(subItem * dolarVal).toLocaleString('es-AR');
+          texto += '- ' + (cant > 1 ? cant + 'x ' : '') + nombre + ' - ' + precioTxt + '\n';
+        }
+      }
+
+      texto += '-----------------------------------\n';
+      texto += 'Subtotal: ' + subtotalTxt + '\n';
+      if (porcDesc > 0) {
+        texto += 'Descuento (' + porcDesc + '%): Aplicado\n';
+        if (motivoDesc) texto += 'Motivo: ' + motivoDesc + '\n';
+      }
+      texto += '*TOTAL FINAL: ' + totalTxt + '*\n';
+      texto += 'Nota: Precios incluyen IVA. Expresados en dólares según cotización BNA.\nMantenimiento: 48 días.\nForma de pago: Contado/Transferencia.\nSin otro particular saluda atte.\n*' + empresa + '*';
+
+      navigator.clipboard.writeText(texto).then(() => { alert('Presupuesto copiado al portapapeles!'); }).catch(() => { alert('Error al copiar'); });
+    }
+  </script>
+
+</body>
+</html>
