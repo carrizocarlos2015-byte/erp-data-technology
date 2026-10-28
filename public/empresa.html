@@ -4,386 +4,212 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ERP - Configuración Empresa</title>
-
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-
-    /* MENÚ DE NAVEGACIÓN */
-    .menu-nav {
-      background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-      padding: 10px 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-    .menu-nav .logo { color: white; font-weight: bold; font-size: 1.2rem; text-decoration: none; }
-    .menu-nav .nav-link {
-      color: rgba(255,255,255,0.85);
-      font-weight: 500;
-      padding: 8px 16px;
-      border-radius: 8px;
-      transition: all 0.2s;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .menu-nav .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
-    .menu-nav .nav-link.active { background: white; color: #0d6efd; }
-    .menu-nav .nav-link i { font-size: 1.1rem; }
-    @media (max-width: 767px) { .menu-nav .nav-link span { display: none; } .menu-nav .nav-link { padding: 8px 10px; } }
-
-    .card { border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
-    .card-header-custom { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0; }
-    .card-header-custom h4 { margin: 0; font-weight: bold; }
-    .card-header-custom p { margin: 5px 0 0 0; opacity: 0.9; font-size: 0.9rem; }
-
-    .form-label { font-weight: 600; color: #495057; font-size: 0.9rem; }
-    .form-control:focus, .form-select:focus { border-color: #667eea; box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25); }
-
-    .preview-logo-container {
-      background: #f8f9fa;
-      border: 2px dashed #dee2e6;
-      border-radius: 10px;
-      padding: 20px;
-      text-align: center;
-      min-height: 150px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .preview-logo-container img {
-      max-height: 120px;
-      max-width: 100%;
-      object-fit: contain;
-    }
-    .preview-logo-container .placeholder {
-      color: #adb5bd;
-      font-size: 0.9rem;
-    }
-    .preview-logo-container .placeholder i { font-size: 3rem; display: block; margin-bottom: 10px; }
-
-    .btn-guardar {
-      background: linear-gradient(135deg, #198754 0%, #146c43 100%);
-      border: none;
-      padding: 12px 30px;
-      font-weight: 600;
-      font-size: 1rem;
-      transition: all 0.2s;
-    }
-    .btn-guardar:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3); }
-    .btn-eliminar-logo { background: #dc3545; border: none; padding: 8px 20px; font-weight: 600; }
-    .btn-eliminar-logo:hover { background: #bb2d3b; }
-
-    .mensaje-exito {
-      background: #d1e7dd;
-      color: #0f5132;
-      border: 1px solid #badbcc;
-      border-radius: 8px;
-      padding: 12px 20px;
-      margin-bottom: 15px;
-      display: none;
-    }
-    .mensaje-error {
-      background: #f8d7da;
-      color: #842029;
-      border: 1px solid #f5c2c7;
-      border-radius: 8px;
-      padding: 12px 20px;
-      margin-bottom: 15px;
-      display: none;
-    }
-
-    .info-box {
-      background: #e7f1ff;
-      border-left: 4px solid #0d6efd;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-    .info-box i { color: #0d6efd; margin-right: 8px; }
+    body { background-color: #f8f9fa; }
+    .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .card { border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border: none; }
+    .logo-preview { width: 200px; height: auto; border: 2px dashed #dee2e6; border-radius: 8px; padding: 10px; }
+    .btn-save { position: fixed; bottom: 30px; right: 30px; z-index: 1000; box-shadow: 0 4px 15px rgba(13,110,253,0.4); }
   </style>
 </head>
 <body>
-
-  <!-- MENÚ DE NAVEGACIÓN -->
-  <nav class="menu-nav">
-    <div class="container-fluid px-3">
-      <div class="d-flex align-items-center justify-content-between flex-wrap">
-        <a href="index.html" class="logo me-3"><i class="bi bi-building"></i> ERP Data Technology</a>
-        <div class="d-flex flex-wrap gap-1">
-          <a href="index.html" class="nav-link"><i class="bi bi-house"></i> <span>Inicio</span></a>
-          <a href="clientes.html" class="nav-link"><i class="bi bi-people"></i> <span>Clientes</span></a>
-          <a href="cuenta-corriente.html" class="nav-link"><i class="bi bi-wallet2"></i> <span>Cta. Cte.</span></a>
-          <a href="finanzas.html" class="nav-link"><i class="bi bi-cash-stack"></i> <span>Finanzas</span></a>
-          <a href="cheques.html" class="nav-link"><i class="bi bi-receipt"></i> <span>Cheques</span></a>
-          <a href="trabajos.html" class="nav-link"><i class="bi bi-tools"></i> <span>Trabajos</span></a>
-          <a href="agenda.html" class="nav-link"><i class="bi bi-calendar-event"></i> <span>Agenda</span></a>
-          <a href="reportes.html" class="nav-link"><i class="bi bi-file-pdf"></i> <span>Reportes</span></a>
-          <a href="empresa.html" class="nav-link active"><i class="bi bi-building-gear"></i> <span>Empresa</span></a>
-        </div>
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="index.html"><i class="bi bi-building"></i> ERP Data Technology</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html"><i class="bi bi-house"></i> Inicio</a></li>
+          <li class="nav-item"><a class="nav-link" href="clientes.html"><i class="bi bi-people"></i> Clientes</a></li>
+          <li class="nav-item"><a class="nav-link" href="cuenta-corriente.html"><i class="bi bi-wallet2"></i> Cta. Cte.</a></li>
+          <li class="nav-item"><a class="nav-link" href="finanzas.html"><i class="bi bi-cash-stack"></i> Finanzas</a></li>
+          <li class="nav-item"><a class="nav-link" href="cheques.html"><i class="bi bi-receipt"></i> Cheques</a></li>
+          <li class="nav-item"><a class="nav-link" href="trabajos.html"><i class="bi bi-briefcase"></i> Trabajos</a></li>
+          <li class="nav-item"><a class="nav-link" href="agenda.html"><i class="bi bi-calendar"></i> Agenda</a></li>
+          <li class="nav-item"><a class="nav-link" href="reportes.html"><i class="bi bi-bar-chart"></i> Reportes</a></li>
+          <li class="nav-item"><a class="nav-link active" href="empresa.html"><i class="bi bi-building"></i> Empresa</a></li>
+          <li class="nav-item"><a class="nav-link" href="presupuestos.html"><i class="bi bi-pc-display"></i> PC Builder</a></li>
+        </ul>
       </div>
     </div>
   </nav>
 
-  <div class="container-fluid px-3 py-3">
+  <div class="container mt-4">
+    <h2 class="mb-4"><i class="bi bi-gear"></i> Configuración de la Empresa</h2>
+    <p class="text-muted mb-4">Estos datos se usarán en reportes PDF, presupuestos y documentos oficiales.</p>
 
-    <!-- HEADER -->
-    <div class="card-header-custom mb-3">
-      <h4><i class="bi bi-building-gear"></i> Configuración de la Empresa</h4>
-      <p>Estos datos se usarán en reportes PDF, presupuestos y documentos oficiales.</p>
-    </div>
+    <div class="alert alert-success d-none" id="alertSuccess">Datos guardados correctamente ✅</div>
+    <div class="alert alert-danger d-none" id="alertError">Error al guardar ❌</div>
 
-    <!-- MENSAJES -->
-    <div class="mensaje-exito" id="msgExito">
-      <i class="bi bi-check-circle-fill"></i> <span id="msgExitoTexto">Datos guardados correctamente</span>
-    </div>
-    <div class="mensaje-error" id="msgError">
-      <i class="bi bi-exclamation-triangle-fill"></i> <span id="msgErrorTexto">Error al guardar</span>
-    </div>
-
-    <!-- INFO BOX -->
-    <div class="info-box">
-      <i class="bi bi-info-circle-fill"></i>
-      <strong>Importante:</strong> Los datos que cargues aquí aparecerán automáticamente en los PDFs de reportes de cuenta corriente, reportes de saldos y presupuestos. El logo se mostrará en el encabezado de todos los documentos.
-    </div>
-
-    <!-- FORMULARIO -->
-    <div class="card">
-      <div class="card-body p-4">
-        <form id="formEmpresa" onsubmit="event.preventDefault(); guardarEmpresa();">
-
-          <!-- DATOS PRINCIPALES -->
-          <h5 class="fw-bold mb-3"><i class="bi bi-building"></i> Datos Principales</h5>
-          <div class="row g-3 mb-4">
-            <div class="col-md-6">
-              <label for="empNombre" class="form-label">Nombre / Razón Social *</label>
-              <input type="text" class="form-control" id="empNombre" placeholder="Ej: Data Technology S.A.S." required>
-            </div>
-            <div class="col-md-6">
-              <label for="empCuit" class="form-label">CUIT / CUIL</label>
-              <input type="text" class="form-control" id="empCuit" placeholder="20-26190534-6">
-            </div>
-            <div class="col-md-8">
-              <label for="empDireccion" class="form-label">Dirección</label>
-              <input type="text" class="form-control" id="empDireccion" placeholder="Jujuy 1156 - Ciudad - Mendoza">
-            </div>
-            <div class="col-md-4">
-              <label for="empTelefono" class="form-label">Teléfono / Celular</label>
-              <input type="text" class="form-control" id="empTelefono" placeholder="261-6080860">
-            </div>
-          </div>
-
-          <!-- CONTACTO -->
-          <h5 class="fw-bold mb-3"><i class="bi bi-envelope"></i> Contacto</h5>
-          <div class="row g-3 mb-4">
-            <div class="col-md-6">
-              <label for="empEmail" class="form-label">Email</label>
-              <input type="email" class="form-control" id="empEmail" placeholder="contacto@datatechnology.com">
-            </div>
-            <div class="col-md-6">
-              <label for="empSitioWeb" class="form-label">Sitio Web</label>
-              <input type="text" class="form-control" id="empSitioWeb" placeholder="www.datatechnology.com">
-            </div>
-          </div>
-
-          <!-- LOGO -->
-          <h5 class="fw-bold mb-3"><i class="bi bi-image"></i> Logo de la Empresa</h5>
-          <div class="row g-3 mb-4">
-            <div class="col-md-7">
-              <label for="empLogoFile" class="form-label">Seleccionar Logo (PNG o JPG)</label>
-              <input type="file" class="form-control" id="empLogoFile" accept="image/png, image/jpeg" onchange="previsualizarLogo(this)">
-              <small class="text-muted mt-1 d-block">Tamaño recomendado: 300x100 px. Máximo 2 MB.</small>
-              <input type="hidden" id="empLogoBase64">
-            </div>
-            <div class="col-md-5">
-              <label class="form-label">Vista Previa</label>
-              <div class="preview-logo-container" id="previewContainer">
-                <div class="placeholder" id="placeholderLogo">
-                  <i class="bi bi-image"></i>
-                  <span>No hay logo cargado</span>
-                </div>
-                <img id="imgPreviewLogo" src="" alt="Logo" style="display: none;">
+    <form id="formEmpresa">
+      <div class="row g-4">
+        <!-- Datos Principales -->
+        <div class="col-md-8">
+          <div class="card p-4 mb-4">
+            <h5 class="mb-3"><i class="bi bi-info-circle"></i> Datos Principales</h5>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Nombre / Razón Social *</label>
+                <input type="text" class="form-control" id="empNombre" required>
               </div>
-              <div class="text-center mt-2">
-                <button type="button" class="btn btn-eliminar-logo btn-sm" onclick="eliminarLogo()" id="btnEliminarLogo" style="display: none;">
-                  <i class="bi bi-trash"></i> Eliminar Logo
-                </button>
+              <div class="col-md-6">
+                <label class="form-label">CUIT / CUIL</label>
+                <input type="text" class="form-control" id="empCuit">
+              </div>
+              <div class="col-md-12">
+                <label class="form-label">Dirección</label>
+                <input type="text" class="form-control" id="empDireccion">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Teléfono / Celular</label>
+                <input type="text" class="form-control" id="empTelefono">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" id="empEmail">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Sitio Web</label>
+                <input type="url" class="form-control" id="empWeb">
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- BOTONES -->
-          <div class="d-flex gap-2 pt-3 border-top">
-            <button type="submit" class="btn btn-guardar btn-success" id="btnGuardar">
-              <i class="bi bi-save"></i> Guardar Datos
-            </button>
-            <button type="button" class="btn btn-outline-secondary" onclick="cargarDatos()">
-              <i class="bi bi-arrow-clockwise"></i> Recargar
+        <!-- Logo -->
+        <div class="col-md-4">
+          <div class="card p-4 text-center">
+            <h5 class="mb-3"><i class="bi bi-image"></i> Logo de la Empresa</h5>
+            <img src="" alt="Logo" class="logo-preview mb-3 d-none" id="logoPreview">
+            <p class="text-muted small" id="noLogoText">No hay logo cargado</p>
+            <input type="file" class="form-control form-control-sm mb-2" id="logoInput" accept="image/png,image/jpeg">
+            <small class="text-muted d-block mb-3">PNG o JPG. Máx 2MB. Recomiendo 300x100px.</small>
+            <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="eliminarLogo()" id="btnEliminarLogo" style="display:none;">
+              <i class="bi bi-trash"></i> Eliminar Logo
             </button>
           </div>
-
-        </form>
+        </div>
       </div>
-    </div>
 
+      <div class="d-flex justify-content-end gap-2 mt-4">
+        <button type="button" class="btn btn-secondary" onclick="cargarDatos()">
+          <i class="bi bi-arrow-clockwise"></i> Recargar
+        </button>
+        <button type="submit" class="btn btn-primary px-4">
+          <i class="bi bi-check-circle"></i> Guardar Datos
+        </button>
+      </div>
+    </form>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
   <script>
-    const API_URL = 'http://localhost:3000/api/empresa';
+    const API = '/api';
+    let logoBase64 = null;
 
-    document.addEventListener('DOMContentLoaded', function() {
-      cargarDatos();
-    });
+    document.addEventListener('DOMContentLoaded', cargarDatos);
 
     async function cargarDatos() {
       try {
-        const res = await fetch(API_URL);
+        const res = await fetch(`${API}/empresa`);
         const data = await res.json();
-
-        document.getElementById('empNombre').value = data.nombre || '';
-        document.getElementById('empCuit').value = data.cuit || '';
-        document.getElementById('empDireccion').value = data.direccion || '';
-        document.getElementById('empTelefono').value = data.telefono || '';
-        document.getElementById('empEmail').value = data.email || '';
-        document.getElementById('empSitioWeb').value = data.sitio_web || '';
-
-        if (data.logo_base64) {
-          document.getElementById('empLogoBase64').value = data.logo_base64;
-          document.getElementById('imgPreviewLogo').src = data.logo_base64;
-          document.getElementById('imgPreviewLogo').style.display = 'block';
-          document.getElementById('placeholderLogo').style.display = 'none';
-          document.getElementById('btnEliminarLogo').style.display = 'inline-block';
-        } else {
-          document.getElementById('imgPreviewLogo').style.display = 'none';
-          document.getElementById('placeholderLogo').style.display = 'block';
-          document.getElementById('btnEliminarLogo').style.display = 'none';
+        
+        if (data && data.nombre) {
+          document.getElementById('empNombre').value = data.nombre || '';
+          document.getElementById('empCuit').value = data.cuit || '';
+          document.getElementById('empDireccion').value = data.direccion || '';
+          document.getElementById('empTelefono').value = data.telefono || '';
+          document.getElementById('empEmail').value = data.email || '';
+          document.getElementById('empWeb').value = data.web || '';
+          
+          if (data.logo) {
+            logoBase64 = data.logo;
+            document.getElementById('logoPreview').src = data.logo;
+            document.getElementById('logoPreview').classList.remove('d-none');
+            document.getElementById('noLogoText').classList.add('d-none');
+            document.getElementById('btnEliminarLogo').style.display = 'block';
+          } else {
+            resetLogoUI();
+          }
         }
-
-        ocultarMensajes();
       } catch (error) {
         console.error('Error al cargar datos:', error);
-        mostrarError('Error al conectar con el servidor');
       }
     }
 
-    function previsualizarLogo(input) {
-      if (input.files && input.files[0]) {
-        const file = input.files[0];
-
-        // Validar tamaño (2 MB)
-        if (file.size > 2 * 1024 * 1024) {
-          alert('El archivo es demasiado grande. Máximo 2 MB.');
-          input.value = '';
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const base64 = e.target.result;
-          document.getElementById('empLogoBase64').value = base64;
-          document.getElementById('imgPreviewLogo').src = base64;
-          document.getElementById('imgPreviewLogo').style.display = 'block';
-          document.getElementById('placeholderLogo').style.display = 'none';
-          document.getElementById('btnEliminarLogo').style.display = 'inline-block';
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-
-    async function eliminarLogo() {
-      if (!confirm('¿Estás seguro de eliminar el logo?')) return;
-
-      try {
-        const res = await fetch(`${API_URL}/logo`, { method: 'DELETE' });
-        const result = await res.json();
-
-        if (result.success) {
-          document.getElementById('empLogoBase64').value = '';
-          document.getElementById('imgPreviewLogo').src = '';
-          document.getElementById('imgPreviewLogo').style.display = 'none';
-          document.getElementById('placeholderLogo').style.display = 'block';
-          document.getElementById('btnEliminarLogo').style.display = 'none';
-          document.getElementById('empLogoFile').value = '';
-          mostrarExito(result.message);
-        } else {
-          mostrarError(result.message);
-        }
-      } catch (error) {
-        console.error('Error al eliminar logo:', error);
-        mostrarError('Error al conectar con el servidor');
-      }
-    }
-
-    async function guardarEmpresa() {
-      const nombre = document.getElementById('empNombre').value.trim();
-      if (!nombre) {
-        mostrarError('El nombre de la empresa es obligatorio');
+    document.getElementById('logoInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      if (file.size > 2 * 1024 * 1024) {
+        alert('El archivo supera los 2MB');
+        this.value = '';
         return;
       }
 
-      const btn = document.getElementById('btnGuardar');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando...';
-      ocultarMensajes();
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        logoBase64 = ev.target.result;
+        document.getElementById('logoPreview').src = logoBase64;
+        document.getElementById('logoPreview').classList.remove('d-none');
+        document.getElementById('noLogoText').classList.add('d-none');
+        document.getElementById('btnEliminarLogo').style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
 
-      const datos = {
-        nombre: nombre,
+    function eliminarLogo() {
+      logoBase64 = null;
+      document.getElementById('logoInput').value = '';
+      resetLogoUI();
+    }
+
+    function resetLogoUI() {
+      document.getElementById('logoPreview').classList.add('d-none');
+      document.getElementById('noLogoText').classList.remove('d-none');
+      document.getElementById('btnEliminarLogo').style.display = 'none';
+    }
+
+    document.getElementById('formEmpresa').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const data = {
+        nombre: document.getElementById('empNombre').value.trim(),
         cuit: document.getElementById('empCuit').value.trim(),
         direccion: document.getElementById('empDireccion').value.trim(),
         telefono: document.getElementById('empTelefono').value.trim(),
         email: document.getElementById('empEmail').value.trim(),
-        sitio_web: document.getElementById('empSitioWeb').value.trim(),
-        logo_base64: document.getElementById('empLogoBase64').value
+        web: document.getElementById('empWeb').value.trim(),
+        logo: logoBase64
       };
 
       try {
-        const res = await fetch(API_URL, {
+        const res = await fetch(`${API}/empresa`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(datos)
+          body: JSON.stringify(data)
         });
+        
         const result = await res.json();
-
+        
         if (result.success) {
-          mostrarExito(result.message);
+          document.getElementById('alertSuccess').classList.remove('d-none');
+          document.getElementById('alertError').classList.add('d-none');
+          setTimeout(() => document.getElementById('alertSuccess').classList.add('d-none'), 3000);
         } else {
-          mostrarError(result.message);
+          throw new Error(result.message);
         }
       } catch (error) {
-        console.error('Error al guardar:', error);
-        mostrarError('Error al conectar con el servidor');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-save"></i> Guardar Datos';
+        document.getElementById('alertError').textContent = 'Error al guardar: ' + error.message;
+        document.getElementById('alertError').classList.remove('d-none');
+        document.getElementById('alertSuccess').classList.add('d-none');
+        setTimeout(() => document.getElementById('alertError').classList.add('d-none'), 5000);
       }
-    }
-
-    function mostrarExito(texto) {
-      document.getElementById('msgExitoTexto').textContent = texto;
-      document.getElementById('msgExito').style.display = 'block';
-      document.getElementById('msgError').style.display = 'none';
-      setTimeout(() => { document.getElementById('msgExito').style.display = 'none'; }, 5000);
-    }
-
-    function mostrarError(texto) {
-      document.getElementById('msgErrorTexto').textContent = texto;
-      document.getElementById('msgError').style.display = 'block';
-      document.getElementById('msgExito').style.display = 'none';
-      setTimeout(() => { document.getElementById('msgError').style.display = 'none'; }, 5000);
-    }
-
-    function ocultarMensajes() {
-      document.getElementById('msgExito').style.display = 'none';
-      document.getElementById('msgError').style.display = 'none';
-    }
+    });
   </script>
-
 </body>
 </html>

@@ -3,125 +3,119 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ERP - Gestión de Categorías</title>
+  <title>ERP - Categorías</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .menu-nav { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); padding: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 1000; }
-    .menu-nav .logo { color: white; font-weight: bold; font-size: 1.2rem; text-decoration: none; }
-    .menu-nav .nav-link { color: rgba(255,255,255,0.85); font-weight: 500; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; text-decoration: none; display: flex; align-items: center; gap: 6px; }
-    .menu-nav .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
-    .menu-nav .nav-link.active { background: white; color: #0d6efd; }
-    .menu-nav .nav-link i { font-size: 1.1rem; }
-    @media (max-width: 767px) { .menu-nav .nav-link span { display: none; } .menu-nav .nav-link { padding: 8px 10px; } }
-    .card { border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
-    .categoria-item { border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: white; }
-    .categoria-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .categoria-nombre { font-weight: bold; font-size: 1.1rem; }
-    .subcategoria-list { margin-left: 20px; margin-top: 10px; }
-    .subcategoria-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #f0f0f0; }
-    .subcategoria-item:last-child { border-bottom: none; }
-    .badge-count { background: #6c757d; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; }
-    .btn-accion { padding: 4px 8px; font-size: 0.85rem; margin: 0 2px; }
-    .btn-editar { background-color: #0d6efd; color: white; }
-    .btn-eliminar { background-color: #dc3545; color: white; }
-    .btn-agregar { background-color: #198754; color: white; }
-    .fab-button { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: #0d6efd; color: white; border: none; box-shadow: 0 4px 12px rgba(13,110,253,0.4); font-size: 1.5rem; display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    body { background-color: #f8f9fa; }
+    .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .categoria-card {
+      background: white; border-radius: 12px; padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 15px;
+      border-left: 4px solid #667eea;
+    }
+    .subcategoria-item {
+      background: #f8f9fa; border-radius: 8px; padding: 10px 15px;
+      margin: 5px 0 5px 30px; display: flex; justify-content: space-between; align-items: center;
+    }
   </style>
 </head>
 <body>
-
-  <nav class="menu-nav">
-    <div class="container-fluid px-3">
-      <div class="d-flex align-items-center justify-content-between flex-wrap">
-        <a href="index.html" class="logo me-3"><i class="bi bi-building"></i> ERP Data Technology</a>
-        <div class="d-flex flex-wrap gap-1">
-          <a href="index.html" class="nav-link"><i class="bi bi-house"></i> <span>Inicio</span></a>
-          <a href="clientes.html" class="nav-link"><i class="bi bi-people"></i> <span>Clientes</span></a>
-          <a href="cuenta-corriente.html" class="nav-link"><i class="bi bi-wallet2"></i> <span>Cta. Cte.</span></a>
-          <a href="finanzas.html" class="nav-link"><i class="bi bi-cash-stack"></i> <span>Finanzas</span></a>
-          <a href="categorias.html" class="nav-link active"><i class="bi bi-tags"></i> <span>Categorías</span></a>
-          <a href="cheques.html" class="nav-link"><i class="bi bi-receipt"></i> <span>Cheques</span></a>
-          <a href="trabajos.html" class="nav-link"><i class="bi bi-tools"></i> <span>Trabajos</span></a>
-          <a href="agenda.html" class="nav-link"><i class="bi bi-calendar-event"></i> <span>Agenda</span></a>
-          <a href="reportes.html" class="nav-link"><i class="bi bi-file-pdf"></i> <span>Reportes</span></a>
-          <a href="empresa.html" class="nav-link"><i class="bi bi-building-gear"></i> <span>Empresa</span></a>
-          <a href="presupuestos.html" class="nav-link"><i class="bi bi-pc-display"></i> <span>PC Builder</span></a>
-        </div>
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="index.html"><i class="bi bi-building"></i> ERP Data Technology</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html"><i class="bi bi-house"></i> Inicio</a></li>
+          <li class="nav-item"><a class="nav-link" href="clientes.html"><i class="bi bi-people"></i> Clientes</a></li>
+          <li class="nav-item"><a class="nav-link" href="cuenta-corriente.html"><i class="bi bi-wallet2"></i> Cta. Cte.</a></li>
+          <li class="nav-item"><a class="nav-link" href="finanzas.html"><i class="bi bi-cash-stack"></i> Finanzas</a></li>
+          <li class="nav-item"><a class="nav-link active" href="categorias.html"><i class="bi bi-tags"></i> Categorías</a></li>
+          <li class="nav-item"><a class="nav-link" href="cheques.html"><i class="bi bi-receipt"></i> Cheques</a></li>
+          <li class="nav-item"><a class="nav-link" href="trabajos.html"><i class="bi bi-briefcase"></i> Trabajos</a></li>
+          <li class="nav-item"><a class="nav-link" href="agenda.html"><i class="bi bi-calendar"></i> Agenda</a></li>
+          <li class="nav-item"><a class="nav-link" href="reportes.html"><i class="bi bi-bar-chart"></i> Reportes</a></li>
+          <li class="nav-item"><a class="nav-link" href="empresa.html"><i class="bi bi-building"></i> Empresa</a></li>
+          <li class="nav-item"><a class="nav-link" href="presupuestos.html"><i class="bi bi-pc-display"></i> PC Builder</a></li>
+        </ul>
       </div>
     </div>
   </nav>
 
-  <div class="container-fluid px-3 py-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="fw-bold mb-0"><i class="bi bi-tags"></i> Gestión de Categorías y Subcategorías</h4>
-      <button class="btn btn-primary" onclick="abrirModalCategoria()"><i class="bi bi-plus-lg"></i> Nueva Categoría</button>
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2><i class="bi bi-tags"></i> Gestión de Categorías y Subcategorías</h2>
+      <button class="btn btn-primary" onclick="abrirModalCategoria()">
+        <i class="bi bi-plus-circle"></i> Nueva Categoría
+      </button>
     </div>
 
     <div id="listaCategorias">
-      <div class="text-center py-4 text-muted">Cargando categorías...</div>
+      <p class="text-center text-muted py-5">Cargando categorías...</p>
     </div>
   </div>
 
-  <!-- Modal: Nueva/Editar Categoría -->
+  <!-- Modal Categoría -->
   <div class="modal fade" id="modalCategoria" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title" id="modalCategoriaTitulo"><i class="bi bi-plus-lg"></i> Nueva Categoría</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalCatTitulo">Nueva Categoría</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <form id="formCategoria">
-            <input type="hidden" id="categoriaId">
+            <input type="hidden" id="catId">
             <div class="mb-3">
-              <label class="form-label fw-bold">Nombre *</label>
-              <input type="text" class="form-control" id="categoriaNombre" required>
+              <label class="form-label">Nombre *</label>
+              <input type="text" class="form-control" id="catNombre" required>
             </div>
             <div class="mb-3">
-              <label class="form-label fw-bold">Icono (emoji o clase Bootstrap)</label>
-              <input type="text" class="form-control" id="categoriaIcono" placeholder="Ej:  o bi-cash">
+              <label class="form-label">Icono (emoji)</label>
+              <input type="text" class="form-control" id="catIcono" placeholder="Ej: 🛒, 🏠, ">
             </div>
             <div class="mb-3">
-              <label class="form-label fw-bold">Color (hex)</label>
-              <input type="color" class="form-control" id="categoriaColor" value="#0d6efd">
+              <label class="form-label">Color (hex)</label>
+              <input type="color" class="form-control form-control-color" id="catColor" value="#667eea">
             </div>
           </form>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-primary" onclick="guardarCategoria()"><i class="bi bi-save"></i> Guardar</button>
+          <button type="button" class="btn btn-primary" onclick="guardarCategoria()">Guardar</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Nueva Subcategoría -->
+  <!-- Modal Subcategoría -->
   <div class="modal fade" id="modalSubcategoria" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header bg-success text-white">
-          <h5 class="modal-title" id="modalSubcategoriaTitulo"><i class="bi bi-plus-lg"></i> Nueva Subcategoría</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalSubTitulo">Nueva Subcategoría</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <form id="formSubcategoria">
-            <input type="hidden" id="subcategoriaId">
-            <input type="hidden" id="subcategoriaCategoriaId">
+            <input type="hidden" id="subId">
+            <input type="hidden" id="subCatId">
             <div class="mb-3">
-              <label class="form-label fw-bold">Nombre *</label>
-              <input type="text" class="form-control" id="subcategoriaNombre" required>
+              <label class="form-label">Nombre *</label>
+              <input type="text" class="form-control" id="subNombre" required>
             </div>
             <div class="mb-3">
-              <label class="form-label fw-bold">Icono (emoji o clase Bootstrap)</label>
-              <input type="text" class="form-control" id="subcategoriaIcono" placeholder="Ej: 🏪 o bi-shop">
+              <label class="form-label">Icono (emoji)</label>
+              <input type="text" class="form-control" id="subIcono" placeholder="Ej: 🍎, ⚡">
             </div>
           </form>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-success" onclick="guardarSubcategoria()"><i class="bi bi-save"></i> Guardar</button>
+          <button type="button" class="btn btn-primary" onclick="guardarSubcategoria()">Guardar</button>
         </div>
       </div>
     </div>
@@ -129,228 +123,172 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const API_URL = '/api/finanzas';
-    let categoriasGlobal = [];
+    const API = '/api';
+    let categoriasData = [];
 
     document.addEventListener('DOMContentLoaded', cargarCategorias);
 
     async function cargarCategorias() {
       try {
-        const response = await fetch(`${API_URL}/categorias-gestion`);
-        categoriasGlobal = await response.json();
-        renderizarCategorias();
+        const res = await fetch(`${API}/finanzas/categorias-gestion`);
+        categoriasData = await res.json();
+        renderizarLista();
       } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('listaCategorias').innerHTML = '<div class="alert alert-danger">Error al cargar categorías</div>';
+        console.error('Error al cargar categorías:', error);
       }
     }
 
-    function renderizarCategorias() {
-      const contenedor = document.getElementById('listaCategorias');
-      if (categoriasGlobal.length === 0) {
-        contenedor.innerHTML = '<div class="text-center py-4 text-muted">No hay categorías</div>';
+    function renderizarLista() {
+      const container = document.getElementById('listaCategorias');
+      if (categoriasData.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted py-5">No hay categorías registradas</p>';
         return;
       }
 
-      let html = '';
-      categoriasGlobal.forEach(cat => {
-        html += `
-          <div class="categoria-item">
-            <div class="categoria-header">
-              <div>
-                <span class="categoria-nombre">${cat.icono || '📁'} ${cat.nombre}</span>
-                <span class="badge-count ms-2">${cat.cantidad_movimientos} mov.</span>
-              </div>
-              <div>
-                <button class="btn btn-sm btn-agregar" onclick="abrirModalSubcategoria('${cat.id}', '${cat.nombre}')">
-                  <i class="bi bi-plus-lg"></i> Subcategoría
-                </button>
-                <button class="btn btn-sm btn-editar" onclick="editarCategoria('${cat.id}')">
-                  <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm btn-eliminar" onclick="eliminarCategoria('${cat.id}')">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </div>
+      container.innerHTML = categoriasData.map(cat => `
+        <div class="categoria-card">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-1">${cat.icono || ''} ${cat.nombre}</h5>
+              <small class="text-muted">${cat.cantidad_movimientos || 0} movimientos</small>
             </div>
-            ${cat.subcategorias && cat.subcategorias.length > 0 ? `
-              <div class="subcategoria-list">
-                ${cat.subcategorias.map(sub => `
-                  <div class="subcategoria-item">
-                    <div>
-                      <span>${sub.icono || '📌'} ${sub.nombre}</span>
-                      <span class="badge-count ms-2">${sub.cantidad_movimientos} mov.</span>
-                    </div>
-                    <div>
-                      <button class="btn btn-sm btn-editar" onclick="editarSubcategoria('${sub.id}', '${sub.nombre}', '${sub.icono || ''}')">
-                        <i class="bi bi-pencil"></i>
-                      </button>
-                      <button class="btn btn-sm btn-eliminar" onclick="eliminarSubcategoria('${sub.id}')">
-                        <i class="bi bi-trash"></i>
-                      </button>
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-            ` : '<div class="text-muted ms-3"><small>Sin subcategorías</small></div>'}
+            <div class="btn-group">
+              <button class="btn btn-sm btn-outline-primary" onclick="abrirModalSubcategoria('${cat.id}', '${cat.nombre}')">
+                <i class="bi bi-plus"></i> Subcategoría
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="editarCategoria('${cat.id}')">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" onclick="eliminarCategoria('${cat.id}', '${cat.nombre}')">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
           </div>
-        `;
-      });
-      contenedor.innerHTML = html;
+          ${cat.subcategorias && cat.subcategorias.length > 0 ? 
+            cat.subcategorias.map(sub => `
+              <div class="subcategoria-item">
+                <span>${sub.icono || ''} ${sub.nombre} (${sub.cantidad_movimientos || 0})</span>
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-secondary" onclick="editarSubcategoria('${sub.id}', '${sub.nombre}', '${sub.icono || ''}')">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-outline-danger" onclick="eliminarSubcategoria('${sub.id}', '${sub.nombre}')">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            `).join('') : '<p class="text-muted small mt-2 mb-0 ms-4">Sin subcategorías</p>'
+          }
+        </div>
+      `).join('');
     }
 
     function abrirModalCategoria() {
+      document.getElementById('modalCatTitulo').textContent = 'Nueva Categoría';
       document.getElementById('formCategoria').reset();
-      document.getElementById('categoriaId').value = '';
-      document.getElementById('modalCategoriaTitulo').innerHTML = '<i class="bi bi-plus-lg"></i> Nueva Categoría';
+      document.getElementById('catId').value = '';
+      document.getElementById('catColor').value = '#667eea';
       new bootstrap.Modal(document.getElementById('modalCategoria')).show();
     }
 
     function editarCategoria(id) {
-      const cat = categoriasGlobal.find(c => c.id === id);
+      const cat = categoriasData.find(c => c.id === id);
       if (!cat) return;
-      document.getElementById('categoriaId').value = cat.id;
-      document.getElementById('categoriaNombre').value = cat.nombre;
-      document.getElementById('categoriaIcono').value = cat.icono || '';
-      document.getElementById('categoriaColor').value = cat.color_hex || '#0d6efd';
-      document.getElementById('modalCategoriaTitulo').innerHTML = '<i class="bi bi-pencil"></i> Editar Categoría';
+      document.getElementById('modalCatTitulo').textContent = 'Editar Categoría';
+      document.getElementById('catId').value = cat.id;
+      document.getElementById('catNombre').value = cat.nombre;
+      document.getElementById('catIcono').value = cat.icono || '';
+      document.getElementById('catColor').value = cat.color_hex || '#667eea';
       new bootstrap.Modal(document.getElementById('modalCategoria')).show();
     }
 
     async function guardarCategoria() {
-      const id = document.getElementById('categoriaId').value;
-      const nombre = document.getElementById('categoriaNombre').value.trim();
-      if (!nombre) { alert('El nombre es obligatorio'); return; }
-      
-      const datos = {
-        nombre: nombre,
-        icono: document.getElementById('categoriaIcono').value.trim(),
-        color_hex: document.getElementById('categoriaColor').value
+      const id = document.getElementById('catId').value;
+      const data = {
+        nombre: document.getElementById('catNombre').value.trim(),
+        icono: document.getElementById('catIcono').value.trim(),
+        color_hex: document.getElementById('catColor').value
       };
+      if (!data.nombre) { alert('Nombre obligatorio'); return; }
 
       try {
-        let response;
-        if (id) {
-          response = await fetch(`${API_URL}/categorias/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos)
-          });
-        } else {
-          response = await fetch(`${API_URL}/categorias`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos)
-          });
-        }
-        const result = await response.json();
+        const url = id ? `${API}/finanzas/categorias/${id}` : `${API}/finanzas/categorias`;
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+        const result = await res.json();
         if (result.success) {
-          alert(result.message);
           bootstrap.Modal.getInstance(document.getElementById('modalCategoria')).hide();
           await cargarCategorias();
-        } else {
-          alert('Error: ' + result.message);
-        }
-      } catch (error) {
-        alert('Error al conectar');
-      }
+        } else alert(result.message);
+      } catch (error) { alert('Error al guardar'); }
     }
 
-    async function eliminarCategoria(id) {
-      const cat = categoriasGlobal.find(c => c.id === id);
-      if (!cat) return;
-      if (!confirm(`¿Eliminar la categoría "${cat.nombre}"?\n\n️ Se eliminarán también todas sus subcategorías.`)) return;
-      
+    async function eliminarCategoria(id, nombre) {
+      if (!confirm(`¿Eliminar categoría "${nombre}"?`)) return;
       try {
-        const response = await fetch(`${API_URL}/categorias/${id}`, { method: 'DELETE' });
-        const result = await response.json();
-        if (result.success) {
-          alert(result.message);
-          await cargarCategorias();
-        } else {
-          alert('Error: ' + result.message);
-        }
-      } catch (error) {
-        alert('Error al conectar');
-      }
+        const res = await fetch(`${API}/finanzas/categorias/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success) await cargarCategorias();
+        else alert(result.message);
+      } catch (error) { alert('Error al eliminar'); }
     }
 
-    function abrirModalSubcategoria(categoriaId, categoriaNombre) {
+    function abrirModalSubcategoria(catId, catNombre) {
+      document.getElementById('modalSubTitulo').textContent = `Nueva Subcategoría para "${catNombre}"`;
       document.getElementById('formSubcategoria').reset();
-      document.getElementById('subcategoriaId').value = '';
-      document.getElementById('subcategoriaCategoriaId').value = categoriaId;
-      document.getElementById('modalSubcategoriaTitulo').innerHTML = `<i class="bi bi-plus-lg"></i> Nueva Subcategoría para ${categoriaNombre}`;
+      document.getElementById('subId').value = '';
+      document.getElementById('subCatId').value = catId;
       new bootstrap.Modal(document.getElementById('modalSubcategoria')).show();
     }
 
     function editarSubcategoria(id, nombre, icono) {
-      const sub = categoriasGlobal.flatMap(c => c.subcategorias || []).find(s => s.id === id);
+      const sub = findSubById(id);
       if (!sub) return;
-      document.getElementById('subcategoriaId').value = sub.id;
-      document.getElementById('subcategoriaCategoriaId').value = ''; // No se puede cambiar de categoría
-      document.getElementById('subcategoriaNombre').value = sub.nombre;
-      document.getElementById('subcategoriaIcono').value = sub.icono || '';
-      document.getElementById('modalSubcategoriaTitulo').innerHTML = '<i class="bi bi-pencil"></i> Editar Subcategoría';
+      document.getElementById('modalSubTitulo').textContent = 'Editar Subcategoría';
+      document.getElementById('subId').value = sub.id;
+      document.getElementById('subCatId').value = sub.categoria_id || '';
+      document.getElementById('subNombre').value = sub.nombre;
+      document.getElementById('subIcono').value = sub.icono || '';
       new bootstrap.Modal(document.getElementById('modalSubcategoria')).show();
     }
 
-    async function guardarSubcategoria() {
-      const id = document.getElementById('subcategoriaId').value;
-      const categoria_id = document.getElementById('subcategoriaCategoriaId').value;
-      const nombre = document.getElementById('subcategoriaNombre').value.trim();
-      if (!nombre) { alert('El nombre es obligatorio'); return; }
-      
-      const datos = {
-        nombre: nombre,
-        categoria_id: categoria_id,
-        icono: document.getElementById('subcategoriaIcono').value.trim()
-      };
-
-      try {
-        let response;
-        if (id) {
-          response = await fetch(`${API_URL}/subcategorias/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos)
-          });
-        } else {
-          response = await fetch(`${API_URL}/subcategorias`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos)
-          });
-        }
-        const result = await response.json();
-        if (result.success) {
-          alert(result.message);
-          bootstrap.Modal.getInstance(document.getElementById('modalSubcategoria')).hide();
-          await cargarCategorias();
-        } else {
-          alert('Error: ' + result.message);
-        }
-      } catch (error) {
-        alert('Error al conectar');
+    function findSubById(id) {
+      for (const cat of categoriasData) {
+        const sub = cat.subcategorias?.find(s => s.id === id);
+        if (sub) return { ...sub, categoria_id: cat.id };
       }
+      return null;
     }
 
-    async function eliminarSubcategoria(id) {
-      const sub = categoriasGlobal.flatMap(c => c.subcategorias || []).find(s => s.id === id);
-      if (!sub) return;
-      if (!confirm(`¿Eliminar la subcategoría "${sub.nombre}"?`)) return;
-      
+    async function guardarSubcategoria() {
+      const id = document.getElementById('subId').value;
+      const data = {
+        nombre: document.getElementById('subNombre').value.trim(),
+        categoria_id: document.getElementById('subCatId').value,
+        icono: document.getElementById('subIcono').value.trim()
+      };
+      if (!data.nombre || !data.categoria_id) { alert('Campos obligatorios incompletos'); return; }
+
       try {
-        const response = await fetch(`${API_URL}/subcategorias/${id}`, { method: 'DELETE' });
-        const result = await response.json();
+        const url = id ? `${API}/finanzas/subcategorias/${id}` : `${API}/finanzas/subcategorias`;
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+        const result = await res.json();
         if (result.success) {
-          alert(result.message);
+          bootstrap.Modal.getInstance(document.getElementById('modalSubcategoria')).hide();
           await cargarCategorias();
-        } else {
-          alert('Error: ' + result.message);
-        }
-      } catch (error) {
-        alert('Error al conectar');
-      }
+        } else alert(result.message);
+      } catch (error) { alert('Error al guardar'); }
+    }
+
+    async function eliminarSubcategoria(id, nombre) {
+      if (!confirm(`¿Eliminar subcategoría "${nombre}"?`)) return;
+      try {
+        const res = await fetch(`${API}/finanzas/subcategorias/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success) await cargarCategorias();
+        else alert(result.message);
+      } catch (error) { alert('Error al eliminar'); }
     }
   </script>
 </body>
