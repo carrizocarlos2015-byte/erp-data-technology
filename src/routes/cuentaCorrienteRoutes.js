@@ -1,6 +1,5 @@
 // src/routes/cuentaCorrienteRoutes.js
 // Rutas del Módulo de Cuenta Corriente
-
 const express = require('express');
 const router = express.Router();
 const cuentaCorrienteController = require('../controllers/cuentaCorrienteController');
@@ -17,7 +16,7 @@ router.get('/saldo/:clienteId', cuentaCorrienteController.obtenerSaldoCliente);
 // GET: Obtener saldo de todos los clientes
 router.get('/saldos', cuentaCorrienteController.obtenerSaldosTodos);
 
-// GET: Obtener saldo pendiente de una factura específica (NUEVO)
+// GET: Obtener saldo pendiente de una factura específica
 router.get('/factura/:facturaId/saldo', cuentaCorrienteController.obtenerSaldoFactura);
 
 // POST: Crear un nuevo movimiento
@@ -28,5 +27,8 @@ router.put('/:id', cuentaCorrienteController.editarMovimiento);
 
 // DELETE: Eliminar un movimiento
 router.delete('/:id', cuentaCorrienteController.eliminarMovimiento);
+
+// ✅ NUEVA RUTA: Registrar Pago Específico (Para el botón de pago)
+router.post('/pago', cuentaCorrienteController.registrarPago);
 
 module.exports = router;

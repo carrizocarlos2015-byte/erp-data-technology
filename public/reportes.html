@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ERP - Reportes</title>
+  <title>ERP - Reportes PDF</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -65,7 +65,7 @@
           </div>
           <div class="col-md-3 col-6">
             <div class="kpi-card" style="border-left: 4px solid #198754;">
-              <div class="kpi-label text-muted"> Clientes Acreedores</div>
+              <div class="kpi-label text-muted">🟢 Clientes Acreedores</div>
               <div class="kpi-value text-success" id="kpiAcreedores">0</div>
               <small class="text-muted">Tienen saldo a favor</small>
             </div>
@@ -79,7 +79,7 @@
           </div>
           <div class="col-md-3 col-6">
             <div class="kpi-card" style="border-left: 4px solid #0d6efd;">
-              <div class="kpi-label text-muted"> Total Clientes</div>
+              <div class="kpi-label text-muted">👥 Total Clientes</div>
               <div class="kpi-value text-primary" id="kpiTotal">0</div>
               <small class="text-muted">Registrados</small>
             </div>
@@ -169,24 +169,40 @@
     const API = '/api';
     let saldosData = [];
     let clientesList = [];
+    let empresaData = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
+      await cargarEmpresa();
       await cargarSaldos();
       await cargarClientesSelect();
     });
+
+    async function cargarEmpresa() {
+      try {
+        const res = await fetch(`${API}/empresa`);
+        empresaData = await res.json();
+      } catch (error) {
+        console.error('Error al cargar datos de empresa:', error);
+        // Fallback por si falla la carga
+        empresaData = { 
+          nombre: 'Data Technology', 
+          direccion: 'Jujuy 1156 - Ciudad - Mendoza', 
+          telefono: 'Cel 261-6080860' 
+        };
+      }
+    }
 
     async function cargarSaldos() {
       try {
         const res = await fetch(`${API}/cuenta-corriente/saldos`);
         saldosData = await res.json();
         
-        // Calcular KPIs
         let deudores = 0, acreedores = 0, sinSaldo = 0;
         let totalDebe = 0, totalHaber = 0;
 
         saldosData.forEach(s => {
           if (s.saldo > 0) { deudores++; totalDebe += s.total_debe; }
-          else if (s.saldo < 0) { acreedores++; totalHaber += s.total_haber; }
+          else if (s.saldo < 0) { acreedores++; totalHaber += Math.abs(s.saldo); }
           else { sinSaldo++; }
         });
 
@@ -236,7 +252,7 @@
 
         return `
         <tr>
-          <td>${s.cliente_id}</td>
+          <td>${s.cliente_id.substring(0,8)}...</td>
           <td><strong>${s.cliente_nombre}</strong></td>
           <td>${s.codigo_cliente}</td>
           <td class="text-end">${formatMoney(s.total_debe)}</td>
@@ -257,76 +273,153 @@
       window.scrollTo({ top: document.querySelector('.card:last-child').offsetTop - 100, behavior: 'smooth' });
     }
 
-    async function generarPDFGeneral() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      
-      doc.setFontSize(18);
-      doc.text('Reporte General de Saldos - ERP Data Technology', 14, 20);
-      doc.setFontSize(10);
-      doc.text(`Generado: ${new Date().toLocaleString('es-AR')}`, 14, 28);
-      
-      doc.autoTable({
-        startY: 35,
-        head: [['Cliente', 'CUIT', 'DEBE', 'HABER', 'SALDO', 'Estado']],
-        body: saldosData.map(s => [
-          s.cliente_nombre,
-          s.codigo_cliente,
-          formatMoney(s.total_debe),
-          formatMoney(s.total_haber),
-          formatMoney(s.saldo),
-          s.saldo > 0 ? 'Deudor' : (s.saldo < 0 ? 'Acreedor' : 'Al día')
-        ]),
-        styles: { fontSize: 9 },
-        headStyles: { fillColor: [102, 126, 234] }
-      });
-      
-      doc.save('reporte_general_saldos.pdf');
-    }
-
+    // ✅ FUNCIÓN PARA GENERAR PDF INDIVIDUAL CON LOGO A LA IZQUIERDA Y DATOS A LA DERECHA
     async function generarPDFIndividual() {
       const clienteId = document.getElementById('selectClienteIndividual').value;
       if (!clienteId) { alert('Seleccioná un cliente primero'); return; }
 
       try {
         const resMov = await fetch(`${API}/cuenta-corriente/cliente/${clienteId}`);
-        const movimientos = await resMov.json();
+        const dataMov = await resMov.json();
+        const movimientos = dataMov.movimientos || []; 
         
         const cliente = clientesList.find(c => c.id === clienteId);
-        const resSaldo = await fetch(`${API}/cuenta-corriente/saldo/${clienteId}`);
-        const saldo = await resSaldo.json();
-
+        
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
-        doc.setFontSize(18);
-        doc.text('Estado de Cuenta Corriente', 14, 20);
-        doc.setFontSize(12);
-        doc.text(`Cliente: ${cliente.nombre}`, 14, 30);
-        doc.text(`CUIT: ${cliente.cuit}`, 14, 37);
-        doc.text(`Fecha: ${new Date().toLocaleDateString('es-AR')}`, 14, 44);
+        // --- ENCABEZADO PROFESIONAL ---
+        let yPos = 20;
+        const logoWidth = 40;
+        const logoHeight = 20;
+        const leftMargin = 14;
         
+        // 1. Logo a la Izquierda
+        if (empresaData && empresaData.logo) {
+          try {
+            doc.addImage(empresaData.logo, 'PNG', leftMargin, yPos, logoWidth, logoHeight);
+          } catch (e) {
+            console.warn('Error al cargar logo en PDF:', e);
+          }
+        }
+        
+        // 2. Datos de la Empresa Alineados a la Derecha
+        const rightX = 196; // Margen derecho aprox
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text(empresaData?.nombre || 'Data Technology', rightX, yPos + 5, { align: 'right' });
+        
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        doc.text(empresaData?.direccion || 'Jujuy 1156 - Ciudad - Mendoza', rightX, yPos + 12, { align: 'right' });
+        doc.text(empresaData?.telefono || 'Cel 261-6080860', rightX, yPos + 18, { align: 'right' });
+        
+        // Título Centrado debajo del encabezado
+        yPos += 35;
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text('RESUMEN DE CUENTA CORRIENTE', 105, yPos, { align: 'center' });
+        
+        // Datos del Cliente
+        yPos += 15;
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Cliente: ${cliente?.nombre || 'N/A'}`, leftMargin, yPos);
+        yPos += 6;
+        doc.text(`CUIT: ${cliente?.cuit || 'N/A'}`, leftMargin, yPos);
+        yPos += 6;
+        doc.text(`Mendoza ${new Date().toLocaleDateString('es-AR')}.`, leftMargin, yPos);
+        
+        // Línea separadora
+        yPos += 8;
+        doc.setDrawColor(0);
+        doc.setLineWidth(0.5);
+        doc.line(leftMargin, yPos, 196, yPos);
+        
+        // Tabla de Movimientos
+        yPos += 10;
         doc.autoTable({
-          startY: 50,
+          startY: yPos,
           head: [['Fecha', 'Descripción', 'Debe', 'Haber', 'Saldo']],
           body: movimientos.map(m => [
-            m.fecha.split('T')[0],
-            m.descripcion,
-            formatMoney(m.debe),
-            formatMoney(m.haber),
-            formatMoney(m.debe - m.haber)
+            m.fecha ? m.fecha.split('T')[0] : '-',
+            m.descripcion || '-',
+            formatMoney(m.debe || 0),
+            formatMoney(m.haber || 0),
+            formatMoney(m.saldo || 0)
           ]),
-          styles: { fontSize: 9 },
-          headStyles: { fillColor: [102, 126, 234] }
+          styles: { fontSize: 9, cellPadding: 2 },
+          headStyles: { fillColor: [102, 126, 234], textColor: 255, fontStyle: 'bold' },
+          alternateRowStyles: { fillColor: [245, 245, 245] },
+          columnStyles: {
+            0: { cellWidth: 25 },
+            1: { cellWidth: 'auto' },
+            2: { halign: 'right', cellWidth: 30 },
+            3: { halign: 'right', cellWidth: 30 },
+            4: { halign: 'right', cellWidth: 30, fontStyle: 'bold' }
+          }
         });
         
+        // Saldo Final
         const finalY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(12);
-        doc.text(`Saldo Final: ${formatMoney(saldo.saldo)}`, 14, finalY);
+        doc.setFont(undefined, 'bold');
+        doc.text(`SALDO TOTAL: ${formatMoney(dataMov.saldo_total || 0)}`, 196, finalY, { align: 'right' });
         
-        doc.save(`estado_cuenta_${cliente.nombre.replace(/\s+/g, '_')}.pdf`);
+        const fileName = `CtaCte_${cliente?.nombre?.replace(/\s+/g, '_') || 'Cliente'}_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
       } catch (error) {
+        console.error('Error al generar PDF:', error);
         alert('Error al generar PDF: ' + error.message);
+      }
+    }
+
+    async function generarPDFGeneral() {
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('landscape');
+        
+        let yPos = 20;
+        if (empresaData && empresaData.logo) {
+          try { doc.addImage(empresaData.logo, 'PNG', 14, yPos, 30, 15); } catch(e) {}
+        }
+        const empX = empresaData && empresaData.logo ? 50 : 14;
+        doc.setFontSize(14); doc.setFont(undefined, 'bold');
+        doc.text(empresaData?.nombre || 'Data Technology', empX, yPos + 5);
+        doc.setFontSize(10); doc.setFont(undefined, 'normal');
+        doc.text(empresaData?.direccion || '', empX, yPos + 11);
+        
+        yPos += 25;
+        doc.setFontSize(14); doc.setFont(undefined, 'bold');
+        doc.text('REPORTE GENERAL DE SALDOS DE CLIENTES', 148, yPos, { align: 'center' });
+        yPos += 8;
+        doc.setFontSize(10); doc.setFont(undefined, 'normal');
+        doc.text(`Generado: ${new Date().toLocaleString('es-AR')}`, 14, yPos);
+        
+        yPos += 10;
+        doc.autoTable({
+          startY: yPos,
+          head: [['Cliente', 'CUIT', 'DEBE', 'HABER', 'SALDO', 'Estado']],
+          body: saldosData.map(s => [
+            s.cliente_nombre,
+            s.codigo_cliente,
+            formatMoney(s.total_debe),
+            formatMoney(s.total_haber),
+            formatMoney(s.saldo),
+            s.saldo > 0 ? 'Deudor' : (s.saldo < 0 ? 'Acreedor' : 'Al día')
+          ]),
+          styles: { fontSize: 9, cellPadding: 2 },
+          headStyles: { fillColor: [102, 126, 234], textColor: 255 },
+          alternateRowStyles: { fillColor: [245, 245, 245] },
+          columnStyles: {
+            2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right', fontStyle: 'bold' }
+          }
+        });
+        
+        doc.save('Reporte_General_Saldos.pdf');
+      } catch (error) {
+        alert('Error al generar PDF general: ' + error.message);
       }
     }
 
