@@ -9,37 +9,23 @@
   <style>
     body { background-color: #f8f9fa; }
     .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .categoria-card {
-      background: white; border-radius: 12px; padding: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 15px;
-      border-left: 4px solid #667eea;
-    }
-    .subcategoria-item {
-      background: #f8f9fa; border-radius: 8px; padding: 10px 15px;
-      margin: 5px 0 5px 30px; display: flex; justify-content: space-between; align-items: center;
-    }
+    .categoria-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 15px; border-left: 5px solid #6c757d; }
+    .categoria-card.INGRESO { border-left-color: #198754; }
+    .categoria-card.EGRESO { border-left-color: #dc3545; }
+    .categoria-card.GENERAL { border-left-color: #0d6efd; }
+    .subcategoria-item { background: #f8f9fa; border-radius: 8px; padding: 10px 15px; margin: 8px 0 8px 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e9ecef; }
   </style>
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container-fluid">
       <a class="navbar-brand" href="index.html"><i class="bi bi-building"></i> ERP Data Technology</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
+      <div class="collapse navbar-collapse">
         <ul class="navbar-nav me-auto">
-          <li class="nav-item"><a class="nav-link" href="index.html"><i class="bi bi-house"></i> Inicio</a></li>
-          <li class="nav-item"><a class="nav-link" href="clientes.html"><i class="bi bi-people"></i> Clientes</a></li>
-          <li class="nav-item"><a class="nav-link" href="cuenta-corriente.html"><i class="bi bi-wallet2"></i> Cta. Cte.</a></li>
-          <li class="nav-item"><a class="nav-link" href="finanzas.html"><i class="bi bi-cash-stack"></i> Finanzas</a></li>
-          <li class="nav-item"><a class="nav-link active" href="categorias.html"><i class="bi bi-tags"></i> Categorías</a></li>
-          <li class="nav-item"><a class="nav-link" href="cheques.html"><i class="bi bi-receipt"></i> Cheques</a></li>
-          <li class="nav-item"><a class="nav-link" href="trabajos.html"><i class="bi bi-briefcase"></i> Trabajos</a></li>
-          <li class="nav-item"><a class="nav-link" href="agenda.html"><i class="bi bi-calendar"></i> Agenda</a></li>
-          <li class="nav-item"><a class="nav-link" href="reportes.html"><i class="bi bi-bar-chart"></i> Reportes</a></li>
-          <li class="nav-item"><a class="nav-link" href="empresa.html"><i class="bi bi-building"></i> Empresa</a></li>
-          <li class="nav-item"><a class="nav-link" href="presupuestos.html"><i class="bi bi-pc-display"></i> PC Builder</a></li>
+          <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
+          <li class="nav-item"><a class="nav-link" href="finanzas.html">Finanzas</a></li>
+          <li class="nav-item"><a class="nav-link active" href="categorias.html">Categorías</a></li>
+          <li class="nav-item"><a class="nav-link" href="metodos-pago.html">Métodos de Pago</a></li>
         </ul>
       </div>
     </div>
@@ -47,46 +33,43 @@
 
   <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2><i class="bi bi-tags"></i> Gestión de Categorías y Subcategorías</h2>
-      <button class="btn btn-primary" onclick="abrirModalCategoria()">
-        <i class="bi bi-plus-circle"></i> Nueva Categoría
-      </button>
+      <h2><i class="bi bi-tags"></i> Gestión de Categorías</h2>
+      <button class="btn btn-primary" onclick="abrirModalCategoria()"><i class="bi bi-plus-circle"></i> Nueva Categoría</button>
     </div>
 
-    <div id="listaCategorias">
-      <p class="text-center text-muted py-5">Cargando categorías...</p>
+    <div class="btn-group mb-4" role="group">
+      <button type="button" class="btn btn-outline-secondary active" onclick="filtrar('TODOS', this)">Todas</button>
+      <button type="button" class="btn btn-outline-success" onclick="filtrar('INGRESO', this)">Ingresos</button>
+      <button type="button" class="btn btn-outline-danger" onclick="filtrar('EGRESO', this)">Egresos</button>
     </div>
+
+    <div id="listaCategorias"><p class="text-center text-muted py-5">Cargando...</p></div>
   </div>
 
   <!-- Modal Categoría -->
   <div class="modal fade" id="modalCategoria" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="modalCatTitulo">Nueva Categoría</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
+        <div class="modal-header"><h5 class="modal-title" id="modalCatTitulo">Nueva Categoría</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
           <form id="formCategoria">
             <input type="hidden" id="catId">
+            <div class="mb-3"><label class="form-label">Nombre *</label><input type="text" class="form-control" id="catNombre" required></div>
             <div class="mb-3">
-              <label class="form-label">Nombre *</label>
-              <input type="text" class="form-control" id="catNombre" required>
+              <label class="form-label">Tipo (Ámbito) *</label>
+              <select class="form-select" id="catAmbito" required>
+                <option value="EGRESO">Egreso (Gastos)</option>
+                <option value="INGRESO">Ingreso (Ganancias)</option>
+                <option value="GENERAL">General (Ambos)</option>
+              </select>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Icono (emoji)</label>
-              <input type="text" class="form-control" id="catIcono" placeholder="Ej: 🛒, 🏠, ">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Color (hex)</label>
-              <input type="color" class="form-control form-control-color" id="catColor" value="#667eea">
+            <div class="row">
+              <div class="col-6 mb-3"><label class="form-label">Icono</label><input type="text" class="form-control" id="catIcono" placeholder="Ej: 💰"></div>
+              <div class="col-6 mb-3"><label class="form-label">Color</label><input type="color" class="form-control form-control-color w-100" id="catColor" value="#667eea"></div>
             </div>
           </form>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-primary" onclick="guardarCategoria()">Guardar</button>
-        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" onclick="guardarCategoria()">Guardar</button></div>
       </div>
     </div>
   </div>
@@ -95,28 +78,15 @@
   <div class="modal fade" id="modalSubcategoria" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="modalSubTitulo">Nueva Subcategoría</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
+        <div class="modal-header"><h5 class="modal-title">Nueva Subcategoría</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
           <form id="formSubcategoria">
-            <input type="hidden" id="subId">
-            <input type="hidden" id="subCatId">
-            <div class="mb-3">
-              <label class="form-label">Nombre *</label>
-              <input type="text" class="form-control" id="subNombre" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Icono (emoji)</label>
-              <input type="text" class="form-control" id="subIcono" placeholder="Ej: 🍎, ⚡">
-            </div>
+            <input type="hidden" id="subId"><input type="hidden" id="subCatId">
+            <div class="mb-3"><label class="form-label">Nombre *</label><input type="text" class="form-control" id="subNombre" required></div>
+            <div class="mb-3"><label class="form-label">Icono</label><input type="text" class="form-control" id="subIcono" placeholder="Ej: 👨"></div>
           </form>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-primary" onclick="guardarSubcategoria()">Guardar</button>
-        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" onclick="guardarSubcategoria()">Guardar</button></div>
       </div>
     </div>
   </div>
@@ -129,76 +99,65 @@
     document.addEventListener('DOMContentLoaded', cargarCategorias);
 
     async function cargarCategorias() {
-      try {
-        const res = await fetch(`${API}/finanzas/categorias-gestion`);
-        categoriasData = await res.json();
-        renderizarLista();
-      } catch (error) {
-        console.error('Error al cargar categorías:', error);
-      }
+      const res = await fetch(`${API}/finanzas/categorias-gestion`);
+      categoriasData = await res.json();
+      renderizarLista(categoriasData);
     }
 
-    function renderizarLista() {
-      const container = document.getElementById('listaCategorias');
-      if (categoriasData.length === 0) {
-        container.innerHTML = '<p class="text-center text-muted py-5">No hay categorías registradas</p>';
-        return;
-      }
+    function filtrar(tipo, btn) {
+      document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderizarLista(tipo === 'TODOS' ? categoriasData : categoriasData.filter(c => c.ambito === tipo));
+    }
 
-      container.innerHTML = categoriasData.map(cat => `
-        <div class="categoria-card">
-          <div class="d-flex justify-content-between align-items-center">
+    function renderizarLista(categorias) {
+      const container = document.getElementById('listaCategorias');
+      if (!categorias.length) return container.innerHTML = '<p class="text-center text-muted py-5">Sin categorías.</p>';
+
+      container.innerHTML = categorias.map(cat => {
+        const badge = cat.ambito === 'INGRESO' ? 'bg-success' : (cat.ambito === 'EGRESO' ? 'bg-danger' : 'bg-primary');
+        return `
+        <div class="categoria-card ${cat.ambito}">
+          <div class="d-flex justify-content-between align-items-start">
             <div>
-              <h5 class="mb-1">${cat.icono || ''} ${cat.nombre}</h5>
+              <h5 class="mb-1">${cat.icono || ''} ${cat.nombre} <span class="badge ${badge} ms-2" style="font-size:0.7rem">${cat.ambito}</span></h5>
               <small class="text-muted">${cat.cantidad_movimientos || 0} movimientos</small>
             </div>
             <div class="btn-group">
-              <button class="btn btn-sm btn-outline-primary" onclick="abrirModalSubcategoria('${cat.id}', '${cat.nombre}')">
-                <i class="bi bi-plus"></i> Subcategoría
-              </button>
-              <button class="btn btn-sm btn-outline-secondary" onclick="editarCategoria('${cat.id}')">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-danger" onclick="eliminarCategoria('${cat.id}', '${cat.nombre}')">
-                <i class="bi bi-trash"></i>
-              </button>
+              <button class="btn btn-sm btn-outline-primary" onclick="abrirModalSub('${cat.id}', '${cat.nombre}')"><i class="bi bi-plus"></i> Sub</button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="editarCat('${cat.id}')"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-sm btn-outline-danger" onclick="eliminarCat('${cat.id}', '${cat.nombre}')"><i class="bi bi-trash"></i></button>
             </div>
           </div>
-          ${cat.subcategorias && cat.subcategorias.length > 0 ? 
-            cat.subcategorias.map(sub => `
-              <div class="subcategoria-item">
-                <span>${sub.icono || ''} ${sub.nombre} (${sub.cantidad_movimientos || 0})</span>
-                <div class="btn-group btn-group-sm">
-                  <button class="btn btn-outline-secondary" onclick="editarSubcategoria('${sub.id}', '${sub.nombre}', '${sub.icono || ''}')">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                  <button class="btn btn-outline-danger" onclick="eliminarSubcategoria('${sub.id}', '${sub.nombre}')">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
+          ${(cat.subcategorias || []).map(sub => `
+            <div class="subcategoria-item">
+              <span>${sub.icono || ''} ${sub.nombre} <small class="text-muted">(${sub.cantidad_movimientos || 0})</small></span>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary" onclick="editarSub('${sub.id}', '${sub.nombre}', '${sub.icono || ''}')"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-outline-danger" onclick="eliminarSub('${sub.id}', '${sub.nombre}')"><i class="bi bi-trash"></i></button>
               </div>
-            `).join('') : '<p class="text-muted small mt-2 mb-0 ms-4">Sin subcategorías</p>'
-          }
-        </div>
-      `).join('');
+            </div>
+          `).join('')}
+        </div>`;
+      }).join('');
     }
 
     function abrirModalCategoria() {
       document.getElementById('modalCatTitulo').textContent = 'Nueva Categoría';
       document.getElementById('formCategoria').reset();
       document.getElementById('catId').value = '';
-      document.getElementById('catColor').value = '#667eea';
+      document.getElementById('catAmbito').value = 'EGRESO';
       new bootstrap.Modal(document.getElementById('modalCategoria')).show();
     }
 
-    function editarCategoria(id) {
-      const cat = categoriasData.find(c => c.id === id);
-      if (!cat) return;
+    function editarCat(id) {
+      const c = categoriasData.find(x => x.id === id);
       document.getElementById('modalCatTitulo').textContent = 'Editar Categoría';
-      document.getElementById('catId').value = cat.id;
-      document.getElementById('catNombre').value = cat.nombre;
-      document.getElementById('catIcono').value = cat.icono || '';
-      document.getElementById('catColor').value = cat.color_hex || '#667eea';
+      document.getElementById('catId').value = c.id;
+      document.getElementById('catNombre').value = c.nombre;
+      document.getElementById('catAmbito').value = c.ambito;
+      document.getElementById('catIcono').value = c.icono || '';
+      document.getElementById('catColor').value = c.color_hex || '#667eea';
       new bootstrap.Modal(document.getElementById('modalCategoria')).show();
     }
 
@@ -206,58 +165,40 @@
       const id = document.getElementById('catId').value;
       const data = {
         nombre: document.getElementById('catNombre').value.trim(),
+        ambito: document.getElementById('catAmbito').value,
         icono: document.getElementById('catIcono').value.trim(),
         color_hex: document.getElementById('catColor').value
       };
-      if (!data.nombre) { alert('Nombre obligatorio'); return; }
-
-      try {
-        const url = id ? `${API}/finanzas/categorias/${id}` : `${API}/finanzas/categorias`;
-        const method = id ? 'PUT' : 'POST';
-        const res = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-        const result = await res.json();
-        if (result.success) {
-          bootstrap.Modal.getInstance(document.getElementById('modalCategoria')).hide();
-          await cargarCategorias();
-        } else alert(result.message);
-      } catch (error) { alert('Error al guardar'); }
+      const url = id ? `${API}/finanzas/categorias/${id}` : `${API}/finanzas/categorias`;
+      const res = await fetch(url, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+      const result = await res.json();
+      if (result.success) { bootstrap.Modal.getInstance(document.getElementById('modalCategoria')).hide(); cargarCategorias(); }
+      else alert(result.message);
     }
 
-    async function eliminarCategoria(id, nombre) {
-      if (!confirm(`¿Eliminar categoría "${nombre}"?`)) return;
-      try {
-        const res = await fetch(`${API}/finanzas/categorias/${id}`, { method: 'DELETE' });
-        const result = await res.json();
-        if (result.success) await cargarCategorias();
-        else alert(result.message);
-      } catch (error) { alert('Error al eliminar'); }
+    async function eliminarCat(id, nombre) {
+      if (!confirm(`¿Eliminar "${nombre}"?`)) return;
+      const res = await fetch(`${API}/finanzas/categorias/${id}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (result.success) cargarCategorias(); else alert(result.message);
     }
 
-    function abrirModalSubcategoria(catId, catNombre) {
-      document.getElementById('modalSubTitulo').textContent = `Nueva Subcategoría para "${catNombre}"`;
+    function abrirModalSub(catId, catNombre) {
       document.getElementById('formSubcategoria').reset();
       document.getElementById('subId').value = '';
       document.getElementById('subCatId').value = catId;
       new bootstrap.Modal(document.getElementById('modalSubcategoria')).show();
     }
 
-    function editarSubcategoria(id, nombre, icono) {
-      const sub = findSubById(id);
-      if (!sub) return;
-      document.getElementById('modalSubTitulo').textContent = 'Editar Subcategoría';
-      document.getElementById('subId').value = sub.id;
-      document.getElementById('subCatId').value = sub.categoria_id || '';
-      document.getElementById('subNombre').value = sub.nombre;
-      document.getElementById('subIcono').value = sub.icono || '';
+    function editarSub(id, nombre, icono) {
+      document.getElementById('subId').value = id;
+      document.getElementById('subNombre').value = nombre;
+      document.getElementById('subIcono').value = icono;
+      // Buscamos el catId buscando en todas las categorias
+      let catId = '';
+      categoriasData.forEach(c => { if(c.subcategorias) c.subcategorias.forEach(s => { if(s.id === id) catId = c.id; }) });
+      document.getElementById('subCatId').value = catId;
       new bootstrap.Modal(document.getElementById('modalSubcategoria')).show();
-    }
-
-    function findSubById(id) {
-      for (const cat of categoriasData) {
-        const sub = cat.subcategorias?.find(s => s.id === id);
-        if (sub) return { ...sub, categoria_id: cat.id };
-      }
-      return null;
     }
 
     async function guardarSubcategoria() {
@@ -267,28 +208,18 @@
         categoria_id: document.getElementById('subCatId').value,
         icono: document.getElementById('subIcono').value.trim()
       };
-      if (!data.nombre || !data.categoria_id) { alert('Campos obligatorios incompletos'); return; }
-
-      try {
-        const url = id ? `${API}/finanzas/subcategorias/${id}` : `${API}/finanzas/subcategorias`;
-        const method = id ? 'PUT' : 'POST';
-        const res = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-        const result = await res.json();
-        if (result.success) {
-          bootstrap.Modal.getInstance(document.getElementById('modalSubcategoria')).hide();
-          await cargarCategorias();
-        } else alert(result.message);
-      } catch (error) { alert('Error al guardar'); }
+      const url = id ? `${API}/finanzas/subcategorias/${id}` : `${API}/finanzas/subcategorias`;
+      const res = await fetch(url, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+      const result = await res.json();
+      if (result.success) { bootstrap.Modal.getInstance(document.getElementById('modalSubcategoria')).hide(); cargarCategorias(); }
+      else alert(result.message);
     }
 
-    async function eliminarSubcategoria(id, nombre) {
+    async function eliminarSub(id, nombre) {
       if (!confirm(`¿Eliminar subcategoría "${nombre}"?`)) return;
-      try {
-        const res = await fetch(`${API}/finanzas/subcategorias/${id}`, { method: 'DELETE' });
-        const result = await res.json();
-        if (result.success) await cargarCategorias();
-        else alert(result.message);
-      } catch (error) { alert('Error al eliminar'); }
+      const res = await fetch(`${API}/finanzas/subcategorias/${id}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (result.success) cargarCategorias(); else alert(result.message);
     }
   </script>
 </body>

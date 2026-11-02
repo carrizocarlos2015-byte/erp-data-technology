@@ -1,820 +1,623 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ERP - Finanzas</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
-    body { background-color: #f8f9fa; }
-    .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .kpi-card {
-      background: white;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-      border-left: 4px solid #6c757d;
-    }
-    .kpi-card.ingresos { border-left-color: #198754; }
-    .kpi-card.egresos { border-left-color: #dc3545; }
-    .kpi-card.balance { border-left-color: #6f42c1; }
-    .kpi-card.resultado { border-left-color: #fd7e14; }
-    .kpi-value { font-size: 1.8rem; font-weight: bold; }
-    .chart-container {
-      background: white;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-    .btn-dashboard {
-      background: #10b981;
-      color: white;
-      border: none;
-      padding: 8px 20px;
-      border-radius: 20px;
-      font-weight: 600;
-    }
-    .btn-dashboard:hover { background: #059669; color: white; }
-    .ambito-btn.active { background: #6366f1; color: white; }
-    .loading-overlay {
-      position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(255,255,255,0.8);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 9999;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP - Finanzas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .kpi-card { border-left: 4px solid #0d6efd; transition: transform 0.2s; }
+        .kpi-card:hover { transform: translateY(-3px); }
+        .ambito-btn.active { opacity: 1 !important; font-weight: bold; box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25); }
+        .ambito-btn { opacity: 0.6; }
+        .table-responsive { max-height: 600px; overflow-y: auto; }
+        .badge-tipo { font-size: 0.85em; padding: 0.4em 0.8em; }
+    </style>
 </head>
-<body>
-  <div class="loading-overlay" id="loadingOverlay">
-    <div class="text-center">
-      <div class="spinner-border text-primary" role="status"></div>
-      <p class="mt-2">Cargando datos...</p>
-    </div>
-  </div>
+<body class="bg-light">
 
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark">
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 sticky-top">
     <div class="container-fluid">
-      <a class="navbar-brand" href="index.html">
-        <i class="bi bi-building"></i> ERP Data Technology
-      </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav me-auto">
-          <li class="nav-item"><a class="nav-link" href="index.html"><i class="bi bi-house"></i> Inicio</a></li>
-          <li class="nav-item"><a class="nav-link" href="clientes.html"><i class="bi bi-people"></i> Clientes</a></li>
-          <li class="nav-item"><a class="nav-link" href="cuenta-corriente.html"><i class="bi bi-wallet2"></i> Cta. Cte.</a></li>
-          <li class="nav-item"><a class="nav-link active" href="finanzas.html"><i class="bi bi-cash-stack"></i> Finanzas</a></li>
-          <li class="nav-item"><a class="nav-link" href="categorias.html"><i class="bi bi-tags"></i> Categorías</a></li>
-          <li class="nav-item"><a class="nav-link" href="cheques.html"><i class="bi bi-receipt"></i> Cheques</a></li>
-          <li class="nav-item"><a class="nav-link" href="trabajos.html"><i class="bi bi-briefcase"></i> Trabajos</a></li>
-          <li class="nav-item"><a class="nav-link" href="agenda.html"><i class="bi bi-calendar"></i> Agenda</a></li>
-          <li class="nav-item"><a class="nav-link" href="reportes.html"><i class="bi bi-bar-chart"></i> Reportes</a></li>
-          <li class="nav-item"><a class="nav-link" href="empresa.html"><i class="bi bi-building"></i> Empresa</a></li>
-          <li class="nav-item"><a class="nav-link" href="presupuestos.html"><i class="bi bi-pc-display"></i> PC Builder</a></li>
-        </ul>
-        <a href="dashboard.html" class="btn btn-dashboard">
-          <i class="bi bi-graph-up"></i> Dashboard
-        </a>
-      </div>
-    </div>
-  </nav>
-
-  <div class="container-fluid mt-4 px-4">
-    <!-- Filtros -->
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-2">
-            <label class="form-label fw-bold">AÑO</label>
-            <select class="form-select" id="filtroAnio"></select>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label fw-bold">MES</label>
-            <select class="form-select" id="filtroMes">
-              <option value="1">Enero</option>
-              <option value="2">Febrero</option>
-              <option value="3">Marzo</option>
-              <option value="4">Abril</option>
-              <option value="5">Mayo</option>
-              <option value="6">Junio</option>
-              <option value="7">Julio</option>
-              <option value="8">Agosto</option>
-              <option value="9">Septiembre</option>
-              <option value="10">Octubre</option>
-              <option value="11">Noviembre</option>
-              <option value="12">Diciembre</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fw-bold">CATEGORÍA</label>
-            <select class="form-select" id="filtroCategoria">
-              <option value="">Todas las categorías</option>
-            </select>
-          </div>
-          <div class="col-md-5 d-flex align-items-end gap-2">
-            <button class="btn btn-primary" onclick="actualizarFinanzas()">
-              <i class="bi bi-arrow-clockwise"></i> Actualizar
-            </button>
-            <button class="btn btn-success" onclick="abrirModalNuevo()">
-              <i class="bi bi-plus-circle"></i> Nuevo Movimiento
-            </button>
-          </div>
+        <a class="navbar-brand fw-bold" href="index.html"><i class="fas fa-chart-line me-2"></i>ERP Data Technology</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navMenu">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
+                <li class="nav-item"><a class="nav-link" href="clientes.html">Clientes</a></li>
+                <li class="nav-item"><a class="nav-link" href="cuenta-corriente.html">Cta. Cte.</a></li>
+                <li class="nav-item"><a class="nav-link active" href="finanzas.html">Finanzas</a></li>
+                <li class="nav-item"><a class="nav-link" href="categorias.html">Categorías</a></li>
+                <li class="nav-item"><a class="nav-link" href="cheques.html">Cheques</a></li>
+                <li class="nav-item"><a class="nav-link" href="trabajos.html">Trabajos</a></li>
+                <li class="nav-item"><a class="nav-link" href="agenda.html">Agenda</a></li>
+                <li class="nav-item"><a class="nav-link" href="reportes.html">Reportes</a></li>
+                <li class="nav-item"><a class="nav-link" href="empresa.html">Empresa</a></li>
+            </ul>
+            <a class="btn btn-outline-light btn-sm rounded-pill px-3" href="dashboard.html">
+                <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+            </a>
         </div>
+    </div>
+</nav>
 
-        <!-- Filtro por rango de fechas -->
-        <div class="row mt-3 align-items-end g-3">
-          <div class="col-md-1">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="checkRangoFechas" onchange="toggleRangoFechas()">
-              <label class="form-check-label fw-bold" for="checkRangoFechas">
-                Por fechas
-              </label>
+<div class="container-fluid px-4 pb-5">
+    
+    <!-- PANEL DE FILTROS -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label small text-muted fw-bold">AÑO</label>
+                    <select id="filtroAnio" class="form-select form-select-sm"></select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted fw-bold">MES</label>
+                    <select id="filtroMes" class="form-select form-select-sm">
+                        <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+                        <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+                        <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+                        <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted fw-bold">CATEGORÍA</label>
+                    <select id="filtroCategoria" class="form-select form-select-sm"><option value="">Todas las categorías</option></select>
+                </div>
+                <div class="col-md-5 text-end">
+                    <div class="btn-group mb-2" role="group">
+                        <button type="button" class="btn btn-outline-primary btn-sm ambito-btn active" data-ambito="GENERAL" onclick="setAmbito(this)">General</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm ambito-btn" data-ambito="EMPRESA" onclick="setAmbito(this)">🏢 Empresa</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm ambito-btn" data-ambito="CASA" onclick="setAmbito(this)">🏠 Casa</button>
+                    </div>
+                    <br>
+                    <button class="btn btn-primary btn-sm" onclick="cargarTodo()"><i class="fas fa-sync-alt me-2"></i>Actualizar</button>
+                    <button class="btn btn-success btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#modalMovimiento" onclick="prepararNuevoMovimiento()">
+                        <i class="fas fa-plus me-2"></i>Nuevo Movimiento
+                    </button>
+                </div>
             </div>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Desde</label>
-            <input type="date" class="form-control" id="filtroFechaInicio" disabled>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Hasta</label>
-            <input type="date" class="form-control" id="filtroFechaFin" disabled>
-          </div>
         </div>
+    </div>
 
-        <!-- Selector de ámbito -->
-        <div class="row mt-3">
-          <div class="col-md-12">
-            <div class="btn-group" role="group">
-              <button type="button" class="btn btn-outline-primary ambito-btn active" id="btnGeneral" onclick="setAmbito('GENERAL')">General</button>
-              <button type="button" class="btn btn-outline-primary ambito-btn" id="btnEmpresa" onclick="setAmbito('EMPRESA')">🏢 Empresa</button>
-              <button type="button" class="btn btn-outline-primary ambito-btn" id="btnCasa" onclick="setAmbito('CASA')">🏠 Casa</button>
+    <!-- KPIS MENSUALES -->
+    <h6 class="text-muted text-uppercase mb-3 small fw-bold"><i class="fas fa-calendar-alt me-2"></i>MENSUAL</h6>
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card kpi-card shadow-sm h-100 border-0">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase fs-7 mb-2">INGRESOS DEL MES</h6>
+                    <h3 class="fw-bold text-success mb-0 display-6" id="kpiMensualIngresos">$0</h3>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-    </div>
-
-    <!-- KPIs Mensuales -->
-    <div class="text-center mb-3">
-      <span class="badge bg-secondary"><i class="bi bi-calendar"></i> MENSUAL</span>
-    </div>
-    <div class="row g-3">
-      <div class="col-md-3">
-        <div class="kpi-card ingresos">
-          <div class="text-muted small">INGRESOS DEL MES</div>
-          <div class="kpi-value text-success" id="kpiIngresosMes">$0</div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="kpi-card egresos">
-          <div class="text-muted small">EGRESOS DEL MES</div>
-          <div class="kpi-value text-danger" id="kpiEgresosMes">$0</div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="kpi-card balance">
-          <div class="text-muted small">BALANCE DEL MES</div>
-          <div class="kpi-value" id="kpiBalanceMes">$0</div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="kpi-card resultado">
-          <div class="text-muted small">RESULTADO %</div>
-          <div class="kpi-value text-warning" id="kpiResultadoPct">0%</div>
-          <div class="small text-muted">Sobre los ingresos del mes</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- KPIs Anuales -->
-    <div class="text-center mb-3 mt-4">
-      <span class="badge bg-secondary"><i class="bi bi-calendar-check"></i> ACUMULADO ANUAL</span>
-    </div>
-    <div class="row g-3">
-      <div class="col-md-4">
-        <div class="kpi-card ingresos">
-          <div class="text-muted small">INGRESOS ACUMULADOS</div>
-          <div class="kpi-value text-success" id="kpiIngresosAnio">$0</div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="kpi-card egresos">
-          <div class="text-muted small">EGRESOS ACUMULADOS</div>
-          <div class="kpi-value text-danger" id="kpiEgresosAnio">$0</div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="kpi-card balance">
-          <div class="text-muted small">BALANCE ACUMULADO</div>
-          <div class="kpi-value" id="kpiBalanceAnio">$0</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Alertas -->
-    <div class="card mb-4" id="cardAlertas" style="display: none;">
-      <div class="card-header bg-warning text-dark">
-        <i class="bi bi-exclamation-triangle"></i> Alertas y avisos
-      </div>
-      <div class="card-body" id="alertasContainer"></div>
-    </div>
-
-    <!-- Gráficos -->
-    <div class="row g-3">
-      <div class="col-md-6">
-        <div class="chart-container">
-          <h5>Evolución últimos 6 meses</h5>
-          <canvas id="chartEvolucion"></canvas>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="chart-container">
-          <h5>Ingresos por categoría</h5>
-          <canvas id="chartIngresosCat"></canvas>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="chart-container">
-          <h5>Egresos por categoría</h5>
-          <canvas id="chartEgresosCat"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tabla de movimientos -->
-    <div class="card mt-4">
-      <div class="card-header bg-primary text-white">
-        <i class="bi bi-list"></i> Movimientos
-      </div>
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Tipo</th>
-                <th>Categoría</th>
-                <th>Subcategoría</th>
-                <th>Descripción</th>
-                <th>Monto</th>
-                <th>Método</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="tablaMovimientos">
-              <tr><td colspan="8" class="text-center">Cargando...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Registrar/Editar Movimiento -->
-  <div class="modal fade" id="modalMovimiento" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="modalTitulo">Registrar Movimiento</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <form id="formMovimiento">
-            <input type="hidden" id="movId">
-            <div class="mb-3">
-              <label class="form-label">Tipo *</label>
-              <select class="form-select" id="movTipo" required onchange="onTipoChange()">
-                <option value="">Seleccionar...</option>
-                <option value="Ingreso">Ingreso</option>
-                <option value="Egreso">Egreso</option>
-              </select>
+        <div class="col-md-3">
+            <div class="card kpi-card shadow-sm h-100 border-0" style="border-left-color:#dc3545">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase fs-7 mb-2">EGRESOS DEL MES</h6>
+                    <h3 class="fw-bold text-danger mb-0 display-6" id="kpiMensualEgresos">$0</h3>
+                </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Categoría *</label>
-              <select class="form-select" id="movCategoria" required onchange="onCategoriaChange()">
-                <option value="">Elegí el tipo primero</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Subcategoría</label>
-              <select class="form-select" id="movSubcategoria">
-                <option value="">Sin subcategoría</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Fecha *</label>
-              <input type="date" class="form-control" id="movFecha" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Monto ($) *</label>
-              <input type="number" class="form-control" id="movMonto" step="0.01" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Método de pago</label>
-              <select class="form-select" id="movMetodo"></select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Descripción *</label>
-              <textarea class="form-control" id="movDescripcion" rows="3" required></textarea>
-            </div>
-          </form>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-primary" onclick="guardarMovimiento()">Guardar</button>
+        <div class="col-md-3">
+            <div class="card kpi-card shadow-sm h-100 border-0" style="border-left-color:#6c757d">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase fs-7 mb-2">BALANCE DEL MES</h6>
+                    <h3 class="fw-bold mb-0 display-6" id="kpiMensualBalance">$0</h3>
+                </div>
+            </div>
         </div>
-      </div>
+        <div class="col-md-3">
+            <div class="card kpi-card shadow-sm h-100 border-0" style="border-left-color:#0dcaf0">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase fs-7 mb-2">RESULTADO %</h6>
+                    <h3 class="fw-bold text-info mb-0 display-6" id="kpiMensualResultado">0%</h3>
+                    <small class="text-muted">Sobre los ingresos del mes</small>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    const API_BASE = '/api/finanzas';
-    let ambitoActual = 'GENERAL';
-    let charts = {};
-    let categoriasData = [];
-    let metodosPagoData = [];
-    let movimientosData = [];
+    <!-- KPIS ACUMULADOS -->
+    <h6 class="text-muted text-uppercase mb-3 small fw-bold"><i class="fas fa-calendar me-2"></i>ACUMULADO ANUAL</h6>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase fs-7 mb-2">INGRESOS ACUMULADOS</h6>
+                    <h3 class="fw-bold text-success mb-0" id="kpiAnualIngresos">$0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase fs-7 mb-2">EGRESOS ACUMULADOS</h6>
+                    <h3 class="fw-bold text-danger mb-0" id="kpiAnualEgresos">$0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase fs-7 mb-2">BALANCE ACUMULADO</h6>
+                    <h3 class="fw-bold mb-0" id="kpiAnualBalance">$0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      inicializarFiltros();
-      await cargarCategorias();
-      await cargarMetodosPago();
-      await cargarMovimientos();
+    <!-- TABLA DE MOVIMIENTOS -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3 fw-bold d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-list me-2 text-primary"></i>Movimientos Registrados</span>
+            <span class="badge bg-secondary rounded-pill" id="totalRegistros">0 registros</span>
+        </div>
+        <div class="card-body p-0 table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light sticky-top">
+                    <tr>
+                        <th width="120">Fecha</th>
+                        <th width="100">Tipo</th>
+                        <th>Categoría</th>
+                        <th>Subcategoría</th>
+                        <th>Descripción</th>
+                        <th class="text-end">Monto</th>
+                        <th>Método</th>
+                        <th width="100" class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaMovimientos">
+                    <tr><td colspan="8" class="text-center py-5 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Cargando datos...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL NUEVO/EDITAR MOVIMIENTO -->
+<div class="modal fade" id="modalMovimiento" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="modalTitle"><i class="fas fa-plus-circle me-2 text-primary"></i>Registrar Movimiento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="movId">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">Tipo *</label>
+                        <select id="movTipo" class="form-select" onchange="onTipoChange()">
+                            <option value="">Seleccionar tipo...</option>
+                            <option value="Ingreso">Ingreso</option>
+                            <option value="Egreso">Egreso</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">Categoría *</label>
+                        <select id="movCategoria" class="form-select" onchange="onCategoriaChange()" disabled>
+                            <option value="">Primero selecciona el tipo</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">Subcategoría</label>
+                        <select id="movSubcategoria" class="form-select" disabled>
+                            <option value="">Sin subcategoría</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">Fecha *</label>
+                        <input type="date" id="movFecha" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">Monto ($) *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" id="movMonto" class="form-control" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">Método de pago</label>
+                        <select id="movMetodo" class="form-select"></select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold small">Descripción *</label>
+                        <input type="text" id="movDescripcion" class="form-control" placeholder="Detalle del movimiento...">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary px-4" onclick="guardarMovimiento()">
+                    <i class="fas fa-save me-2"></i>Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ==================== VARIABLES GLOBALES ====================
+let ambitoActual = 'GENERAL';
+let categoriasData = []; 
+let metodosPago = [];
+let editandoId = null;
+
+// LISTA DE EXCEPCIONES PARA INGRESOS (Palabras clave que SIEMPRE deben aparecer como Ingreso)
+const KEYWORDS_INGRESO_FORZADO = [
+    'sueldo', 'haber', 'cobro servicios', 'venta', 'intereses', 
+    'servicios', 'ganancias', 'salario', 'ingresos', 'cobro'
+];
+
+// ==================== INICIALIZACIÓN ====================
+document.addEventListener('DOMContentLoaded', () => {
+    inicializarFiltros();
+    cargarCategorias(); // Carga primero para que el modal funcione
+    cargarMetodosPago();
+    cargarTodo();       // Luego carga datos y KPIs
+});
+
+function inicializarFiltros() {
+    const anioActual = new Date().getFullYear();
+    const sel = document.getElementById('filtroAnio');
+    for (let i = anioActual - 2; i <= anioActual + 1; i++) {
+        const opt = document.createElement('option');
+        opt.value = i; opt.text = i;
+        if (i === anioActual) opt.selected = true;
+        sel.appendChild(opt);
+    }
+    document.getElementById('filtroMes').value = new Date().getMonth() + 1;
+    document.getElementById('movFecha').value = new Date().toISOString().split('T')[0];
+}
+
+function setAmbito(btn) {
+    document.querySelectorAll('.ambito-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    ambitoActual = btn.dataset.ambito;
+    cargarTodo();
+}
+
+// ==================== CARGA DE DATOS MAESTROS ====================
+async function cargarCategorias() {
+    try {
+        // Usamos la ruta de gestión que devuelve el campo 'ambito'
+        const res = await fetch('/api/finanzas/categorias-gestion');
+        if (!res.ok) throw new Error('Error al cargar categorías');
+        
+        let rawCats = await res.json();
+        
+        // PATCH TEMPORAL: Si la BD no devuelve 'ambito', lo inferimos por nombre o palabra clave
+        categoriasData = rawCats.map(c => {
+            if (!c.ambito) {
+                const nombreLower = c.nombre.toLowerCase();
+                const esIngresoForzado = KEYWORDS_INGRESO_FORZADO.some(kw => nombreLower.includes(kw));
+                c.ambito = esIngresoForzado ? 'INGRESO' : 'EGRESO';
+            } else {
+                c.ambito = c.ambito.toUpperCase();
+            }
+            return c;
+        });
+
+        // Llenar filtro de categorías en la tabla principal
+        const selFiltro = document.getElementById('filtroCategoria');
+        selFiltro.innerHTML = '<option value="">Todas las categorías</option>';
+        categoriasData.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id; opt.text = `${c.nombre}`;
+            selFiltro.appendChild(opt);
+        });
+    } catch(e) { 
+        console.error('Error cargando categorías:', e); 
+        alert('No se pudieron cargar las categorías. Verifica el servidor.');
+    }
+}
+
+async function cargarMetodosPago() {
+    try {
+        const res = await fetch('/api/finanzas/metodos-pago');
+        metodosPago = await res.json();
+        const sel = document.getElementById('movMetodo');
+        sel.innerHTML = '<option value="">Seleccionar método...</option>';
+        metodosPago.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id; opt.text = m.nombre;
+            sel.appendChild(opt);
+        });
+    } catch(e) { console.error('Error cargando métodos:', e); }
+}
+
+// ==================== CARGA DE DATOS DINÁMICOS ====================
+async function cargarTodo() {
+    await Promise.all([cargarResumen(), cargarMovimientos()]);
+}
+
+async function cargarResumen() {
+    const params = new URLSearchParams({
+        anio: document.getElementById('filtroAnio').value,
+        mes: document.getElementById('filtroMes').value
+    });
+    try {
+        const res = await fetch(`/api/finanzas/resumen?${params}`);
+        const data = await res.json();
+        if (data && data.mensual) {
+            document.getElementById('kpiMensualIngresos').textContent = fmt(data.mensual.ingresos);
+            document.getElementById('kpiMensualEgresos').textContent = fmt(data.mensual.egresos);
+            
+            const balM = document.getElementById('kpiMensualBalance');
+            balM.textContent = fmt(data.mensual.balance);
+            balM.className = `fw-bold mb-0 display-6 ${data.mensual.balance >= 0 ? 'text-success' : 'text-danger'}`;
+            
+            const pct = data.mensual.ingresos > 0 ? ((data.mensual.balance / data.mensual.ingresos) * 100).toFixed(1) : 0;
+            document.getElementById('kpiMensualResultado').textContent = pct + '%';
+
+            if (data.acumulado) {
+                document.getElementById('kpiAnualIngresos').textContent = fmt(data.acumulado.ingresos);
+                document.getElementById('kpiAnualEgresos').textContent = fmt(data.acumulado.egresos);
+                const balA = document.getElementById('kpiAnualBalance');
+                balA.textContent = fmt(data.acumulado.balance);
+                balA.className = `fw-bold mb-0 ${data.acumulado.balance >= 0 ? 'text-success' : 'text-danger'}`;
+            }
+        }
+    } catch(e) { console.error('Error resumen:', e); }
+}
+
+// CORRECCIÓN DEFINITIVA: Renderizado seguro de objetos anidados y botón borrar funcional
+async function cargarMovimientos() {
+    const params = new URLSearchParams({
+        anio: document.getElementById('filtroAnio').value,
+        mes: document.getElementById('filtroMes').value,
+        categoria_id: document.getElementById('filtroCategoria').value || ''
+    });
+    try {
+        const res = await fetch(`/api/finanzas?${params}`);
+        const data = await res.json();
+        const tbody = document.getElementById('tablaMovimientos');
+        document.getElementById('totalRegistros').textContent = `${data.length} registros`;
+        
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted"><i class="fas fa-inbox fa-2x mb-3 d-block"></i>Sin movimientos para este período</td></tr>';
+            return;
+        }
+
+        // Mapeo seguro accediendo a .nombre dentro de los objetos anidados
+        tbody.innerHTML = data.map(m => {
+            const catNombre = m.categoria ? m.categoria.nombre : '-';
+            const subcatNombre = m.subcategoria ? m.subcategoria.nombre : '-';
+            const metodoNombre = m.metodo_pago ? m.metodo_pago.nombre : '-';
+            
+            // Formateo de fecha robusto
+            let fechaStr = 'Sin fecha';
+            if (m.fecha) {
+                const d = typeof m.fecha === 'string' ? new Date(m.fecha + 'T00:00:00') : new Date(m.fecha);
+                if (!isNaN(d)) fechaStr = d.toLocaleDateString('es-AR');
+            }
+
+            // Serialización segura del objeto completo para el botón editar
+            const movJson = JSON.stringify(m).replace(/'/g, "&#39;");
+
+            return `
+            <tr>
+                <td class="text-nowrap">${fechaStr}</td>
+                <td><span class="badge badge-tipo ${m.tipo==='Ingreso'?'bg-success':'bg-danger'}">${m.tipo}</span></td>
+                <td>${catNombre}</td>
+                <td>${subcatNombre}</td>
+                <td class="text-truncate" style="max-width:200px" title="${m.descripcion}">${m.descripcion}</td>
+                <td class="text-end fw-bold ${m.tipo==='Ingreso'?'text-success':'text-danger'}">${fmt(m.monto)}</td>
+                <td>${metodoNombre}</td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick='editarMovimiento(${movJson})' title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarMovimiento('${m.id}')" title="Eliminar"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+            `;
+        }).join('');
+    } catch(e) { 
+        console.error('Error movimientos:', e); 
+        alert('Error al cargar movimientos'); 
+    }
+}
+
+// ==================== LÓGICA DEL MODAL (SOLUCIÓN DEFINITIVA DE CATEGORÍAS) ====================
+function prepararNuevoMovimiento() {
+    editandoId = null;
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus-circle me-2 text-primary"></i>Registrar Movimiento';
+    document.getElementById('movId').value = '';
+    document.getElementById('movTipo').value = '';
+    document.getElementById('movCategoria').innerHTML = '<option value="">Primero selecciona el tipo</option>';
+    document.getElementById('movCategoria').disabled = true;
+    document.getElementById('movSubcategoria').innerHTML = '<option value="">Sin subcategoría</option>';
+    document.getElementById('movSubcategoria').disabled = true;
+    document.getElementById('movFecha').value = new Date().toISOString().split('T')[0];
+    document.getElementById('movMonto').value = '';
+    document.getElementById('movDescripcion').value = '';
+    document.getElementById('movMetodo').value = '';
+}
+
+// ESTA FUNCIÓN ES LA CLAVE: Filtra categorías según el tipo seleccionado + Excepciones
+function onTipoChange() {
+    const tipo = document.getElementById('movTipo').value; // 'Ingreso' o 'Egreso'
+    const selCat = document.getElementById('movCategoria');
+    
+    if (!tipo) {
+        selCat.innerHTML = '<option value="">Primero selecciona el tipo</option>';
+        selCat.disabled = true;
+        return;
+    }
+    
+    selCat.disabled = false;
+    const tipoNormalizado = tipo.toUpperCase(); 
+    
+    // Filtrar categorías según el tipo seleccionado
+    const filtradas = categoriasData.filter(c => {
+        const nombreLower = c.nombre.toLowerCase();
+        const catAmbito = c.ambito ? c.ambito.toUpperCase() : 'EGRESO';
+        
+        // 1. Si es EGRESO, solo mostramos las que son estrictamente EGRESO
+        if (tipoNormalizado === 'EGRESO') {
+            return catAmbito === 'EGRESO';
+        }
+        
+        // 2. Si es INGRESO, mostramos:
+        //    - Las que son INGRESO en BD
+        //    - Las que son GENERAL en BD  
+        //    - LAS EXCEPCIONES FORZADAS (Sueldo, Haber, Cobros, etc.)
+        if (tipoNormalizado === 'INGRESO') {
+            const esExcepcionIngreso = KEYWORDS_INGRESO_FORZADO.some(keyword => 
+                nombreLower.includes(keyword)
+            );
+            return catAmbito === 'INGRESO' || catAmbito === 'GENERAL' || esExcepcionIngreso;
+        }
+        
+        return false;
     });
 
-    function inicializarFiltros() {
-      const anioSelect = document.getElementById('filtroAnio');
-      const anioActual = new Date().getFullYear();
-      for (let i = anioActual - 2; i <= anioActual + 1; i++) {
-        const option = document.createElement('option');
-        option.value = i;
-        option.textContent = i;
-        if (i === anioActual) option.selected = true;
-        anioSelect.appendChild(option);
-      }
-      document.getElementById('filtroMes').value = new Date().getMonth() + 1;
-    }
-
-    function toggleRangoFechas() {
-      const check = document.getElementById('checkRangoFechas').checked;
-      document.getElementById('filtroAnio').disabled = check;
-      document.getElementById('filtroMes').disabled = check;
-      document.getElementById('filtroFechaInicio').disabled = !check;
-      document.getElementById('filtroFechaFin').disabled = !check;
-    }
-
-    function setAmbito(ambito) {
-      ambitoActual = ambito;
-      document.querySelectorAll('.ambito-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(`btn${ambito.charAt(0) + ambito.slice(1).toLowerCase()}`).classList.add('active');
-      actualizarFinanzas();
-    }
-
-    async function cargarCategorias() {
-      try {
-        const res = await fetch(`${API_BASE}/categorias`);
-        categoriasData = await res.json();
-        
-        const select = document.getElementById('filtroCategoria');
-        select.innerHTML = '<option value="">Todas las categorías</option>';
-        
-        categoriasData.forEach(cat => {
-          const option = document.createElement('option');
-          option.value = cat.id;
-          option.textContent = `${cat.icono ? cat.icono + ' ' : ''}${cat.nombre}`;
-          select.appendChild(option);
+    selCat.innerHTML = '<option value="">Seleccionar categoría...</option>';
+    
+    if (filtradas.length === 0) {
+        selCat.innerHTML += '<option value="" disabled>No hay categorías disponibles</option>';
+    } else {
+        filtradas.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id; 
+            opt.text = c.nombre;
+            selCat.appendChild(opt);
         });
-      } catch (error) {
-        console.error('Error al cargar categorías:', error);
-      }
     }
+    
+    // Resetear subcategorías al cambiar tipo
+    document.getElementById('movSubcategoria').innerHTML = '<option value="">Sin subcategoría</option>';
+    document.getElementById('movSubcategoria').disabled = true;
+}
 
-    async function cargarMetodosPago() {
-      try {
-        const res = await fetch(`${API_BASE}/metodos-pago`);
-        metodosPagoData = await res.json();
-        const select = document.getElementById('movMetodo');
-        select.innerHTML = '<option value="">Seleccionar...</option>';
-        metodosPagoData.forEach(mp => {
-          const option = document.createElement('option');
-          option.value = mp.id;
-          option.textContent = `${mp.icono ? mp.icono + ' ' : ''}${mp.nombre}`;
-          select.appendChild(option);
-        });
-      } catch (error) {
-        console.error('Error al cargar métodos de pago:', error);
-      }
-    }
-
-    async function cargarMovimientos() {
-      showLoading(true);
-      try {
-        const res = await fetch(`${API_BASE}/`);
-        movimientosData = await res.json();
-        actualizarFinanzas();
-      } catch (error) {
-        console.error('Error al cargar movimientos:', error);
-        alert('Error al cargar movimientos');
-      } finally {
-        showLoading(false);
-      }
-    }
-
-    function obtenerParametrosFiltro() {
-      const checkRango = document.getElementById('checkRangoFechas').checked;
-      const ambito = ambitoActual;
-      const categoria = document.getElementById('filtroCategoria').value;
-      
-      const params = { ambito };
-      if (categoria) params.categoria_ids = categoria;
-      
-      if (checkRango) {
-        const fechaInicio = document.getElementById('filtroFechaInicio').value;
-        const fechaFin = document.getElementById('filtroFechaFin').value;
-        if (fechaInicio) params.fecha_inicio = fechaInicio;
-        if (fechaFin) params.fecha_fin = fechaFin;
-      } else {
-        params.anio = document.getElementById('filtroAnio').value;
-        params.mes = document.getElementById('filtroMes').value;
-      }
-      
-      return params;
-    }
-
-    function filtrarMovimientos(params, esAnual = false) {
-      return movimientosData.filter(mov => {
-        const fechaStr = mov.fecha.split('T')[0];
-        const fecha = new Date(fechaStr);
-        
-        let matchFecha = true;
-        if (params.fecha_inicio && params.fecha_fin) {
-          matchFecha = fechaStr >= params.fecha_inicio && fechaStr <= params.fecha_fin;
-        } else if (params.anio && params.mes && !esAnual) {
-          matchFecha = fecha.getFullYear() === parseInt(params.anio) && 
-                       fecha.getMonth() + 1 === parseInt(params.mes);
-        } else if (params.anio && esAnual) {
-          matchFecha = fecha.getFullYear() === parseInt(params.anio);
-        }
-        
-        const matchCategoria = !params.categoria_ids || mov.categoria?.id === params.categoria_ids;
-        const matchAmbito = params.ambito === 'GENERAL' || mov.categoria?.ambito === params.ambito;
-        
-        return matchFecha && matchCategoria && matchAmbito;
-      });
-    }
-
-    function calcularKPIs(movs) {
-      let ingresos = 0, egresos = 0;
-      movs.forEach(m => {
-        if (m.tipo === 'Ingreso') ingresos += m.monto;
-        else egresos += m.monto;
-      });
-      return { ingresos, egresos, balance: ingresos - egresos };
-    }
-
-    function actualizarFinanzas() {
-      const params = obtenerParametrosFiltro();
-      const movsMes = filtrarMovimientos(params, false);
-      const movsAnio = filtrarMovimientos(params, true);
-      
-      const kpisMes = calcularKPIs(movsMes);
-      const kpisAnio = calcularKPIs(movsAnio);
-      
-      document.getElementById('kpiIngresosMes').textContent = formatMoney(kpisMes.ingresos);
-      document.getElementById('kpiEgresosMes').textContent = formatMoney(kpisMes.egresos);
-      document.getElementById('kpiBalanceMes').textContent = formatMoney(kpisMes.balance);
-      
-      const resultadoPct = kpisMes.ingresos > 0 ? ((kpisMes.balance / kpisMes.ingresos) * 100).toFixed(1) : 0;
-      document.getElementById('kpiResultadoPct').textContent = `${resultadoPct}%`;
-      
-      document.getElementById('kpiIngresosAnio').textContent = formatMoney(kpisAnio.ingresos);
-      document.getElementById('kpiEgresosAnio').textContent = formatMoney(kpisAnio.egresos);
-      document.getElementById('kpiBalanceAnio').textContent = formatMoney(kpisAnio.balance);
-      
-      renderizarEvolucion();
-      renderizarGraficoCategorias(movsMes);
-      renderizarAlertas(movsMes);
-      renderizarTabla(movsMes);
-    }
-
-    function renderizarEvolucion() {
-      const anio = document.getElementById('filtroAnio').value;
-      const ambito = ambitoActual;
-      
-      // Agrupar movimientos por mes (últimos 6 meses del año seleccionado)
-      const porMes = {};
-      for (let i = 1; i <= 12; i++) {
-        porMes[i] = { ingresos: 0, egresos: 0 };
-      }
-      
-      movimientosData.filter(m => {
-        const fecha = new Date(m.fecha.split('T')[0]);
-        return fecha.getFullYear() === parseInt(anio) &&
-               (ambito === 'GENERAL' || m.categoria?.ambito === ambito);
-      }).forEach(m => {
-        const mes = new Date(m.fecha.split('T')[0]).getMonth() + 1;
-        if (m.tipo === 'Ingreso') porMes[mes].ingresos += m.monto;
-        else porMes[mes].egresos += m.monto;
-      });
-      
-      const mesesLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-      const labels = mesesLabels;
-      const ingresos = Object.values(porMes).map(p => p.ingresos);
-      const egresos = Object.values(porMes).map(p => p.egresos);
-      
-      if (charts.evolucion) charts.evolucion.destroy();
-      const ctx = document.getElementById('chartEvolucion').getContext('2d');
-      charts.evolucion = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            { label: 'Ingresos', data: ingresos, backgroundColor: 'rgba(25, 135, 84, 0.7)' },
-            { label: 'Egresos', data: egresos, backgroundColor: 'rgba(220, 53, 69, 0.7)' }
-          ]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: { beginAtZero: true, ticks: { callback: v => formatMoney(v) } }
-          }
-        }
-      });
-    }
-
-    function renderizarGraficoCategorias(movs) {
-      const ingresos = movs.filter(m => m.tipo === 'Ingreso');
-      const egresos = movs.filter(m => m.tipo === 'Egreso');
-      
-      const agrupar = (movs) => {
-        const grupos = {};
-        movs.forEach(m => {
-          const nombre = m.categoria?.nombre || 'Sin categoría';
-          if (!grupos[nombre]) grupos[nombre] = 0;
-          grupos[nombre] += m.monto;
-        });
-        return grupos;
-      };
-      
-      const ingGrupos = agrupar(ingresos);
-      const egrGrupos = agrupar(egresos);
-      
-      if (charts.ingresosCat) charts.ingresosCat.destroy();
-      const ctxIng = document.getElementById('chartIngresosCat').getContext('2d');
-      charts.ingresosCat = new Chart(ctxIng, {
-        type: 'doughnut',
-        data: {
-          labels: Object.keys(ingGrupos),
-          datasets: [{
-            data: Object.values(ingGrupos),
-            backgroundColor: ['#198754', '#20c997', '#0dcaf0', '#0d6efd', '#6610f2', '#d63384']
-          }]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
-      });
-      
-      if (charts.egresosCat) charts.egresosCat.destroy();
-      const ctxEgr = document.getElementById('chartEgresosCat').getContext('2d');
-      charts.egresosCat = new Chart(ctxEgr, {
-        type: 'doughnut',
-        data: {
-          labels: Object.keys(egrGrupos),
-          datasets: [{
-            data: Object.values(egrGrupos),
-            backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#6c757d', '#343a40', '#20c997']
-          }]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
-      });
-    }
-
-    function renderizarAlertas(movs) {
-      const egresos = movs.filter(m => m.tipo === 'Egreso');
-      const totalEgresos = egresos.reduce((s, m) => s + m.monto, 0);
-      
-      const grupos = {};
-      egresos.forEach(m => {
-        const nombre = m.categoria?.nombre || 'Sin categoría';
-        if (!grupos[nombre]) grupos[nombre] = 0;
-        grupos[nombre] += m.monto;
-      });
-      
-      const alertas = [];
-      Object.entries(grupos).forEach(([nombre, total]) => {
-        if (totalEgresos > 0 && (total / totalEgresos) > 0.3) {
-          alertas.push(`⚠️ <strong>${nombre}</strong> representa más del 30% de los egresos del período`);
-        }
-      });
-      
-      const kpis = calcularKPIs(movs);
-      if (kpis.egresos > kpis.ingresos && kpis.ingresos > 0) {
-        alertas.push(`🚨 <strong>Balance negativo:</strong> los egresos superan los ingresos en ${formatMoney(kpis.egresos - kpis.ingresos)}`);
-      }
-      
-      const container = document.getElementById('alertasContainer');
-      const card = document.getElementById('cardAlertas');
-      container.innerHTML = '';
-      
-      if (alertas.length > 0) {
-        card.style.display = 'block';
-        alertas.forEach(a => {
-          const div = document.createElement('div');
-          div.className = 'alert alert-warning mb-2';
-          div.innerHTML = a;
-          container.appendChild(div);
-        });
-      } else {
-        card.style.display = 'none';
-      }
-    }
-
-    function renderizarTabla(movs) {
-      const tbody = document.getElementById('tablaMovimientos');
-      tbody.innerHTML = '';
-      
-      if (movs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay movimientos para este período</td></tr>';
+function onCategoriaChange() {
+    const catId = document.getElementById('movCategoria').value;
+    const selSub = document.getElementById('movSubcategoria');
+    if (!catId) {
+        selSub.innerHTML = '<option value="">Sin subcategoría</option>';
+        selSub.disabled = true;
         return;
-      }
-      
-      // Ordenar por fecha descendente
-      movs.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-      
-      movs.forEach(mov => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${formatDate(mov.fecha)}</td>
-          <td><span class="badge bg-${mov.tipo === 'Ingreso' ? 'success' : 'danger'}">${mov.tipo}</span></td>
-          <td>${mov.categoria?.icono ? mov.categoria.icono + ' ' : ''}${mov.categoria?.nombre || '-'}</td>
-          <td>${mov.subcategoria?.nombre || '-'}</td>
-          <td>${mov.descripcion}</td>
-          <td class="fw-bold ${mov.tipo === 'Ingreso' ? 'text-success' : 'text-danger'}">${formatMoney(mov.monto)}</td>
-          <td>${mov.metodo_pago?.nombre || '-'}</td>
-          <td>
-            <button class="btn btn-sm btn-outline-primary" onclick="editarMovimiento('${mov.id}')">
-              <i class="bi bi-pencil"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-danger" onclick="eliminarMovimiento('${mov.id}')">
-              <i class="bi bi-trash"></i>
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
     }
-
-    function onTipoChange() {
-      const tipo = document.getElementById('movTipo').value;
-      const select = document.getElementById('movCategoria');
-      select.innerHTML = '<option value="">Seleccionar...</option>';
-      document.getElementById('movSubcategoria').innerHTML = '<option value="">Sin subcategoría</option>';
-      
-      if (!tipo) return;
-      
-      const filtradas = categoriasData.filter(c => {
-        if (tipo === 'Ingreso') return ['Cobro Servicios', 'Intereses Ganados', 'Venta de Productos', 'REINTEGROS'].includes(c.nombre);
-        return !['Cobro Servicios', 'Intereses Ganados', 'Venta de Productos', 'REINTEGROS'].includes(c.nombre);
-      });
-      
-      filtradas.forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat.id;
-        option.textContent = `${cat.icono ? cat.icono + ' ' : ''}${cat.nombre}`;
-        option.dataset.subcategorias = JSON.stringify(cat.subcategorias || []);
-        select.appendChild(option);
-      });
-    }
-
-    function onCategoriaChange() {
-      const select = document.getElementById('movCategoria');
-      const selected = select.options[select.selectedIndex];
-      const subSelect = document.getElementById('movSubcategoria');
-      subSelect.innerHTML = '<option value="">Sin subcategoría</option>';
-      
-      if (selected.dataset.subcategorias) {
-        const subs = JSON.parse(selected.dataset.subcategorias);
-        subs.forEach(sub => {
-          const option = document.createElement('option');
-          option.value = sub.id;
-          option.textContent = sub.nombre;
-          subSelect.appendChild(option);
+    const cat = categoriasData.find(c => c.id == catId);
+    selSub.disabled = false;
+    selSub.innerHTML = '<option value="">Sin subcategoría</option>';
+    if (cat && cat.subcategorias && cat.subcategorias.length > 0) {
+        cat.subcategorias.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id; opt.text = s.nombre;
+            selSub.appendChild(opt);
         });
-      }
     }
+}
 
-    function abrirModalNuevo() {
-      document.getElementById('modalTitulo').textContent = 'Registrar Movimiento';
-      document.getElementById('formMovimiento').reset();
-      document.getElementById('movId').value = '';
-      document.getElementById('movCategoria').innerHTML = '<option value="">Elegí el tipo primero</option>';
-      document.getElementById('movSubcategoria').innerHTML = '<option value="">Sin subcategoría</option>';
-      document.getElementById('movFecha').value = new Date().toISOString().split('T')[0];
-      new bootstrap.Modal(document.getElementById('modalMovimiento')).show();
-    }
-
-    async function editarMovimiento(id) {
-      const mov = movimientosData.find(m => m.id === id);
-      if (!mov) return;
-      
-      document.getElementById('modalTitulo').textContent = 'Editar Movimiento';
-      document.getElementById('movId').value = mov.id;
-      document.getElementById('movTipo').value = mov.tipo;
-      document.getElementById('movFecha').value = mov.fecha.split('T')[0];
-      document.getElementById('movMonto').value = mov.monto;
-      document.getElementById('movMetodo').value = mov.metodo_pago?.id || '';
-      document.getElementById('movDescripcion').value = mov.descripcion;
-      
-      onTipoChange();
-      
-      setTimeout(() => {
-        document.getElementById('movCategoria').value = mov.categoria?.id || '';
-        onCategoriaChange();
-        setTimeout(() => {
-          document.getElementById('movSubcategoria').value = mov.subcategoria?.id || '';
-        }, 100);
-      }, 100);
-      
-      new bootstrap.Modal(document.getElementById('modalMovimiento')).show();
-    }
-
-    async function guardarMovimiento() {
-      const id = document.getElementById('movId').value;
-      const data = {
+async function guardarMovimiento() {
+    const data = {
+        fecha: document.getElementById('movFecha').value,
         tipo: document.getElementById('movTipo').value,
+        monto: parseFloat(document.getElementById('movMonto').value),
+        descripcion: document.getElementById('movDescripcion').value,
         categoria_id: document.getElementById('movCategoria').value,
         subcategoria_id: document.getElementById('movSubcategoria').value || null,
-        fecha: document.getElementById('movFecha').value,
-        monto: parseFloat(document.getElementById('movMonto').value),
-        metodo_pago_id: document.getElementById('movMetodo').value,
-        descripcion: document.getElementById('movDescripcion').value
-      };
+        metodo_pago_id: document.getElementById('movMetodo').value || null,
+        comprobante: null,
+        es_transferencia_interna: false,
+        es_gasto_caja_chica: false
+    };
 
-      if (!data.tipo || !data.categoria_id || !data.fecha || !data.monto || !data.descripcion) {
-        alert('Todos los campos obligatorios deben estar completos');
+    // Validaciones básicas
+    if (!data.fecha || !data.tipo || isNaN(data.monto) || data.monto <= 0 || !data.descripcion || !data.categoria_id) {
+        alert('Por favor completa todos los campos obligatorios (*) correctamente.');
         return;
-      }
+    }
 
-      try {
-        const url = id ? `${API_BASE}/${id}` : `${API_BASE}/`;
-        const method = id ? 'PUT' : 'POST';
-        
+    try {
+        let url = '/api/finanzas';
+        let method = 'POST';
+        if (editandoId) {
+            url = `/api/finanzas/${editandoId}`;
+            method = 'PUT';
+        }
         const res = await fetch(url, {
-          method: method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
+            method, headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
         });
         const result = await res.json();
-        
         if (result.success) {
-          bootstrap.Modal.getInstance(document.getElementById('modalMovimiento')).hide();
-          await cargarMovimientos();
+            bootstrap.Modal.getInstance(document.getElementById('modalMovimiento')).hide();
+            cargarTodo(); // Recargar tabla y KPIs
         } else {
-          alert(result.message);
+            alert(result.message || 'Error al guardar el movimiento');
         }
-      } catch (error) {
-        alert('Error al guardar movimiento');
-      }
+    } catch(e) { 
+        console.error(e);
+        alert('Error de conexión con el servidor'); 
     }
+}
 
-    async function eliminarMovimiento(id) {
-      if (!confirm('¿Estás seguro de eliminar este movimiento?')) return;
-      
-      try {
-        const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+// CORRECCIÓN DEFINITIVA: Recibe el objeto completo y extrae IDs anidados
+function editarMovimiento(mov) {
+    if (!mov) return;
+
+    editandoId = mov.id;
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit me-2 text-warning"></i>Editar Movimiento';
+    
+    // Setear valores básicos
+    document.getElementById('movTipo').value = mov.tipo;
+    
+    // Formatear fecha para input type="date" (YYYY-MM-DD)
+    let fechaInput = new Date().toISOString().split('T')[0];
+    if (mov.fecha) {
+        const d = typeof mov.fecha === 'string' ? new Date(mov.fecha + 'T00:00:00') : new Date(mov.fecha);
+        if (!isNaN(d)) fechaInput = d.toISOString().split('T')[0];
+    }
+    document.getElementById('movFecha').value = fechaInput;
+    
+    document.getElementById('movMonto').value = mov.monto;
+    document.getElementById('movDescripcion').value = mov.descripcion;
+    
+    // Setear método de pago (ahora es un objeto {id, nombre...})
+    document.getElementById('movMetodo').value = mov.metodo_pago ? mov.metodo_pago.id : '';
+
+    // Disparar eventos para cargar categorías y subcategorías dependientes
+    onTipoChange();
+    
+    // Pequeño delay para asegurar que el DOM se actualizó antes de setear valor
+    setTimeout(() => {
+        document.getElementById('movCategoria').value = mov.categoria ? mov.categoria.id : '';
+        onCategoriaChange();
+        setTimeout(() => {
+            document.getElementById('movSubcategoria').value = mov.subcategoria ? mov.subcategoria.id : '';
+        }, 50);
+    }, 50);
+
+    new bootstrap.Modal(document.getElementById('modalMovimiento')).show();
+}
+
+// CORRECCIÓN DEFINITIVA: Botón borrar funcional
+async function eliminarMovimiento(id) {
+    if (!confirm('¿Estás seguro de eliminar este movimiento? Esta acción no se puede deshacer.')) return;
+    try {
+        const res = await fetch(`/api/finanzas/${id}`, { method: 'DELETE' });
         const result = await res.json();
-        
         if (result.success) {
-          await cargarMovimientos();
+            cargarTodo();
         } else {
-          alert(result.message);
+            alert(result.message || 'Error al eliminar');
         }
-      } catch (error) {
-        alert('Error al eliminar movimiento');
-      }
+    } catch(e) { 
+        console.error(e);
+        alert('Error de conexión al eliminar'); 
     }
+}
 
-    function showLoading(show) {
-      document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
-    }
-
-    function formatMoney(amount) {
-      return '$' + parseFloat(amount || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    function formatDate(dateStr) {
-      if (!dateStr) return '-';
-      const parts = dateStr.split('T')[0].split('-');
-      return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    }
-  </script>
+// ==================== UTILIDADES ====================
+function fmt(amount) {
+    return '$' + parseFloat(amount || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+</script>
 </body>
 </html>

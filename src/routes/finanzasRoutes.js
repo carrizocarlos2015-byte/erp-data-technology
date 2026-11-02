@@ -1,7 +1,6 @@
 // src/routes/finanzasRoutes.js
 const express = require('express');
 const router = express.Router();
-
 const finanzasController = require('../controllers/finanzasController');
 const categoriasController = require('../controllers/categoriasController');
 const dashboardFinanzasController = require('../controllers/dashboardFinanzasController');
