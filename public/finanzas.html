@@ -52,11 +52,11 @@
             <div class="row g-3 align-items-end">
                 <div class="col-md-2">
                     <label class="form-label small text-muted fw-bold">AÑO</label>
-                    <select id="filtroAnio" class="form-select form-select-sm"></select>
+                    <select id="filtroAnio" class="form-select form-select-sm" onchange="cargarTodo()"></select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small text-muted fw-bold">MES</label>
-                    <select id="filtroMes" class="form-select form-select-sm">
+                    <select id="filtroMes" class="form-select form-select-sm" onchange="cargarTodo()">
                         <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
                         <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
                         <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
@@ -68,6 +68,11 @@
                     <select id="filtroCategoria" class="form-select form-select-sm"><option value="">Todas las categorías</option></select>
                 </div>
                 <div class="col-md-5 text-end">
+                    <div class="btn-group mb-2 me-3" role="group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm tipo-btn active" data-tipo="GENERAL" onclick="setTipo(this)">General</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm tipo-btn" data-tipo="INGRESO" onclick="setTipo(this)">Ingresos</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm tipo-btn" data-tipo="EGRESO" onclick="setTipo(this)">Egresos</button>
+                    </div>
                     <div class="btn-group mb-2" role="group">
                         <button type="button" class="btn btn-outline-primary btn-sm ambito-btn active" data-ambito="GENERAL" onclick="setAmbito(this)">General</button>
                         <button type="button" class="btn btn-outline-primary btn-sm ambito-btn" data-ambito="EMPRESA" onclick="setAmbito(this)">🏢 Empresa</button>
@@ -244,6 +249,7 @@
 <script>
 // ==================== VARIABLES GLOBALES ====================
 let ambitoActual = 'GENERAL';
+let tipoActual = 'GENERAL';
 let categoriasData = []; 
 let metodosPago = [];
 let editandoId = null;
@@ -279,6 +285,13 @@ function setAmbito(btn) {
     document.querySelectorAll('.ambito-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     ambitoActual = btn.dataset.ambito;
+    cargarTodo();
+}
+
+function setTipo(btn) {
+    document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    tipoActual = btn.dataset.tipo;
     cargarTodo();
 }
 
@@ -339,7 +352,9 @@ async function cargarTodo() {
 async function cargarResumen() {
     const params = new URLSearchParams({
         anio: document.getElementById('filtroAnio').value,
-        mes: document.getElementById('filtroMes').value
+        mes: document.getElementById('filtroMes').value,
+        tipo: tipoActual === 'GENERAL' ? '' : tipoActual,
+        ambito: ambitoActual
     });
     try {
         const res = await fetch(`/api/finanzas/resumen?${params}`);
@@ -371,7 +386,9 @@ async function cargarMovimientos() {
     const params = new URLSearchParams({
         anio: document.getElementById('filtroAnio').value,
         mes: document.getElementById('filtroMes').value,
-        categoria_id: document.getElementById('filtroCategoria').value || ''
+        categoria_id: document.getElementById('filtroCategoria').value || '',
+        tipo: tipoActual === 'GENERAL' ? '' : tipoActual,
+        ambito: ambitoActual
     });
     try {
         const res = await fetch(`/api/finanzas?${params}`);
@@ -389,6 +406,12 @@ async function cargarMovimientos() {
             const catNombre = m.categoria ? m.categoria.nombre : '-';
             const subcatNombre = m.subcategoria ? m.subcategoria.nombre : '-';
             const metodoNombre = m.metodo_pago ? m.metodo_pago.nombre : '-';
+            const ambNegocio = m.categoria ? (m.categoria.ambito_negocio || 'GENERAL') : 'GENERAL';
+            const ambBadge = ambNegocio === 'EMPRESA'
+                ? ' <span class="badge bg-warning text-dark" style="font-size:0.65rem" title="Empresa">🏢 Empresa</span>'
+                : (ambNegocio === 'CASA'
+                    ? ' <span class="badge bg-info text-dark" style="font-size:0.65rem" title="Casa">🏠 Casa</span>'
+                    : ' <span class="badge bg-secondary" style="font-size:0.65rem" title="General">General</span>');
             
             // Formateo de fecha robusto
             let fechaStr = 'Sin fecha';
@@ -404,7 +427,7 @@ async function cargarMovimientos() {
             <tr>
                 <td class="text-nowrap">${fechaStr}</td>
                 <td><span class="badge badge-tipo ${m.tipo==='Ingreso'?'bg-success':'bg-danger'}">${m.tipo}</span></td>
-                <td>${catNombre}</td>
+                <td>${catNombre}${ambBadge}</td>
                 <td>${subcatNombre}</td>
                 <td class="text-truncate" style="max-width:200px" title="${m.descripcion}">${m.descripcion}</td>
                 <td class="text-end fw-bold ${m.tipo==='Ingreso'?'text-success':'text-danger'}">${fmt(m.monto)}</td>

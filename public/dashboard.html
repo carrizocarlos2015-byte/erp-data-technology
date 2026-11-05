@@ -9,6 +9,23 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .kpi-card { border-left: 4px solid #0d6efd; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .kpi-delta { font-size: 0.78rem; font-weight: 600; display: inline-block; margin-top: 6px; }
+        .kpi-delta.up { color: #198754; }
+        .kpi-delta.down { color: #dc3545; }
+        .kpi-delta.flat { color: #6c757d; }
+        .kpi-delta.muted { color: #adb5bd; font-weight: 400; }
+
+        /* ---- Impresión / PDF ---- */
+        @media print {
+            @page { size: landscape; margin: 10mm; }
+            body { background: #fff !important; }
+            .no-print, nav, .card.shadow-sm.border-0.mb-4:first-of-type, button { display: none !important; }
+            #cardAlertas { box-shadow: none !important; border: 1px solid #dee2e6 !important; break-inside: avoid; }
+            .kpi-card, .chart-container { box-shadow: none !important; border: 1px solid #dee2e6 !important; break-inside: avoid; }
+            .chart-container { height: auto !important; }
+            canvas { max-height: 300px; }
+            h5 { break-after: avoid; }
+        }
         .chart-container { position: relative; height: 300px; width: 100%; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     </style>
 </head>
@@ -29,11 +46,11 @@
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Año</label>
-                    <select id="filtroAnio" class="form-select"></select>
+                    <select id="filtroAnio" class="form-select" onchange="cargarDashboard()"></select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Mes</label>
-                    <select id="filtroMes" class="form-select">
+                    <select id="filtroMes" class="form-select" onchange="cargarDashboard()">
                         <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
                         <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
                         <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
@@ -41,9 +58,27 @@
                     </select>
                 </div>
                 <div class="col-md-6 text-end">
+                    <div class="btn-group mb-2 me-2" role="group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm tipo-btn" data-tipo="GENERAL" onclick="setTipoDashboard(this)">General</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm tipo-btn" data-tipo="INGRESO" onclick="setTipoDashboard(this)">Ingresos</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm tipo-btn active" data-tipo="EGRESO" onclick="setTipoDashboard(this)">Egresos</button>
+                    </div>
+                    <div class="btn-group mb-2 me-3" role="group">
+                        <button type="button" class="btn btn-outline-primary btn-sm ambito-btn active" data-ambito="GENERAL" onclick="setAmbitoDashboard(this)">General</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm ambito-btn" data-ambito="EMPRESA" onclick="setAmbitoDashboard(this)">🏢 Empresa</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm ambito-btn" data-ambito="CASA" onclick="setAmbitoDashboard(this)">🏠 Casa</button>
+                    </div>
                     <button class="btn btn-primary btn-lg" onclick="cargarDashboard()">
                         <i class="fas fa-sync-alt me-2"></i>Actualizar Dashboard
                     </button>
+                    <div class="btn-group mb-2 ms-2" role="group">
+                        <button class="btn btn-outline-success btn-sm" onclick="exportarCSV(this)" title="Descargar datos del período en Excel/CSV">
+                            <i class="fas fa-file-csv me-1"></i>CSV
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="exportarPDF()" title="Guardar o imprimir el dashboard como PDF">
+                            <i class="fas fa-file-pdf me-1"></i>PDF
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -55,25 +90,43 @@
             <div class="kpi-card h-100" style="border-left-color: #198754;">
                 <h6 class="text-muted text-uppercase small">Ingresos del Mes</h6>
                 <h2 class="fw-bold text-success mb-0" id="kpiIngresos">$0</h2>
+                <span class="kpi-delta muted" id="kpiIngresosDelta">—</span>
             </div>
         </div>
         <div class="col-md-3">
             <div class="kpi-card h-100" style="border-left-color: #dc3545;">
                 <h6 class="text-muted text-uppercase small">Egresos del Mes</h6>
                 <h2 class="fw-bold text-danger mb-0" id="kpiEgresos">$0</h2>
+                <span class="kpi-delta muted" id="kpiEgresosDelta">—</span>
             </div>
         </div>
         <div class="col-md-3">
             <div class="kpi-card h-100" style="border-left-color: #0d6efd;">
                 <h6 class="text-muted text-uppercase small">Balance Neto</h6>
                 <h2 class="fw-bold mb-0" id="kpiBalance">$0</h2>
+                <span class="kpi-delta muted" id="kpiBalanceDelta">—</span>
             </div>
         </div>
         <div class="col-md-3">
             <div class="kpi-card h-100" style="border-left-color: #0dcaf0;">
                 <h6 class="text-muted text-uppercase small">Operaciones</h6>
                 <h2 class="fw-bold text-info mb-0" id="kpiOps">0</h2>
+                <span class="kpi-delta muted" id="kpiOpsDelta">—</span>
             </div>
+        </div>
+    </div>
+    <p class="text-muted small mb-4 mt-2" id="notaComparativa"></p>
+
+    <!-- ALERTAS DEL MES -->
+    <div class="card shadow-sm border-0 mb-4" id="cardAlertas">
+        <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-bell me-2 text-warning"></i>Alertas del Mes
+                <span class="badge bg-secondary ms-2" id="badgeAlertas">0</span>
+            </h5>
+            <small class="text-muted" id="periodoAlertas"></small>
+        </div>
+        <div class="card-body" id="listaAlertas">
+            <div class="text-center text-muted py-3"><i class="fas fa-spinner fa-spin me-2"></i>Cargando alertas...</div>
         </div>
     </div>
 
@@ -87,7 +140,7 @@
         </div>
         <div class="col-md-4">
             <div class="chart-container">
-                <h5 class="mb-3 text-muted"><i class="fas fa-chart-pie me-2"></i>Egresos por Categoría</h5>
+                <h5 class="mb-3 text-muted" id="tituloDonut"><i class="fas fa-chart-pie me-2"></i>Egresos por Categoría</h5>
                 <canvas id="chartCircular"></canvas>
             </div>
         </div>
@@ -98,9 +151,12 @@
 <script>
     let chartBarrasInstance = null;
     let chartCircularInstance = null;
+    let tipoDashboard = 'EGRESO';
+    let ambitoDashboard = 'GENERAL';
 
     // Constantes globales
     const MESES_ES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const MESES_LARGOS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
     document.addEventListener('DOMContentLoaded', () => {
         inicializarFiltros();
@@ -119,36 +175,99 @@
         document.getElementById('filtroMes').value = new Date().getMonth() + 1;
     }
 
+    function setTipoDashboard(btn) {
+        document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        tipoDashboard = btn.dataset.tipo;
+        cargarDashboard();
+    }
+
+    function setAmbitoDashboard(btn) {
+        document.querySelectorAll('.ambito-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        ambitoDashboard = btn.dataset.ambito;
+        cargarDashboard();
+    }
+
     async function cargarDashboard() {
         const anio = document.getElementById('filtroAnio').value;
         const mes = document.getElementById('filtroMes').value;
+        const tipo = tipoDashboard === 'GENERAL' ? '' : tipoDashboard;
+        const ambito = ambitoDashboard;
 
         try {
             // 1. KPIs
-            await cargarKPIs(anio, mes);
+            await cargarKPIs(anio, mes, tipo, ambito);
         } catch (e) {
             console.error('Error KPIs:', e);
         }
 
         try {
             // 2. Evolución (gráfico de barras)
-            await cargarEvolucion(anio);
+            await cargarEvolucion(anio, tipo, ambito);
         } catch (e) {
             console.error('Error Evolución:', e);
         }
 
         try {
             // 3. Categorías (gráfico circular)
-            await cargarCategorias(anio, mes);
+            await cargarCategorias(anio, mes, tipo, ambito);
         } catch (e) {
             console.error('Error Categorías:', e);
         }
+
+        try {
+            // 4. Alertas del mes
+            await cargarAlertas(anio, mes, tipo, ambito);
+        } catch (e) {
+            console.error('Error Alertas:', e);
+        }
     }
 
-    async function cargarKPIs(anio, mes) {
-        const res = await fetch(`/api/finanzas/dashboard/kpis?anio=${anio}&mes=${mes}`);
+    // ---- Alertas del mes ----
+    const ALERTA_ICONOS = {
+        danger: ['fa-triangle-exclamation', 'alert-danger'],
+        warning: ['fa-circle-exclamation', 'alert-warning'],
+        info: ['fa-circle-info', 'alert-info'],
+        success: ['fa-circle-check', 'alert-success']
+    };
+
+    async function cargarAlertas(anio, mes, tipo, ambito) {
+        const cont = document.getElementById('listaAlertas');
+        try {
+            const res = await fetch(`/api/finanzas/dashboard/alertas?anio=${anio}&mes=${mes}&tipo=${tipo}&ambito=${ambito}`);
+            const data = await res.json();
+            const alertas = (data.success && data.data) ? data.data : [];
+
+            document.getElementById('badgeAlertas').textContent = alertas.length;
+            document.getElementById('badgeAlertas').className = 'badge ' + (alertas.length ? 'bg-warning text-dark' : 'bg-success');
+            document.getElementById('periodoAlertas').textContent = (data.meta && data.meta.periodo) ? data.meta.periodo : '';
+
+            if (!alertas.length) {
+                cont.innerHTML = '<div class="alert alert-success mb-0 py-3 text-center"><i class="fas fa-circle-check me-2"></i>Sin alertas: todo en orden para este período.</div>';
+                return;
+            }
+
+            const TIPO_LABEL = { danger: 'ALERTA', warning: 'AVISO', info: 'INFO', success: 'OK' };
+            cont.innerHTML = alertas.map(a => {
+                const cfg = ALERTA_ICONOS[a.tipo] || ALERTA_ICONOS.info;
+                const monto = (a.monto !== undefined && a.monto !== null)
+                    ? ` <span class="badge bg-white text-dark border ms-1">${formatMoney(Math.abs(a.monto))}</span>`
+                    : '';
+                return `<div class="alert ${cfg[1]} py-3 d-flex align-items-start mb-2" role="alert">
+                    <i class="fas ${cfg[0]} me-3 mt-1"></i>
+                    <div><strong class="text-uppercase" style="font-size:0.7rem; letter-spacing:0.5px; opacity:0.7;">${TIPO_LABEL[a.tipo] || 'INFO'}</strong>${monto}<br>${a.mensaje}</div>
+                </div>`;
+            }).join('');
+        } catch (e) {
+            cont.innerHTML = '<div class="alert alert-secondary mb-0 py-3 text-center"><i class="fas fa-triangle-exclamation me-2"></i>No se pudieron cargar las alertas.</div>';
+        }
+    }
+
+    async function cargarKPIs(anio, mes, tipo, ambito) {
+        const res = await fetch(`/api/finanzas/dashboard/kpis?anio=${anio}&mes=${mes}&tipo=${tipo}&ambito=${ambito}`);
         const data = await res.json();
-        
+
         if (data.success && data.data) {
             const kpis = data.data.kpis || data.data;
             
@@ -161,28 +280,113 @@
             balEl.className = `fw-bold mb-0 ${balance >= 0 ? 'text-success' : 'text-danger'}`;
             
             document.getElementById('kpiOps').textContent = kpis.operaciones || 0;
+
+            // ---- Comparativa con el mes anterior ----
+            const mAnt = parseInt(mes) - 1;
+            const anioAnt = mAnt === 0 ? parseInt(anio) - 1 : parseInt(anio);
+            const mesAnt = mAnt === 0 ? 12 : mAnt;
+            try {
+                const resAnt = await fetch(`/api/finanzas/dashboard/kpis?anio=${anioAnt}&mes=${mesAnt}&tipo=${tipo}&ambito=${ambito}`);
+                const dataAnt = await resAnt.json();
+                const kpisAnt = dataAnt.success && dataAnt.data ? (dataAnt.data.kpis || dataAnt.data) : null;
+                renderComparativa(kpis, kpisAnt, mesAnt, anioAnt);
+            } catch (e) {
+                console.error('Error comparativa mes anterior:', e);
+                ocultarComparativa();
+            }
         }
     }
 
-    async function cargarEvolucion(anio) {
-        const res = await fetch(`/api/finanzas/dashboard/evolucion?anio=${anio}`);
+    // ---- Pinta los indicadores ▲/▼ de cada KPI respecto del mes anterior ----
+    function renderComparativa(actual, anterior, mesAnt, anioAnt) {
+        const nombreMes = MESES_LARGOS[mesAnt - 1];
+        const etiqueta = `${nombreMes} ${anioAnt}`;
+        const nota = document.getElementById('notaComparativa');
+
+        // Sin datos del mes anterior: no se puede comparar
+        const sinDatos = !anterior || ((anterior.ingresos || 0) === 0 && (anterior.egresos || 0) === 0 && (anterior.operaciones || 0) === 0);
+        if (sinDatos) {
+            ['kpiIngresosDelta', 'kpiEgresosDelta', 'kpiBalanceDelta', 'kpiOpsDelta'].forEach(id => {
+                const el = document.getElementById(id);
+                el.textContent = 'sin datos previos';
+                el.className = 'kpi-delta muted';
+                el.title = `No hay movimientos en ${etiqueta} para comparar`;
+            });
+            nota.textContent = `Sin datos en ${etiqueta} → no hay comparativa disponible.`;
+            return;
+        }
+
+        // 'subeEsBueno': subir es positivo (ingresos/balance/ops), bajar es positivo (egresos)
+        pintarDelta('kpiIngresosDelta', actual.ingresos || 0, anterior.ingresos || 0, true, 'pct', etiqueta);
+        pintarDelta('kpiEgresosDelta', actual.egresos || 0, anterior.egresos || 0, false, 'pct', etiqueta);
+        pintarDelta('kpiBalanceDelta', actual.balance || 0, anterior.balance || 0, true, 'money', etiqueta);
+        pintarDelta('kpiOpsDelta', actual.operaciones || 0, anterior.operaciones || 0, true, 'int', etiqueta);
+
+        const varBal = (actual.balance || 0) - (anterior.balance || 0);
+        nota.textContent = `Comparativa contra ${etiqueta}: el balance ${varBal >= 0 ? 'mejoró' : 'empeoró'} ${formatMoney(Math.abs(varBal))}.`;
+    }
+
+    function pintarDelta(id, valorActual, valorAnterior, subeEsBueno, modo, etiqueta) {
+        const el = document.getElementById(id);
+        const dif = valorActual - valorAnterior;
+
+        if (valorAnterior === 0) {
+            el.textContent = dif === 0 ? '= igual' : (dif > 0 ? '▲' : '▼') + ' (sin base)';
+            el.className = 'kpi-delta flat';
+            el.title = `En ${etiqueta} el valor fue 0`;
+            return;
+        }
+
+        let texto;
+        if (modo === 'money') texto = (dif >= 0 ? '▲ ' : '▼ ') + formatMoney(Math.abs(dif));
+        else if (modo === 'int') texto = (dif >= 0 ? '▲ +' : '▼ ') + Math.abs(dif);
+        else {
+            const pct = Math.abs(dif / valorAnterior * 100);
+            texto = (dif >= 0 ? '▲ +' : '▼ -') + pct.toFixed(1).replace('.', ',') + '%';
+        }
+
+        if (dif === 0) {
+            el.textContent = '= igual';
+            el.className = 'kpi-delta flat';
+        } else {
+            const esBueno = dif > 0 ? subeEsBueno : !subeEsBueno;
+            el.textContent = texto;
+            el.className = 'kpi-delta ' + (esBueno ? 'up' : 'down');
+        }
+        el.title = `Valor en ${etiqueta}: ${modo === 'int' ? valorAnterior : formatMoney(valorAnterior)}`;
+    }
+
+    function ocultarComparativa() {
+        ['kpiIngresosDelta', 'kpiEgresosDelta', 'kpiBalanceDelta', 'kpiOpsDelta'].forEach(id => {
+            const el = document.getElementById(id);
+            el.textContent = '—';
+            el.className = 'kpi-delta muted';
+        });
+        document.getElementById('notaComparativa').textContent = '';
+    }
+
+    async function cargarEvolucion(anio, tipo, ambito) {
+        const res = await fetch(`/api/finanzas/dashboard/evolucion?anio=${anio}&tipo=${tipo}&ambito=${ambito}`);
         const data = await res.json();
         
         if (data.success && data.data) {
-            renderChartBarras(data.data);
+            // Determinar si hay comparativa con el año anterior
+            let dataComparacion = null;
+            const anioAnt = parseInt(anio) - 1;
+            try {
+                const resAnt = await fetch(`/api/finanzas/dashboard/evolucion?anio=${anioAnt}&tipo=${tipo}&ambito=${ambito}`);
+                const dataAnt = await resAnt.json();
+                if (dataAnt.success && Array.isArray(dataAnt.data) && dataAnt.data.length > 0) {
+                    dataComparacion = dataAnt.data;
+                }
+            } catch (e) {
+                console.error('Error Evolución comparación:', e);
+            }
+            renderChartBarras(data.data, dataComparacion, anio, dataComparacion ? anioAnt : null);
         }
     }
 
-    async function cargarCategorias(anio, mes) {
-        const res = await fetch(`/api/finanzas/dashboard/categorias?anio=${anio}&mes=${mes}&tipo=Egreso`);
-        const data = await res.json();
-        
-        if (data.success && data.data) {
-            renderChartCircular(data.data);
-        }
-    }
-
-    function renderChartBarras(data) {
+    function renderChartBarras(data, dataComparacion, anio, anioComparacion) {
         const ctx = document.getElementById('chartBarras').getContext('2d');
         if(chartBarrasInstance) chartBarrasInstance.destroy();
 
@@ -200,21 +404,56 @@
             }
         });
 
+        const datasets = [
+            { label: `Ingresos ${anio}`, data: ingresos, backgroundColor: '#198754' },
+            { label: `Egresos ${anio}`, data: egresos, backgroundColor: '#dc3545' }
+        ];
+
+        // Comparativa con el año anterior (48 barras = 2 años x 12 meses x ingresos/egresos)
+        if (dataComparacion && Array.isArray(dataComparacion) && dataComparacion.length > 0) {
+            const ingresosAnt = new Array(12).fill(0);
+            const egresosAnt = new Array(12).fill(0);
+            dataComparacion.forEach(item => {
+                const idx = (item.mes_num || 0) - 1;
+                if (idx >= 0 && idx < 12) {
+                    ingresosAnt[idx] = item.ingresos || 0;
+                    egresosAnt[idx] = item.egresos || 0;
+                }
+            });
+            datasets.push(
+                { label: `Ingresos ${anioComparacion}`, data: ingresosAnt, backgroundColor: 'rgba(25, 135, 84, 0.45)' },
+                { label: `Egresos ${anioComparacion}`, data: egresosAnt, backgroundColor: 'rgba(220, 53, 69, 0.45)' }
+            );
+        }
+
         chartBarrasInstance = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: MESES_ES,
-                datasets: [
-                    { label: 'Ingresos', data: ingresos, backgroundColor: '#198754' },
-                    { label: 'Egresos', data: egresos, backgroundColor: '#dc3545' }
-                ]
+                datasets: datasets
             },
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } }
+                plugins: { legend: { position: 'bottom' } },
+                scales: { y: { beginAtZero: true } }
             }
         });
+    }
+
+    async function cargarCategorias(anio, mes, tipo, ambito) {
+        const titulo = document.getElementById('tituloDonut');
+        if (titulo) {
+            const label = tipo === 'INGRESO' ? 'Ingresos' : (tipo === 'EGRESO' ? 'Egresos' : 'Movimientos');
+            const sufijoAmbito = ambito === 'EMPRESA' ? ' (Empresa)' : (ambito === 'CASA' ? ' (Casa)' : '');
+            titulo.innerHTML = `<i class="fas fa-chart-pie me-2"></i>${label} por Categoría${sufijoAmbito}`;
+        }
+        const res = await fetch(`/api/finanzas/dashboard/categorias?anio=${anio}&mes=${mes}&tipo=${tipo}&ambito=${ambito}`);
+        const data = await res.json();
+        
+        if (data.success && data.data) {
+            renderChartCircular(data.data);
+        }
     }
 
     function renderChartCircular(data) {
@@ -251,6 +490,93 @@
 
     function formatMoney(amount) {
         return '$' + parseFloat(amount || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // ==================== EXPORTAR ====================
+    function getFiltrosActuales() {
+        return {
+            anio: document.getElementById('filtroAnio').value,
+            mes: document.getElementById('filtroMes').value,
+            tipo: tipoDashboard === 'GENERAL' ? '' : tipoDashboard,
+            ambito: ambitoDashboard
+        };
+    }
+
+    const LABEL_TIPO = { '': 'General', 'INGRESO': 'Ingresos', 'EGRESO': 'Egresos' };
+    const LABEL_AMBITO = { 'GENERAL': 'General', 'EMPRESA': 'Empresa', 'CASA': 'Casa' };
+    const LABEL_ALERTA = { danger: 'ALERTA', warning: 'AVISO', info: 'INFO', success: 'OK' };
+
+    async function exportarCSV(btn) {
+        try {
+            const f = getFiltrosActuales();
+            const mesIdx = parseInt(f.mes) - 1;                       // 0-based del mes actual
+            const mesAntIdx = mesIdx === 0 ? 11 : mesIdx - 1;         // 0-based del mes anterior
+            const anioAnt = mesIdx === 0 ? parseInt(f.anio) - 1 : parseInt(f.anio);
+
+            const [rAct, rAnt, rAlert, rCat] = await Promise.all([
+                fetch(`/api/finanzas/dashboard/kpis?anio=${f.anio}&mes=${f.mes}&tipo=${f.tipo}&ambito=${f.ambito}`).then(r => r.json()),
+                fetch(`/api/finanzas/dashboard/kpis?anio=${anioAnt}&mes=${mesAntIdx + 1}&tipo=${f.tipo}&ambito=${f.ambito}`).then(r => r.json()),
+                fetch(`/api/finanzas/dashboard/alertas?anio=${f.anio}&mes=${f.mes}&tipo=${f.tipo}&ambito=${f.ambito}`).then(r => r.json()),
+                fetch(`/api/finanzas/dashboard/categorias?anio=${f.anio}&mes=${f.mes}&tipo=${f.tipo}&ambito=${f.ambito}`).then(r => r.json())
+            ]);
+
+            const kpi = (rAct.success && rAct.data) ? (rAct.data.kpis || rAct.data) : {};
+            const kpiAnt = (rAnt.success && rAnt.data) ? (rAnt.data.kpis || rAnt.data) : null;
+            const alertas = (rAlert.success && rAlert.data) ? rAlert.data : [];
+            const cats = (rCat.success && rCat.data && rCat.data.categorias) ? rCat.data.categorias : [];
+
+            const filas = [];
+            filas.push(['ERP Data Technology - Dashboard Financiero']);
+            filas.push(['Periodo', `${MESES_LARGOS[mesIdx]} ${f.anio}`]);
+            filas.push(['Ambito', LABEL_AMBITO[f.ambito] || f.ambito]);
+            filas.push(['Tipo', LABEL_TIPO[f.tipo] || 'General']);
+            filas.push(['Fecha de exportacion', new Date().toLocaleString('es-AR')]);
+            filas.push([]);
+            filas.push(['KPI', 'Valor del mes', `Valor ${MESES_LARGOS[mesAntIdx]} ${anioAnt}`, 'Variacion']);
+            filas.push(['Ingresos', num(kpi.ingresos), kpiAnt ? num(kpiAnt.ingresos) : '', variacion(kpi.ingresos, kpiAnt && kpiAnt.ingresos)]);
+            filas.push(['Egresos', num(kpi.egresos), kpiAnt ? num(kpiAnt.egresos) : '', variacion(kpi.egresos, kpiAnt && kpiAnt.egresos)]);
+            filas.push(['Balance', num(kpi.balance), kpiAnt ? num(kpiAnt.balance) : '', variacion(kpi.balance, kpiAnt && kpiAnt.balance)]);
+            filas.push(['Operaciones', kpi.operaciones || 0, kpiAnt ? (kpiAnt.operaciones || 0) : '', '']);
+            filas.push([]);
+            filas.push(['Categorias', 'Monto']);
+            cats.forEach(c => filas.push([c.nombre, num(c.total)]));
+            filas.push([]);
+            filas.push(['Alertas']);
+            if (alertas.length) alertas.forEach(a => filas.push([LABEL_ALERTA[a.tipo] || 'INFO', a.mensaje]));
+            else filas.push(['OK', 'Sin alertas para este periodo.']);
+
+            const csv = '\ufeff' + filas.map(fila => fila.map(campoCsv).join(';')).join('\r\n');
+            descargar(csv, `dashboard_${f.anio}-${String(f.mes).padStart(2, '0')}_${f.ambito}_${f.tipo || 'GENERAL'}.csv`, 'text/csv;charset=utf-8;');
+            btn.innerHTML = '<i class="fas fa-check me-1"></i>Descargado';
+            setTimeout(() => { btn.innerHTML = '<i class="fas fa-file-csv me-1"></i>CSV'; }, 2000);
+        } catch (e) {
+            console.error('Error exportar CSV:', e);
+            alert('No se pudo generar el CSV.');
+        }
+    }
+
+    function exportarPDF() {
+        window.print();
+    }
+
+    // helpers de exportación
+    function num(v) { return parseFloat(v || 0).toFixed(2).replace('.', ','); }
+    function variacion(actual, anterior) {
+        const a = parseFloat(actual || 0), b = parseFloat(anterior || 0);
+        if (!b) return 'sin base';
+        return (((a - b) / Math.abs(b)) * 100).toFixed(1).replace('.', ',') + '%';
+    }
+    function campoCsv(v) {
+        const s = String(v === null || v === undefined ? '' : v);
+        return /[";\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }
+    function descargar(contenido, nombreArchivo, tipo) {
+        const blob = new Blob([contenido], { type: tipo });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = nombreArchivo;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 </script>
 </body>

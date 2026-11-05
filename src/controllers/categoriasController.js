@@ -4,32 +4,59 @@ const pool = require('../config/db');
 // GET: Obtener todas las categorías (AHORA INCLUYE AMBITO)
 exports.obtenerCategorias = async (req, res) => {
     try {
-        const query = `
+        // Primero: categorías con conteo de movimientos
+        const catQuery = `
             SELECT 
                 cf.id, 
                 cf.nombre, 
                 cf.icono, 
                 cf.color_hex, 
                 cf.ambito, 
-                COUNT(DISTINCT mf.id) AS cantidad_movimientos, 
-                COALESCE( 
-                    json_agg( 
-                        json_build_object( 
-                            'id', sf.id, 
-                            'nombre', sf.nombre, 
-                            'icono', sf.icono, 
-                            'cantidad_movimientos', (SELECT COUNT(*) FROM movimientos_finanzas mf2 WHERE mf2.subcategoria_id = sf.id) 
-                        ) ORDER BY sf.nombre 
-                    ) FILTER (WHERE sf.id IS NOT NULL), '[]'::json 
-                ) AS subcategorias 
-            FROM categorias_finanzas cf 
-            LEFT JOIN subcategorias_finanzas sf ON cf.id = sf.categoria_id 
-            LEFT JOIN movimientos_finanzas mf ON mf.categoria_id = cf.id 
-            GROUP BY cf.id, cf.nombre, cf.icono, cf.color_hex, cf.ambito 
+                cf.ambito_negocio,
+                COUNT(DISTINCT mf.id) AS cantidad_movimientos
+            FROM categorias_finanzas cf
+            LEFT JOIN movimientos_finanzas mf ON mf.categoria_id = cf.id
+            GROUP BY cf.id, cf.nombre, cf.icono, cf.color_hex, cf.ambito, cf.ambito_negocio
             ORDER BY cf.nombre ASC
         `;
-        const result = await pool.query(query);
-        res.json(result.rows);
+        const catResult = await pool.query(catQuery);
+
+        const cats = catResult.rows.map(row => ({
+            id: row.id,
+            nombre: row.nombre,
+            icono: row.icono,
+            color_hex: row.color_hex,
+            ambito: row.ambito,
+            ambito_negocio: row.ambito_negocio,
+            cantidad_movimientos: parseInt(row.cantidad_movimientos || 0),
+            subcategorias: []
+        }));
+
+        // Segundo: subcategorías (sin joins que multipliquen filas)
+        const subQuery = `
+            SELECT 
+                sf.id, 
+                sf.nombre, 
+                sf.icono, 
+                sf.categoria_id,
+                (SELECT COUNT(*) FROM movimientos_finanzas mf2 WHERE mf2.subcategoria_id = sf.id) AS cantidad_movimientos
+            FROM subcategorias_finanzas sf
+            ORDER BY sf.categoria_id, sf.nombre
+        `;
+        const subResult = await pool.query(subQuery);
+        const subMap = {};
+        subResult.rows.forEach(s => {
+            if (!subMap[s.categoria_id]) subMap[s.categoria_id] = [];
+            subMap[s.categoria_id].push({
+                id: s.id,
+                nombre: s.nombre,
+                icono: s.icono,
+                cantidad_movimientos: parseInt(s.cantidad_movimientos || 0)
+            });
+        });
+        cats.forEach(c => { c.subcategorias = subMap[c.id] || []; });
+
+        res.json(cats);
     } catch (error) {
         console.error('Error al obtener categorías:', error);
         res.status(500).json({ success: false, message: error.message });
@@ -39,14 +66,16 @@ exports.obtenerCategorias = async (req, res) => {
 // POST: Crear nueva categoría (CON ÁMBITO)
 exports.crearCategoria = async (req, res) => {
     try {
-        const { nombre, icono, color_hex, ambito } = req.body;
+        const { nombre, icono, color_hex, ambito, ambito_negocio } = req.body;
         if (!nombre || nombre.trim() === '') return res.status(400).json({ success: false, message: 'El nombre es obligatorio' });
         
-        // Validar y normalizar ámbito
+        // Validar y normalizar tipo (Ingreso/Egreso/General)
         const ambitoValido = ['INGRESO', 'EGRESO', 'GENERAL'].includes(ambito?.toUpperCase()) ? ambito.toUpperCase() : 'EGRESO';
+        // Validar y normalizar ámbito (Casa/Empresa/General)
+        const ambitoNegocioValido = ['CASA', 'EMPRESA', 'GENERAL'].includes(ambito_negocio?.toUpperCase()) ? ambito_negocio.toUpperCase() : 'GENERAL';
         
-        const query = `INSERT INTO categorias_finanzas (nombre, icono, color_hex, ambito) VALUES ($1, $2, $3, $4) RETURNING id, nombre, icono, color_hex, ambito`;
-        const result = await pool.query(query, [nombre.trim(), icono || '', color_hex || '#6c757d', ambitoValido]);
+        const query = `INSERT INTO categorias_finanzas (nombre, icono, color_hex, ambito, ambito_negocio) VALUES ($1, $2, $3, $4, $5) RETURNING id, nombre, icono, color_hex, ambito, ambito_negocio`;
+        const result = await pool.query(query, [nombre.trim(), icono || '', color_hex || '#6c757d', ambitoValido, ambitoNegocioValido]);
         
         res.status(201).json({ success: true, message: 'Categoría creada correctamente', data: result.rows[0] });
     } catch (error) {
@@ -59,19 +88,24 @@ exports.crearCategoria = async (req, res) => {
 exports.editarCategoria = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre, icono, color_hex, ambito } = req.body;
+        const { nombre, icono, color_hex, ambito, ambito_negocio } = req.body;
         if (!nombre || nombre.trim() === '') return res.status(400).json({ success: false, message: 'El nombre es obligatorio' });
         
-        const ambitoValido = ['INGRESO', 'EGRESO', 'GENERAL'].includes(ambito?.toUpperCase()) ? ambito.toUpperCase() : undefined;
+        const sets = ['nombre = $1', 'icono = $2', 'color_hex = $3'];
+        const values = [nombre.trim(), icono || '', color_hex || ''];
+        let pos = 4;
         
-        const query = ambitoValido
-            ? `UPDATE categorias_finanzas SET nombre = $1, icono = $2, color_hex = $3, ambito = $4 WHERE id = $5 RETURNING id, nombre, icono, color_hex, ambito`
-            : `UPDATE categorias_finanzas SET nombre = $1, icono = $2, color_hex = $3 WHERE id = $4 RETURNING id, nombre, icono, color_hex`;
-            
-        const values = ambitoValido 
-            ? [nombre.trim(), icono || '', color_hex || '', ambitoValido, id] 
-            : [nombre.trim(), icono || '', color_hex || '', id];
-            
+        if (ambito && ['INGRESO', 'EGRESO', 'GENERAL'].includes(ambito.toUpperCase())) {
+            sets.push(`ambito = $${pos++}`);
+            values.push(ambito.toUpperCase());
+        }
+        if (ambito_negocio && ['CASA', 'EMPRESA', 'GENERAL'].includes(ambito_negocio.toUpperCase())) {
+            sets.push(`ambito_negocio = $${pos++}`);
+            values.push(ambito_negocio.toUpperCase());
+        }
+        
+        values.push(id);
+        const query = `UPDATE categorias_finanzas SET ${sets.join(', ')} WHERE id = $${pos} RETURNING id, nombre, icono, color_hex, ambito, ambito_negocio`;
         const result = await pool.query(query, values);
         if (result.rows.length === 0) return res.status(404).json({ success: false, message: 'Categoría no encontrada' });
         

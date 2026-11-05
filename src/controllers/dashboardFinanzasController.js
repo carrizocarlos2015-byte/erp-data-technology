@@ -1,10 +1,17 @@
 // src/controllers/dashboardFinanzasController.js
 const pool = require('../config/db');
 
+const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
 function buildWhere(params) {
   const conditions = [];
   const values = [];
   let idx = 1;
+  if (params.tipo) {
+    conditions.push(`UPPER(mf.tipo) = UPPER($${idx})`);
+    values.push(params.tipo.toUpperCase());
+    idx++;
+  }
   if (params.anio) {
     conditions.push(`EXTRACT(YEAR FROM mf.fecha_movimiento) = $${idx}`);
     values.push(parseInt(params.anio));
@@ -26,7 +33,7 @@ function buildWhere(params) {
     idx++;
   }
   if (params.ambito && params.ambito !== 'GENERAL') {
-    conditions.push(`cf.ambito = $${idx}`);
+    conditions.push(`UPPER(cf.ambito_negocio) = UPPER($${idx})`);
     values.push(params.ambito);
     idx++;
   }
@@ -128,12 +135,17 @@ exports.obtenerKPIs = async (req, res) => {
 // 🟢 Evolución
 exports.obtenerEvolucion = async (req, res) => {
   try {
-    const { ambito, anio, meses } = req.query;
+    const { ambito, anio, meses, tipo } = req.query;
     const values = [];
     const conditions = [];
     let idx = 1;
+    if (tipo) {
+      conditions.push(`UPPER(mf.tipo) = UPPER($${idx})`);
+      values.push(tipo.toUpperCase());
+      idx++;
+    }
     if (ambito && ambito !== 'GENERAL') {
-      conditions.push(`cf.ambito = $${idx}`);
+      conditions.push(`UPPER(cf.ambito_negocio) = UPPER($${idx})`);
       values.push(ambito);
       idx++;
     } else {
@@ -150,43 +162,38 @@ exports.obtenerEvolucion = async (req, res) => {
     const whereClause = 'WHERE ' + conditions.join(' AND ');
     const query = `
       SELECT
-        DATE_TRUNC('month', mf.fecha_movimiento) AS mes,
+        EXTRACT(YEAR FROM mf.fecha_movimiento)::int AS anio,
+        EXTRACT(MONTH FROM mf.fecha_movimiento)::int AS mes_num,
         COALESCE(SUM(CASE WHEN mf.tipo = 'Ingreso' THEN mf.monto ELSE 0 END), 0) AS ingresos,
         COALESCE(SUM(CASE WHEN mf.tipo = 'Egreso' THEN mf.monto ELSE 0 END), 0) AS egresos,
         COUNT(*) AS operaciones
       FROM movimientos_finanzas mf
       LEFT JOIN categorias_finanzas cf ON mf.categoria_id = cf.id
       ${whereClause}
-      GROUP BY DATE_TRUNC('month', mf.fecha_movimiento)
-      ORDER BY mes ASC
+      GROUP BY EXTRACT(YEAR FROM mf.fecha_movimiento), EXTRACT(MONTH FROM mf.fecha_movimiento)
+      ORDER BY anio ASC, mes_num ASC
     `;
     const result = await pool.query(query, values);
     const evolucion = result.rows.map(row => {
+      const anioNum = parseInt(row.anio) || 0;
+      const mesNum = parseInt(row.mes_num) || 0;
       let mesStr = 'Sin fecha';
       let labelStr = 'N/A';
-      let anioNum = 0;
-      let mesNum = 0;
-      try {
-        if (row.mes) {
-          const d = new Date(row.mes);
-          if (!isNaN(d)) {
-            mesStr = d.toISOString().split('T')[0].substring(0, 7);
-            labelStr = d.toLocaleDateString('es-AR', { month: 'short', year: '2-digit' });
-            anioNum = d.getFullYear();
-            mesNum = d.getMonth() + 1;
-          }
-        }
-      } catch (e) {
-        console.log('Fecha inválida en evolución');
+      if (anioNum && mesNum) {
+        mesStr = `${anioNum}-${String(mesNum).padStart(2, '0')}`;
+        const MESES_ES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        labelStr = `${MESES_ES[(mesNum || 1) - 1]} ${String(anioNum).slice(-2)}`;
       }
+      const ingresos = parseFloat(row.ingresos || 0);
+      const egresos = parseFloat(row.egresos || 0);
       return {
         mes: mesStr,
         mes_label: labelStr,
         anio: anioNum,
         mes_num: mesNum,
-        ingresos: parseFloat(row.ingresos || 0),
-        egresos: parseFloat(row.egresos || 0),
-        balance: parseFloat(row.ingresos || 0) - parseFloat(row.egresos || 0),
+        ingresos: ingresos,
+        egresos: egresos,
+        balance: ingresos - egresos,
         operaciones: parseInt(row.operaciones || 0)
       };
     });
@@ -206,9 +213,8 @@ exports.obtenerDistribucionCategorias = async (req, res) => {
   try {
     const params = req.query;
     const { where, values } = buildWhere(params);
-    const tipoFilter = params.tipo ? `AND mf.tipo = $${values.length + 1}` : '';
-    const tipoValue = params.tipo ? [params.tipo] : [];
-    const allValues = [...values, ...tipoValue];
+    // buildWhere ya agrega el filtro de tipo con UPPER() (la BD guarda 'Egreso'/'Ingreso'
+    // con mezcla de mayúsculas): agregarlo de nuevo con el valor crudo dejaba el gráfico vacío.
     const query = `
       SELECT
         cf.id AS categoria_id,
@@ -216,17 +222,17 @@ exports.obtenerDistribucionCategorias = async (req, res) => {
         cf.icono,
         cf.color_hex,
         cf.ambito,
+        cf.ambito_negocio,
         COALESCE(SUM(mf.monto), 0) AS total,
         COUNT(*) AS cantidad,
         AVG(mf.monto) AS promedio
       FROM movimientos_finanzas mf
       LEFT JOIN categorias_finanzas cf ON mf.categoria_id = cf.id
       ${where}
-      ${tipoFilter}
-      GROUP BY cf.id, cf.nombre, cf.icono, cf.color_hex, cf.ambito
+      GROUP BY cf.id, cf.nombre, cf.icono, cf.color_hex, cf.ambito, cf.ambito_negocio
       ORDER BY total DESC
     `;
-    const result = await pool.query(query, allValues);
+    const result = await pool.query(query, values);
     const total = result.rows.reduce((sum, row) => sum + parseFloat(row.total || 0), 0);
     const categorias = result.rows.map(row => ({
       id: row.categoria_id,
@@ -234,6 +240,7 @@ exports.obtenerDistribucionCategorias = async (req, res) => {
       icono: row.icono,
       color: row.color_hex,
       ambito: row.ambito,
+      ambito_negocio: row.ambito_negocio,
       total: parseFloat(row.total || 0),
       cantidad: parseInt(row.cantidad || 0),
       promedio: parseFloat(row.promedio || 0),
@@ -283,14 +290,15 @@ exports.obtenerDistribucionMetodosPago = async (req, res) => {
   }
 };
 
-// 🟢 Alertas (simplificada para no fallar)
+// 🟢 Alertas del mes (útiles, no solo balance)
 exports.obtenerAlertas = async (req, res) => {
   try {
-    const { anio, mes, ambito } = req.query;
+    const { anio, mes, ambito, tipo } = req.query;
     const alertas = [];
     if (!anio || !mes) {
       return res.json({ success: true, data: [] });
     }
+
     const conditions = [];
     const values = [];
     let idx = 1;
@@ -300,19 +308,27 @@ exports.obtenerAlertas = async (req, res) => {
     conditions.push(`EXTRACT(MONTH FROM mf.fecha_movimiento) = $${idx}`);
     values.push(parseInt(mes));
     idx++;
+    if (tipo && tipo !== 'GENERAL') {
+      conditions.push(`UPPER(mf.tipo) = UPPER($${idx})`);
+      values.push(tipo.toUpperCase());
+      idx++;
+    }
     if (ambito && ambito !== 'GENERAL') {
-      conditions.push(`cf.ambito = $${idx}`);
+      conditions.push(`UPPER(cf.ambito_negocio) = UPPER($${idx})`);
       values.push(ambito);
       idx++;
     } else {
       conditions.push(`(mf.es_transferencia_interna = false OR mf.es_transferencia_interna IS NULL)`);
     }
     const whereClause = 'WHERE ' + conditions.join(' AND ');
+    const params = { anio: parseInt(anio), mes: parseInt(mes), ambito, tipo };
 
+    // 1) Totales del mes
     const balanceQuery = `
       SELECT
         COALESCE(SUM(CASE WHEN mf.tipo = 'Ingreso' THEN mf.monto ELSE 0 END), 0) AS ingresos,
-        COALESCE(SUM(CASE WHEN mf.tipo = 'Egreso' THEN mf.monto ELSE 0 END), 0) AS egresos
+        COALESCE(SUM(CASE WHEN mf.tipo = 'Egreso' THEN mf.monto ELSE 0 END), 0) AS egresos,
+        COUNT(*) AS operaciones
       FROM movimientos_finanzas mf
       LEFT JOIN categorias_finanzas cf ON mf.categoria_id = cf.id
       ${whereClause}
@@ -320,14 +336,132 @@ exports.obtenerAlertas = async (req, res) => {
     const balanceResult = await pool.query(balanceQuery, values);
     const ingresos = parseFloat(balanceResult.rows[0].ingresos || 0);
     const egresos = parseFloat(balanceResult.rows[0].egresos || 0);
-    if (egresos > ingresos && ingresos > 0) {
+    const operaciones = parseInt(balanceResult.rows[0].operaciones || 0);
+
+    if (operaciones === 0) {
+      alertas.push({
+        tipo: 'info',
+        mensaje: `Sin movimientos registrados en ${MESES[parseInt(mes) - 1]} ${anio}.`
+      });
+      return res.json({ success: true, data: alertas, meta: { ingresos: 0, egresos: 0, operaciones: 0, periodo: `${MESES[parseInt(mes) - 1]} ${anio}` } });
+    }
+
+    // 2) Balance negativo (solo tiene sentido sin filtro de tipo)
+    const sinFiltroTipo = !tipo || tipo === 'GENERAL';
+    if (sinFiltroTipo && egresos > ingresos && ingresos > 0) {
       alertas.push({
         tipo: 'danger',
         mensaje: `Balance negativo: los egresos superan los ingresos en $${(egresos - ingresos).toLocaleString('es-AR')}`,
         monto: egresos - ingresos
       });
+    } else if (sinFiltroTipo && egresos > 0 && ingresos === 0) {
+      alertas.push({
+        tipo: 'danger',
+        mensaje: `Mes sin ingresos: se registraron $${egresos.toLocaleString('es-AR')} en egresos.`
+      });
     }
-    res.json({ success: true, data: alertas });
+
+    // 3) Comparativa de egresos contra el mes anterior
+    const mAnt = parseInt(mes) - 1;
+    const anioAnt = mAnt === 0 ? parseInt(anio) - 1 : parseInt(anio);
+    const mesAnt = mAnt === 0 ? 12 : mAnt;
+    try {
+      const condAnt = [
+        `EXTRACT(YEAR FROM mf.fecha_movimiento) = $1`,
+        `EXTRACT(MONTH FROM mf.fecha_movimiento) = $2`
+      ];
+      const valAnt = [anioAnt, mesAnt];
+      let iAnt = 3;
+      if (tipo && tipo !== 'GENERAL') {
+        condAnt.push(`UPPER(mf.tipo) = UPPER($${iAnt})`);
+        valAnt.push(tipo.toUpperCase());
+        iAnt++;
+      }
+      if (ambito && ambito !== 'GENERAL') {
+        condAnt.push(`UPPER(cf.ambito_negocio) = UPPER($${iAnt})`);
+        valAnt.push(ambito);
+      } else {
+        condAnt.push(`(mf.es_transferencia_interna = false OR mf.es_transferencia_interna IS NULL)`);
+      }
+      const rAnt = await pool.query(`
+        SELECT COALESCE(SUM(CASE WHEN mf.tipo = 'Egreso' THEN mf.monto ELSE 0 END), 0) AS egresos
+          FROM movimientos_finanzas mf
+          LEFT JOIN categorias_finanzas cf ON mf.categoria_id = cf.id
+         WHERE ${condAnt.join(' AND ')}
+      `, valAnt);
+      const egresosAnt = parseFloat(rAnt.rows[0].egresos || 0);
+      if (egresosAnt > 0) {
+        const delta = (egresos - egresosAnt) / egresosAnt * 100;
+        if (delta >= 20) {
+          alertas.push({
+            tipo: 'warning',
+            mensaje: `Los egresos subieron ${delta.toFixed(1)}% respecto de ${MESES[mesAnt - 1]} ${anioAnt} ($${egresosAnt.toLocaleString('es-AR')} → $${egresos.toLocaleString('es-AR')}).`,
+            monto: egresos - egresosAnt
+          });
+        } else if (delta <= -20) {
+          alertas.push({
+            tipo: 'success',
+            mensaje: `Los egresos bajaron ${Math.abs(delta).toFixed(1)}% respecto de ${MESES[mesAnt - 1]} ${anioAnt}.`,
+            monto: egresosAnt - egresos
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Error comparativa en alertas:', e.message);
+    }
+
+    // 4) Categoría que se lleva una parte grande del gasto
+    try {
+      const rCat = await pool.query(`
+        SELECT cf.nombre, SUM(mf.monto) AS total
+          FROM movimientos_finanzas mf
+          JOIN categorias_finanzas cf ON mf.categoria_id = cf.id
+         ${whereClause.replace('WHERE', 'WHERE mf.tipo = \'Egreso\' AND')}
+         GROUP BY cf.nombre
+         ORDER BY total DESC
+         LIMIT 1
+      `, values);
+      if (rCat.rows.length > 0 && egresos > 0) {
+        const top = rCat.rows[0];
+        const pct = parseFloat(top.total) / egresos * 100;
+        if (pct >= 40) {
+          alertas.push({
+            tipo: 'warning',
+            mensaje: `"${top.nombre}" concentra el ${pct.toFixed(0)}% de los egresos del mes ($${parseFloat(top.total).toLocaleString('es-AR')}).`,
+            monto: parseFloat(top.total)
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Error top categoría en alertas:', e.message);
+    }
+
+    // 5) Movimiento inusualmente grande (más de 3 veces el ticket promedio)
+    try {
+      const rMax = await pool.query(`
+        SELECT mf.monto, mf.descripcion, cf.nombre AS categoria
+          FROM movimientos_finanzas mf
+          LEFT JOIN categorias_finanzas cf ON mf.categoria_id = cf.id
+         ${whereClause}
+         ORDER BY mf.monto DESC
+         LIMIT 1
+      `, values);
+      if (rMax.rows.length > 0) {
+        const maxMonto = parseFloat(rMax.rows[0].monto || 0);
+        const promedio = (ingresos + egresos) / operaciones;
+        if (promedio > 0 && maxMonto > promedio * 3 && operaciones >= 5) {
+          alertas.push({
+            tipo: 'info',
+            mensaje: `Movimiento atípico: "${rMax.rows[0].descripcion || 'Sin descripción'}" (${rMax.rows[0].categoria || 'sin categoría'}) por $${maxMonto.toLocaleString('es-AR')} — ${Math.round(maxMonto / promedio)}x el promedio del mes.`,
+            monto: maxMonto
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Error movimiento atípico en alertas:', e.message);
+    }
+
+    res.json({ success: true, data: alertas, meta: { ingresos, egresos, operaciones, periodo: `${MESES[parseInt(mes) - 1]} ${anio}` } });
   } catch (error) {
     console.error('Error en obtenerAlertas:', error);
     res.status(500).json({ success: false, message: error.message });
@@ -348,7 +482,7 @@ exports.analizarCategorias = async (req, res) => {
     const values = [categoriaIds, fecha_inicio, fecha_fin];
     let ambitoFilter = '';
     if (ambito && ambito !== 'GENERAL') {
-      ambitoFilter = 'AND cf.ambito = $4';
+      ambitoFilter = 'AND UPPER(cf.ambito_negocio) = UPPER($4)';
       values.push(ambito);
     } else if (ambito === 'GENERAL') {
       ambitoFilter = 'AND (mf.es_transferencia_interna = false OR mf.es_transferencia_interna IS NULL)';
@@ -360,7 +494,8 @@ exports.analizarCategorias = async (req, res) => {
         cf.icono,
         cf.color_hex,
         cf.ambito,
-        DATE_TRUNC('month', mf.fecha_movimiento) AS mes,
+        EXTRACT(YEAR FROM mf.fecha_movimiento)::int AS anio,
+        EXTRACT(MONTH FROM mf.fecha_movimiento)::int AS mes_num,
         COALESCE(SUM(CASE WHEN mf.tipo = 'Ingreso' THEN mf.monto ELSE 0 END), 0) AS ingresos,
         COALESCE(SUM(CASE WHEN mf.tipo = 'Egreso' THEN mf.monto ELSE 0 END), 0) AS egresos,
         COUNT(*) AS operaciones
@@ -370,8 +505,8 @@ exports.analizarCategorias = async (req, res) => {
         AND mf.fecha_movimiento >= $2::date
         AND mf.fecha_movimiento <= $3::date
         ${ambitoFilter}
-      GROUP BY cf.id, cf.nombre, cf.icono, cf.color_hex, cf.ambito, DATE_TRUNC('month', mf.fecha_movimiento)
-      ORDER BY cf.nombre, mes ASC
+      GROUP BY cf.id, cf.nombre, cf.icono, cf.color_hex, cf.ambito, EXTRACT(YEAR FROM mf.fecha_movimiento), EXTRACT(MONTH FROM mf.fecha_movimiento)
+      ORDER BY cf.nombre, anio ASC, mes_num ASC
     `;
     const result = await pool.query(query, values);
     const analisis = {};
@@ -389,8 +524,8 @@ exports.analizarCategorias = async (req, res) => {
       }
       let mesStr = '';
       try {
-        if (row.mes) {
-          mesStr = new Date(row.mes).toISOString().split('T')[0].substring(0, 7);
+        if (row.mes_num) {
+          mesStr = `${row.anio}-${String(row.mes_num).padStart(2, '0')}`;
         }
       } catch (e) {
         mesStr = '';

@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const finanzasController = require('../controllers/finanzasController');
 const categoriasController = require('../controllers/categoriasController');
+const metodosPagoController = require('../controllers/metodosPagoController');
 const dashboardFinanzasController = require('../controllers/dashboardFinanzasController');
 
 // RUTAS DE MOVIMIENTOS
@@ -22,6 +23,12 @@ router.delete('/categorias/:id', categoriasController.eliminarCategoria);
 router.post('/subcategorias', categoriasController.crearSubcategoria);
 router.put('/subcategorias/:id', categoriasController.editarSubcategoria);
 router.delete('/subcategorias/:id', categoriasController.eliminarSubcategoria);
+
+// RUTAS DE GESTIÓN DE MÉTODOS DE PAGO
+router.get('/metodos-pago-gestion', metodosPagoController.obtenerMetodosPagoGestion);
+router.post('/metodos-pago-gestion', metodosPagoController.crearMetodoPago);
+router.put('/metodos-pago-gestion/:id', metodosPagoController.editarMetodoPago);
+router.delete('/metodos-pago-gestion/:id', metodosPagoController.eliminarMetodoPago);
 
 // RUTAS DEL DASHBOARD FINANCIERO
 router.get('/dashboard/kpis', dashboardFinanzasController.obtenerKPIs);
