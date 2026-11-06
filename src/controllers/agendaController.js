@@ -3,6 +3,104 @@
 
 const pool = require('../config/db');
 
+// Nombre corto de categoría usada para cobros de agenda
+const CAT_COBRO_SERVICIOS = 'Cobro Servicios';
+
+// ============================================================
+// Migración: columna para el cobro por Cuenta Corriente
+// ============================================================
+pool.query(`ALTER TABLE agenda ADD COLUMN IF NOT EXISTS a_cuenta_corriente BOOLEAN DEFAULT false`)
+  .then(() => console.log('✅ Columna a_cuenta_corriente lista en agenda'))
+  .catch(err => console.error('❌ Error en migración de agenda:', err.message));
+
+// ============================================================
+// Helpers: vincular eventos con Cuenta Corriente
+// ============================================================
+const origenAgenda = id => `agenda:${id}`;
+
+async function buscarFacturaCc(origen) {
+  try {
+    const r = await pool.query(
+      "SELECT id, debe FROM movimientos_cc WHERE id_origen = $1 AND debe > 0 ORDER BY created_at ASC LIMIT 1",
+      [origen]
+    );
+    return r.rows[0] || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function facturaCcTienePagos(facturaId) {
+  if (!facturaId) return false;
+  try {
+    const r = await pool.query(
+      `SELECT
+         (SELECT COALESCE(SUM(haber), 0) FROM movimientos_cc WHERE id_factura_origen = $1) AS pagos,
+         (SELECT COALESCE(SUM(monto), 0) FROM aplicaciones_cc WHERE factura_id = $1) AS aplicados`,
+      [facturaId]
+    );
+    const pagos = parseFloat(r.rows[0].pagos) || 0;
+    const aplicados = parseFloat(r.rows[0].aplicados) || 0;
+    return (pagos + aplicados) > 0.009;
+  } catch (e) {
+    return false;
+  }
+}
+
+function descripcionAgenda(evento, titulo) {
+  const t = titulo || evento.titulo || '';
+  return `Agenda ${evento.codigo_evento || ''}${t ? ` - ${String(t).slice(0, 120)}` : ''}`.trim();
+}
+
+// Fecha/hora fin = inicio + 1 hora, sin conversiones UTC
+function sumarUnaHora(fecha, hora) {
+  const [y, m, d] = String(fecha).split('-').map(Number);
+  const [hh, mm] = String(hora).split(':').map(Number);
+  const dt = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, 0);
+  dt.setHours(dt.getHours() + 1);
+  const pad = n => String(n).padStart(2, '0');
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+}
+
+// Crea, actualiza o elimina la factura de Cuenta Corriente asociada a un evento.
+async function sincronizarCcAgenda({ eventoId, clienteId, descripcion, monto, fecha, activa }) {
+  const origen = origenAgenda(eventoId);
+  const factura = await buscarFacturaCc(origen);
+
+  if (!activa) {
+    if (factura && !(await facturaCcTienePagos(factura.id))) {
+      await pool.query('DELETE FROM movimientos_cc WHERE id = $1', [factura.id]);
+      return { accion: 'eliminada' };
+    }
+    return { accion: 'sin_cambios' };
+  }
+
+  if (!factura) {
+    await pool.query(
+      `INSERT INTO movimientos_cc
+         (cliente_id, fecha_movimiento, descripcion, debe, haber, tipo_movimiento, categoria, id_origen, metodo_pago)
+       VALUES ($1, $2, $3, $4, 0, 'Factura', 'Servicios', $5, 'Cuenta Corriente')`,
+      [clienteId, fecha, descripcion, monto, origen]
+    );
+    return { accion: 'creada' };
+  }
+
+  const tienePagos = await facturaCcTienePagos(factura.id);
+  if (tienePagos) {
+    await pool.query(
+      'UPDATE movimientos_cc SET descripcion = $1, cliente_id = $2 WHERE id = $3',
+      [descripcion, clienteId, factura.id]
+    );
+    return { accion: 'actualizada_sin_monto' };
+  }
+
+  await pool.query(
+    'UPDATE movimientos_cc SET descripcion = $1, cliente_id = $2, fecha_movimiento = $3, debe = $4 WHERE id = $5',
+    [descripcion, clienteId, fecha, monto, factura.id]
+  );
+  return { accion: 'actualizada' };
+}
+
 // 🟢 GET: Obtener todos los eventos
 exports.obtenerEventos = async (req, res) => {
   try {
@@ -12,14 +110,15 @@ exports.obtenerEventos = async (req, res) => {
         a.codigo_evento,
         a.titulo,
         a.cliente_id,
-        a.fecha_inicio,
-        a.fecha_fin,
+        to_char(a.fecha_inicio, 'YYYY-MM-DD"T"HH24:MI') AS fecha_inicio,
+        to_char(a.fecha_fin, 'YYYY-MM-DD"T"HH24:MI') AS fecha_fin,
         a.tipo_evento,
         a.estado,
         a.observaciones,
         a.monto_cobrado,
         a.metodo_pago,
         a.cobrado,
+        a.a_cuenta_corriente,
         a.created_at,
         c.codigo_cliente,
         c.nombre_razon_social AS cliente_nombre
@@ -36,12 +135,15 @@ exports.obtenerEventos = async (req, res) => {
       cliente_id: row.cliente_id,
       fecha_inicio: row.fecha_inicio,
       fecha_fin: row.fecha_fin,
+      hora_inicio: row.fecha_inicio ? String(row.fecha_inicio).split('T')[1] || null : null,
+      hora_fin: row.fecha_fin ? String(row.fecha_fin).split('T')[1] || null : null,
       tipo_evento: row.tipo_evento,
       estado: row.estado,
       observaciones: row.observaciones,
       monto_cobrado: parseFloat(row.monto_cobrado),
       metodo_pago: row.metodo_pago,
       cobrado: row.cobrado,
+      a_cuenta_corriente: row.a_cuenta_corriente === true,
       cliente: row.cliente_id ? {
         id: row.cliente_id,
         codigo: row.codigo_cliente,
@@ -139,44 +241,121 @@ exports.obtenerClientes = async (req, res) => {
 exports.crearEvento = async (req, res) => {
   try {
     const {
-      titulo, cliente_id, fecha_inicio, fecha_fin,
-      tipo_evento, estado, observaciones, monto_cobrado, metodo_pago
+      titulo, cliente_id, fecha_inicio, hora_inicio,
+      tipo_evento, estado, observaciones, monto_cobrado, metodo_pago, cobrado,
+      a_cuenta_corriente
     } = req.body;
 
-    if (!titulo || !fecha_inicio || !fecha_fin) {
-      return res.status(400).json({ success: false, message: 'Título, fecha de inicio y fin son obligatorios' });
+    if (!titulo || !fecha_inicio || !hora_inicio) {
+      return res.status(400).json({ success: false, message: 'Título, fecha de inicio y hora de inicio son obligatorios' });
     }
 
-    if (new Date(fecha_fin) <= new Date(fecha_inicio)) {
-      return res.status(400).json({ success: false, message: 'La fecha de fin debe ser posterior a la de inicio' });
+    const enCuentaCorriente = a_cuenta_corriente === true || metodo_pago === 'Cuenta Corriente';
+    const monto = parseFloat(monto_cobrado) || 0;
+
+    if (enCuentaCorriente && !cliente_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Para enviar el evento a Cuenta Corriente tenés que asignarle un cliente'
+      });
     }
+    if (enCuentaCorriente && monto <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Para enviar el evento a Cuenta Corriente, el monto debe ser mayor a 0'
+      });
+    }
+
+    // Fecha fin = inicio + 1 hora (hora local, sin conversión UTC)
+    const inicioStr = `${fecha_inicio}T${hora_inicio}`;
+    const fechaFinStr = sumarUnaHora(fecha_inicio, hora_inicio);
 
     const countResult = await pool.query('SELECT COUNT(*) FROM agenda');
     const nuevoNumero = parseInt(countResult.rows[0].count) + 1;
     const codigoEvento = `EVT-${String(nuevoNumero).padStart(4, '0')}`;
 
+    const cobradoFlag = enCuentaCorriente ? false : cobrado === true;
+
     const query = `
       INSERT INTO agenda
       (codigo_evento, titulo, cliente_id, fecha_inicio, fecha_fin, tipo_evento,
-       estado, observaciones, monto_cobrado, metodo_pago, cobrado)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, false)
-      RETURNING id, codigo_evento, titulo, estado
+       estado, observaciones, monto_cobrado, metodo_pago, cobrado, a_cuenta_corriente)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING id, codigo_evento, titulo, estado, cobrado, monto_cobrado, metodo_pago, a_cuenta_corriente
     `;
     const values = [
       codigoEvento, titulo, cliente_id || null,
-      fecha_inicio, fecha_fin,
+      inicioStr,
+      fechaFinStr,
       tipo_evento || 'Visita Técnica',
       estado || 'Pendiente',
       observaciones || null,
-      monto_cobrado || 0,
-      metodo_pago || null
+      monto,
+      enCuentaCorriente ? 'Cuenta Corriente' : (metodo_pago || null),
+      cobradoFlag,
+      enCuentaCorriente
     ];
     const result = await pool.query(query, values);
+    const evento = result.rows[0];
+
+    let registradoFinanzas = false;
+    let registradoCuentaCorriente = false;
+
+    if (enCuentaCorriente) {
+      // 🧾 Se registra como deuda del cliente en Cuenta Corriente.
+      await sincronizarCcAgenda({
+        eventoId: evento.id,
+        clienteId: cliente_id,
+        descripcion: descripcionAgenda(evento, titulo),
+        monto,
+        fecha: fecha_inicio,
+        activa: true
+      });
+      registradoCuentaCorriente = true;
+    } else if (cobradoFlag && monto > 0) {
+      // ✅ INTEGRACIÓN A FINANZAS: si se crea ya cobrado con monto > 0
+      const yaRegistrada = await pool.query(
+        "SELECT id FROM movimientos_finanzas WHERE id_origen = $1",
+        ['agenda:' + evento.id]
+      );
+      if (yaRegistrada.rows.length === 0) {
+        const catResult = await pool.query(
+          'SELECT id FROM categorias_finanzas WHERE nombre = $1', [CAT_COBRO_SERVICIOS]
+        );
+        if (catResult.rows.length > 0) {
+          let metodoId = null;
+          if (metodo_pago) {
+            const mpResult = await pool.query('SELECT id FROM metodos_pago WHERE nombre = $1', [metodo_pago]);
+            if (mpResult.rows.length > 0) metodoId = mpResult.rows[0].id;
+          }
+          const fechaMov = fecha_inicio ? new Date(fecha_inicio).toISOString().split('T')[0]
+            : new Date().toISOString().split('T')[0];
+          await pool.query(`
+            INSERT INTO movimientos_finanzas
+            (fecha_movimiento, tipo, categoria_id, metodo_pago_id, descripcion, monto, id_origen)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `, [
+            fechaMov,
+            'Ingreso',
+            catResult.rows[0].id,
+            metodoId,
+            `Cobro agenda ${evento.codigo_evento} - ${evento.titulo}`,
+            monto,
+            'agenda:' + evento.id
+          ]);
+          registradoFinanzas = true;
+        }
+      }
+    }
 
     res.status(201).json({
       success: true,
-      message: `Evento registrado correctamente con código: ${codigoEvento}`,
-      data: result.rows[0]
+      message: enCuentaCorriente
+        ? `Evento ${codigoEvento} registrado y enviado a Cuenta Corriente del cliente`
+        : `Evento registrado correctamente con código: ${codigoEvento}`,
+      data: evento,
+      registradoFinanzas,
+      registradoCuentaCorriente
     });
   } catch (error) {
     console.error('Error al crear evento:', error);
@@ -189,62 +368,136 @@ exports.editarEvento = async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      titulo, cliente_id, fecha_inicio, fecha_fin,
-      tipo_evento, estado, observaciones, monto_cobrado, metodo_pago
+      titulo, cliente_id, fecha_inicio, hora_inicio,
+      tipo_evento, estado, observaciones, monto_cobrado, metodo_pago, cobrado,
+      a_cuenta_corriente
     } = req.body;
 
-    const checkResult = await pool.query('SELECT id, estado, cobrado FROM agenda WHERE id = $1', [id]);
+    if (!fecha_inicio || !hora_inicio) {
+      return res.status(400).json({ success: false, message: 'Fecha de inicio y hora de inicio son obligatorias' });
+    }
+
+    const enCuentaCorriente = a_cuenta_corriente === true || metodo_pago === 'Cuenta Corriente';
+    const monto = parseFloat(monto_cobrado) || 0;
+
+    if (enCuentaCorriente && !cliente_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Para enviar el evento a Cuenta Corriente tenés que asignarle un cliente'
+      });
+    }
+    if (enCuentaCorriente && monto <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Para enviar el evento a Cuenta Corriente, el monto debe ser mayor a 0'
+      });
+    }
+
+    // Fecha fin = inicio + 1 hora (hora local, sin conversión UTC)
+    const inicioStr = `${fecha_inicio}T${hora_inicio}`;
+    const fechaFinStr = sumarUnaHora(fecha_inicio, hora_inicio);
+
+    const checkResult = await pool.query(`
+      SELECT a.id, a.estado, a.cobrado, a.monto_cobrado,
+             c.codigo_cliente, c.nombre_razon_social AS cliente_nombre
+      FROM agenda a
+      LEFT JOIN clientes c ON c.id = a.cliente_id
+      WHERE a.id = $1
+    `, [id]);
     if (checkResult.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Evento no encontrado' });
     }
 
-    const estadoAnterior = checkResult.rows[0].estado;
-    const cobradoAnterior = checkResult.rows[0].cobrado;
+    const previa = checkResult.rows[0];
+    const cobradoAnterior = previa.cobrado === true;
+    const clienteTxt = previa.codigo_cliente && previa.cliente_nombre
+      ? ` · ${previa.codigo_cliente} ${previa.cliente_nombre}`
+      : '';
+
+    const cobradoNuevo = enCuentaCorriente ? false : cobrado === true;
 
     const query = `
       UPDATE agenda
       SET titulo = $1, cliente_id = $2, fecha_inicio = $3, fecha_fin = $4,
           tipo_evento = $5, estado = $6, observaciones = $7,
-          monto_cobrado = $8, metodo_pago = $9
-      WHERE id = $10
-      RETURNING id, codigo_evento, titulo, estado
+          monto_cobrado = $8, metodo_pago = $9, cobrado = $10, a_cuenta_corriente = $11
+      WHERE id = $12
+      RETURNING id, codigo_evento, titulo, estado, cobrado, monto_cobrado, metodo_pago, a_cuenta_corriente
     `;
     const values = [
-      titulo, cliente_id || null, fecha_inicio, fecha_fin,
+      titulo, cliente_id || null, inicioStr, fechaFinStr,
       tipo_evento, estado, observaciones || null,
-      monto_cobrado || 0, metodo_pago || null, id
+      monto, enCuentaCorriente ? 'Cuenta Corriente' : (metodo_pago || null), cobradoNuevo,
+      enCuentaCorriente,
+      id
     ];
     const result = await pool.query(query, values);
+    const evento = result.rows[0];
 
-    // ✅ INTEGRACIÓN: Si se completó y tiene monto, registrar en Finanzas (solo una vez)
-    if (estado === 'Completado' && !cobradoAnterior && monto_cobrado > 0) {
-      const catResult = await pool.query('SELECT id FROM categorias_finanzas WHERE nombre = $1', ['Cobro Servicios']);
+    // 🧾 Sincronizar Cuenta Corriente (crea, actualiza o elimina la deuda)
+    const cc = await sincronizarCcAgenda({
+      eventoId: id,
+      clienteId: cliente_id,
+      descripcion: descripcionAgenda(evento, titulo),
+      monto,
+      fecha: fecha_inicio,
+      activa: enCuentaCorriente
+    });
+    const registradoCuentaCorriente = ['creada', 'actualizada'].includes(cc.accion);
 
-      if (catResult.rows.length > 0) {
-        let metodoId = null;
-        if (metodo_pago) {
-          const mpResult = await pool.query('SELECT id FROM metodos_pago WHERE nombre = $1', [metodo_pago]);
-          if (mpResult.rows.length > 0) metodoId = mpResult.rows[0].id;
+    // Si la deuda de CC ya tiene pagos, los ingresos ya se registraron en Finanzas:
+    // no volvemos a registrar el cobro para no duplicar.
+    const facturaCc = await buscarFacturaCc(origenAgenda(id));
+    const ccConPagos = facturaCc ? await facturaCcTienePagos(facturaCc.id) : false;
+
+    // ✅ INTEGRACIÓN A FINANZAS:
+    // Al pasar de "no cobrado" a "cobrado" con monto > 0, registrar un Ingreso en Finanzas
+    // (una sola vez por evento, controlado por id_origen = 'agenda:<id>')
+    let registradoFinanzas = false;
+    if (!enCuentaCorriente && evento.cobrado && !cobradoAnterior && monto > 0 && !ccConPagos) {
+      const yaRegistrada = await pool.query(
+        "SELECT id FROM movimientos_finanzas WHERE id_origen = $1",
+        ['agenda:' + id]
+      );
+      if (yaRegistrada.rows.length === 0) {
+        const catResult = await pool.query(
+          'SELECT id FROM categorias_finanzas WHERE nombre = $1', [CAT_COBRO_SERVICIOS]
+        );
+        if (catResult.rows.length > 0) {
+          let metodoId = null;
+          if (metodo_pago) {
+            const mpResult = await pool.query('SELECT id FROM metodos_pago WHERE nombre = $1', [metodo_pago]);
+            if (mpResult.rows.length > 0) metodoId = mpResult.rows[0].id;
+          }
+          const fechaMov = fecha_inicio ? new Date(fecha_inicio).toISOString().split('T')[0]
+            : new Date().toISOString().split('T')[0];
+          await pool.query(`
+            INSERT INTO movimientos_finanzas
+            (fecha_movimiento, tipo, categoria_id, metodo_pago_id, descripcion, monto, id_origen)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `, [
+            fechaMov,
+            'Ingreso',
+            catResult.rows[0].id,
+            metodoId,
+            `Cobro agenda ${evento.codigo_evento} - ${evento.titulo}${clienteTxt}`,
+            monto,
+            'agenda:' + id
+          ]);
+          registradoFinanzas = true;
         }
-
-        await pool.query(`
-          INSERT INTO movimientos_finanzas
-          (fecha_movimiento, tipo, categoria_id, metodo_pago_id, descripcion, monto)
-          VALUES ($1, $2, $3, $4, $5, $6)
-        `, [
-          new Date().toISOString().split('T')[0],
-          'Ingreso',
-          catResult.rows[0].id,
-          metodoId,
-          `Cobro agenda ${result.rows[0].codigo_evento} - ${titulo}`,
-          monto_cobrado
-        ]);
-
-        await pool.query('UPDATE agenda SET cobrado = true WHERE id = $1', [id]);
       }
     }
 
-    res.json({ success: true, message: 'Evento actualizado correctamente', data: result.rows[0] });
+    res.json({
+      success: true,
+      message: enCuentaCorriente
+        ? 'Evento actualizado y sincronizado con Cuenta Corriente'
+        : 'Evento actualizado correctamente',
+      data: evento,
+      registradoFinanzas,
+      registradoCuentaCorriente
+    });
   } catch (error) {
     console.error('Error al editar evento:', error);
     res.status(500).json({ success: false, message: 'Error al editar el evento', error: error.message });
@@ -258,6 +511,12 @@ exports.eliminarEvento = async (req, res) => {
     const checkResult = await pool.query('SELECT id, codigo_evento FROM agenda WHERE id = $1', [id]);
     if (checkResult.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Evento no encontrado' });
+    }
+
+    // Si tenía una deuda en Cuenta Corriente sin pagos, la eliminamos también.
+    const facturaCc = await buscarFacturaCc(origenAgenda(id));
+    if (facturaCc && !(await facturaCcTienePagos(facturaCc.id))) {
+      await pool.query('DELETE FROM movimientos_cc WHERE id = $1', [facturaCc.id]);
     }
 
     await pool.query('DELETE FROM agenda WHERE id = $1', [id]);

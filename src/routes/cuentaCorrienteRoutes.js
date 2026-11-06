@@ -31,4 +31,10 @@ router.delete('/:id', cuentaCorrienteController.eliminarMovimiento);
 // ✅ NUEVA RUTA: Registrar Pago Específico (Para el botón de pago)
 router.post('/pago', cuentaCorrienteController.registrarPago);
 
+// 💰 FASE 1: Aplicar cobros a facturas (reparto asistido / regularización)
+router.post('/aplicar', cuentaCorrienteController.aplicarCobros);
+
+// ↩️ FASE 1: Deshacer una aplicación (recupera el crédito)
+router.delete('/aplicacion/:id', cuentaCorrienteController.deshacerAplicacion);
+
 module.exports = router;

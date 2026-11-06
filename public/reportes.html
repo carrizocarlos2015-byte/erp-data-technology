@@ -20,6 +20,42 @@
       background: white; border-radius: 12px; padding: 20px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-top: 20px;
     }
+    /* ===== Vista previa ===== */
+    .sheet {
+      background: white; border-radius: 6px; padding: 30px;
+      box-shadow: 0 4px 18px rgba(0,0,0,.15); max-width: 900px; margin: 0 auto;
+      font-size: 13px; color: #212529;
+    }
+    .sheet-encabezado { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; border-bottom: 2px solid #667eea; padding-bottom: 12px; }
+    .sheet-encabezado img { max-height: 60px; max-width: 170px; object-fit: contain; }
+    .sheet-empresa { text-align: right; }
+    .sheet-empresa .nombre { font-size: 17px; font-weight: 700; }
+    .sheet-titulo {
+      background: #667eea; color: #fff; text-align: center; font-weight: 700;
+      letter-spacing: .5px; padding: 8px 10px; border-radius: 5px; margin: 18px 0 14px;
+      font-size: 15px;
+    }
+    .sheet-meta { display: flex; flex-wrap: wrap; gap: 6px 28px; background: #f1f3f7; border-left: 4px solid #667eea; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; }
+    .sheet-meta b { color: #495057; }
+    .sheet table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .sheet thead th { background: #3d4555; color: #fff; padding: 7px 8px; text-align: left; font-weight: 600; border: 1px solid #3d4555; }
+    .sheet tbody td { padding: 6px 8px; border: 1px solid #dee2e6; }
+    .sheet tbody tr:nth-child(even) { background: #f6f7fb; }
+    .sheet tfoot td { padding: 8px; font-weight: 700; background: #e9ecf5; border: 1px solid #c9cfe0; }
+    .sheet .num { text-align: right; white-space: nowrap; }
+    .sheet-totales { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
+    .sheet-totales .caja { border: 1px solid #dee2e6; border-radius: 6px; padding: 10px 16px; text-align: center; min-width: 150px; }
+    .sheet-totales .caja .etiqueta { font-size: 11px; text-transform: uppercase; color: #6c757d; letter-spacing: .5px; }
+    .sheet-totales .caja .valor { font-size: 17px; font-weight: 700; }
+    .sheet-pie { margin-top: 22px; padding-top: 10px; border-top: 1px dashed #adb5bd; font-size: 11px; color: #6c757d; display: flex; justify-content: space-between; }
+    .estado-pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; color: #fff; }
+    @media print {
+      body * { visibility: hidden !important; }
+      #previewContenido, #previewContenido * { visibility: visible !important; }
+      #previewContenido { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
+      .sheet { box-shadow: none; border-radius: 0; max-width: 100%; padding: 10px; }
+      .modal-backdrop { display: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -35,6 +71,7 @@
           <li class="nav-item"><a class="nav-link" href="clientes.html"><i class="bi bi-people"></i> Clientes</a></li>
           <li class="nav-item"><a class="nav-link" href="cuenta-corriente.html"><i class="bi bi-wallet2"></i> Cta. Cte.</a></li>
           <li class="nav-item"><a class="nav-link" href="finanzas.html"><i class="bi bi-cash-stack"></i> Finanzas</a></li>
+          <li class="nav-item"><a class="nav-link" href="categorias.html"><i class="bi bi-tags"></i> Categorías</a></li>
           <li class="nav-item"><a class="nav-link" href="cheques.html"><i class="bi bi-receipt"></i> Cheques</a></li>
           <li class="nav-item"><a class="nav-link" href="trabajos.html"><i class="bi bi-briefcase"></i> Trabajos</a></li>
           <li class="nav-item"><a class="nav-link" href="agenda.html"><i class="bi bi-calendar"></i> Agenda</a></li>
@@ -87,38 +124,53 @@
         </div>
 
         <div class="row g-3 mb-4">
-          <div class="col-md-4">
+          <div class="col-md-3 col-6">
             <div class="kpi-card" style="border-left: 4px solid #dc3545;">
-              <div class="kpi-label text-muted">Total DEBE General</div>
+              <div class="kpi-label text-muted">Total DEBE</div>
               <div class="kpi-value text-danger" id="totalDebe">$0,00</div>
+              <small class="text-muted">Facturado</small>
             </div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3 col-6">
             <div class="kpi-card" style="border-left: 4px solid #198754;">
-              <div class="kpi-label text-muted">Total HABER General</div>
+              <div class="kpi-label text-muted">Total HABER</div>
               <div class="kpi-value text-success" id="totalHaber">$0,00</div>
+              <small class="text-muted">Cobrado / pagado</small>
             </div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3 col-6">
+            <div class="kpi-card" style="border-left: 4px solid #e8590c; background:#fff8f5;">
+              <div class="kpi-label text-muted">💰 Total a COBRAR</div>
+              <div class="kpi-value" style="color:#e8590c;" id="totalACobrar">$0,00</div>
+              <small class="text-muted">Lo que te deben (deudores)</small>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
             <div class="kpi-card" style="border-left: 4px solid #6f42c1;">
               <div class="kpi-label text-muted">Saldo Neto General</div>
               <div class="kpi-value" id="saldoNeto">$0,00</div>
+              <small class="text-muted">En Cuenta Corriente</small>
             </div>
           </div>
         </div>
 
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5 class="mb-0"><i class="bi bi-table"></i> Detalle por Cliente</h5>
-          <button class="btn btn-danger" onclick="generarPDFGeneral()">
-            <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
-          </button>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="vistaPreviaGeneral()">
+              <i class="bi bi-eye"></i> Vista Previa
+            </button>
+            <button class="btn btn-danger" onclick="generarPDFGeneral()">
+              <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
+            </button>
+          </div>
         </div>
 
         <div class="table-responsive table-container">
           <table class="table table-hover" id="tablaSaldos">
             <thead>
               <tr>
-                <th>ID</th>
+                <th>Código</th>
                 <th>Cliente</th>
                 <th>CUIT</th>
                 <th class="text-end">DEBE</th>
@@ -126,11 +178,21 @@
                 <th class="text-end">SALDO</th>
                 <th>Estado</th>
                 <th>Acciones</th>
+                <th>Enviar</th>
               </tr>
             </thead>
             <tbody id="tbodySaldos">
-              <tr><td colspan="8" class="text-center text-muted">Cargando...</td></tr>
+              <tr><td colspan="9" class="text-center text-muted">Cargando...</td></tr>
             </tbody>
+            <tfoot id="tfootSaldos" style="display:none;">
+              <tr class="table-dark fw-bold">
+                <td colspan="3" class="text-end">TOTALES GENERALES →</td>
+                <td class="text-end" id="footDebe">$0,00</td>
+                <td class="text-end" id="footHaber">$0,00</td>
+                <td class="text-end" id="footSaldo">$0,00</td>
+                <td colspan="3"></td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
@@ -160,6 +222,61 @@
             </button>
           </div>
         </div>
+
+        <!-- Alcance: qué querés mostrarle al cliente (no toca los datos, sólo lo que se muestra) -->
+        <div class="row g-3 align-items-end mt-1 pt-3 border-top">
+          <div class="col-md-4">
+            <label class="form-label mb-1"><i class="bi bi-funnel"></i> Alcance del reporte</label>
+            <select class="form-select form-select-sm" id="alcanceIndividual" onchange="alcanceCambio()">
+              <option value="historial">📄 Todo el historial</option>
+              <option value="deuda">💰 Sólo deuda pendiente</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label mb-1">Desde</label>
+            <input type="date" class="form-control form-control-sm" id="indDesde" onchange="alcanceCambio()">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label mb-1">Hasta</label>
+            <input type="date" class="form-control form-control-sm" id="indHasta" onchange="alcanceCambio()">
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-outline-secondary btn-sm w-100" onclick="limpiarAlcance()" title="Volver al historial completo">
+              <i class="bi bi-x-circle"></i> Limpiar
+            </button>
+          </div>
+        </div>
+        <small class="text-muted">Podés enviarle al cliente sólo lo que debe, o el historial completo, cuando quieras.</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL VISTA PREVIA ===== -->
+  <div class="modal fade" id="modalVistaPrevia" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="tituloPreview"><i class="bi bi-eye"></i> Vista Previa</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body bg-light" id="previewContenido">
+          <div class="text-center text-muted py-5">Generando vista previa...</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-success" id="btnWhatsModal" style="display:none;">
+            <i class="bi bi-whatsapp"></i> WhatsApp
+          </button>
+          <button type="button" class="btn btn-outline-secondary" id="btnMailModal" style="display:none;">
+            <i class="bi bi-envelope"></i> Email
+          </button>
+          <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+            <i class="bi bi-printer"></i> Imprimir
+          </button>
+          <button type="button" class="btn btn-danger" id="btnDescargarPreview">
+            <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
+          </button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -170,17 +287,132 @@
     let saldosData = [];
     let clientesList = [];
     let empresaData = null;
+    let previewActual = null; // { tipo: 'individual'|'general', clienteId }
+
+    // ============ HELPERS ============
+    // Logo de la empresa (acepta logo_base64 o logo)
+    function logoEmpresa() {
+      return (empresaData && (empresaData.logo_base64 || empresaData.logo)) || '';
+    }
+
+    // Detecta el formato real del logo para jsPDF (PNG / JPEG / ...)
+    function formatoLogo(dataUri) {
+      if (!dataUri) return 'PNG';
+      if (/^data:image\/(jpe?g)/i.test(dataUri)) return 'JPEG';
+      if (/^data:image\/gif/i.test(dataUri)) return 'GIF';
+      if (/^data:image\/webp/i.test(dataUri)) return 'WEBP';
+      if (/^data:image\/bmp/i.test(dataUri)) return 'BMP';
+      return 'PNG';
+    }
+
+    // Fecha -> dd/mm/aaaa
+    function formatFecha(valor) {
+      if (!valor) return '-';
+      const parte = String(valor).split('T')[0];
+      const [y, m, d] = parte.split('-');
+      if (!y || !m || !d || d.length < 2) return String(valor);
+      return `${d}/${m}/${y}`;
+    }
+
+    function fechaHoraActual() {
+      const n = new Date();
+      const dd = String(n.getDate()).padStart(2, '0');
+      const mm = String(n.getMonth() + 1).padStart(2, '0');
+      return `${dd}/${mm}/${n.getFullYear()} ${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function fechaArchivo() {
+      const n = new Date();
+      return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+    }
+
+    function colorEstado(saldo) {
+      if (saldo > 0) return { clase: 'bg-danger', texto: 'Deudor', hex: '#dc3545' };
+      if (saldo < 0) return { clase: 'bg-success', texto: 'Acreedor', hex: '#198754' };
+      return { clase: 'bg-secondary', texto: 'Sin Saldo', hex: '#6c757d' };
+    }
+
+    // Encabezado común de los PDFs (logo + datos de empresa + franja de título)
+    function encabezadoPDF(doc, titulo, opts = {}) {
+      const ancho = doc.internal.pageSize.getWidth();
+      const margenDcho = ancho - 14;
+      const logo = logoEmpresa();
+      let y = 15;
+
+      if (logo) {
+        try { doc.addImage(logo, formatoLogo(logo), 14, y, 42, 21); } catch (e) { console.warn('Logo no pudo dibujarse:', e.message); }
+      }
+      const xEmpresa = logo ? 62 : 14;
+
+      doc.setTextColor(33, 37, 41);
+      doc.setFontSize(15); doc.setFont(undefined, 'bold');
+      doc.text(empresaData?.nombre || 'Data Technology', xEmpresa, y + 7);
+      doc.setFontSize(9); doc.setFont(undefined, 'normal');
+      doc.setTextColor(90, 95, 105);
+      const lineas = [
+        [empresaData?.direccion, y + 13],
+        [empresaData?.telefono, y + 18],
+        [empresaData?.cuit ? `CUIT: ${empresaData.cuit}` : null, y + 23],
+        [empresaData?.email, y + 28]
+      ];
+      lineas.forEach(([txt, yy]) => { if (txt) doc.text(String(txt), xEmpresa, yy); });
+      doc.setTextColor(33, 37, 41);
+
+      // Franja de título
+      y += 36;
+      doc.setFillColor(102, 126, 234);
+      doc.roundedRect(14, y, ancho - 28, 11, 2, 2, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(opts.tamTitulo || 13); doc.setFont(undefined, 'bold');
+      doc.text(titulo, ancho / 2, y + 7.3, { align: 'center' });
+      doc.setTextColor(33, 37, 41);
+
+      // Subtítulo / fecha
+      y += 17;
+      doc.setFontSize(9); doc.setFont(undefined, 'normal');
+      doc.setTextColor(100, 105, 115);
+      if (opts.izquierda) doc.text(opts.izquierda, 14, y);
+      if (opts.derecha) doc.text(opts.derecha, margenDcho, y, { align: 'right' });
+      doc.setTextColor(33, 37, 41);
+
+      return y + 6;
+    }
+
+    // Pie de página con numeración en cada página del PDF
+    function piePDF(doc, texto) {
+      const paginas = doc.internal.getNumberOfPages();
+      const ancho = doc.internal.pageSize.getWidth();
+      const alto = doc.internal.pageSize.getHeight();
+      for (let i = 1; i <= paginas; i++) {
+        doc.setPage(i);
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.3);
+        doc.line(14, alto - 14, ancho - 14, alto - 14);
+        doc.setFontSize(8);
+        doc.setTextColor(130, 130, 130);
+        doc.text(texto, 14, alto - 9);
+        doc.text(`Página ${i} de ${paginas}`, ancho - 14, alto - 9, { align: 'right' });
+      }
+      doc.setTextColor(33, 37, 41);
+    }
 
     document.addEventListener('DOMContentLoaded', async () => {
-      await cargarEmpresa();
-      await cargarSaldos();
-      await cargarClientesSelect();
+      // Cargamos todo en paralelo: la pantalla queda usable antes
+      await Promise.all([cargarEmpresa(), cargarSaldos(), cargarClientesSelect()]);
     });
+
+    // Garantiza que la lista de clientes esté disponible (evita clics prematuros)
+    async function asegurarClientes() {
+      if (clientesList.length) return;
+      await cargarClientesSelect();
+    }
 
     async function cargarEmpresa() {
       try {
         const res = await fetch(`${API}/empresa`);
         empresaData = await res.json();
+        // Algunos endpoints devuelven 'logo' y otros 'logo_base64': normalizamos
+        if (empresaData && !empresaData.logo_base64 && empresaData.logo) empresaData.logo_base64 = empresaData.logo;
       } catch (error) {
         console.error('Error al cargar datos de empresa:', error);
         // Fallback por si falla la carga
@@ -198,12 +430,16 @@
         saldosData = await res.json();
         
         let deudores = 0, acreedores = 0, sinSaldo = 0;
-        let totalDebe = 0, totalHaber = 0;
+        let totalDebe = 0, totalHaber = 0, saldoNeto = 0, totalACobrar = 0, totalAPagar = 0;
 
         saldosData.forEach(s => {
-          if (s.saldo > 0) { deudores++; totalDebe += s.total_debe; }
-          else if (s.saldo < 0) { acreedores++; totalHaber += Math.abs(s.saldo); }
-          else { sinSaldo++; }
+          if (s.saldo > 0) { deudores++; totalACobrar += s.saldo; }
+          else if (s.saldo < 0) { acreedores++; totalAPagar += Math.abs(s.saldo); }
+          else sinSaldo++;
+          // Sumatoria real de las columnas de la tabla
+          totalDebe += s.total_debe;
+          totalHaber += s.total_haber;
+          saldoNeto += s.saldo;
         });
 
         document.getElementById('kpiDeudores').textContent = deudores;
@@ -213,7 +449,10 @@
         
         document.getElementById('totalDebe').textContent = formatMoney(totalDebe);
         document.getElementById('totalHaber').textContent = formatMoney(totalHaber);
-        document.getElementById('saldoNeto').textContent = formatMoney(totalDebe - totalHaber);
+        document.getElementById('totalACobrar').textContent = formatMoney(totalACobrar);
+        document.getElementById('saldoNeto').textContent = formatMoney(saldoNeto);
+        // Resumen global para reusar en PDF y vista previa
+        window._resumenGeneral = { totalDebe, totalHaber, totalACobrar, totalAPagar, saldoNeto, deudores, acreedores, sinSaldo };
 
         renderizarTabla();
       } catch (error) {
@@ -226,12 +465,16 @@
         const res = await fetch(`${API}/clientes`);
         clientesList = await res.json();
         const select = document.getElementById('selectClienteIndividual');
+        const seleccionado = select.value; // conservamos lo elegido
+        // Reconstruimos las opciones sin duplicar (la función puede repetirse)
+        while (select.options.length > 1) select.remove(1);
         clientesList.forEach(c => {
           const opt = document.createElement('option');
           opt.value = c.id;
           opt.textContent = `${c.codigo} - ${c.nombre}`;
           select.appendChild(opt);
         });
+        if (seleccionado) select.value = seleccionado;
       } catch (error) {
         console.error('Error al cargar clientes:', error);
       }
@@ -239,195 +482,741 @@
 
     function renderizarTabla() {
       const tbody = document.getElementById('tbodySaldos');
+      const tfoot = document.getElementById('tfootSaldos');
       if (saldosData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay datos</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No hay datos</td></tr>';
+        tfoot.style.display = 'none';
         return;
       }
 
+      let sumDebe = 0, sumHaber = 0, sumSaldo = 0;
+
       tbody.innerHTML = saldosData.map(s => {
-        let estadoClass = 'bg-secondary';
-        let estadoTexto = 'Sin Saldo';
-        if (s.saldo > 0) { estadoClass = 'bg-danger'; estadoTexto = 'Deudor'; }
-        else if (s.saldo < 0) { estadoClass = 'bg-success'; estadoTexto = 'Acreedor'; }
+        const estado = colorEstado(s.saldo);
+        sumDebe += s.total_debe;
+        sumHaber += s.total_haber;
+        sumSaldo += s.saldo;
 
         return `
         <tr>
-          <td>${s.cliente_id.substring(0,8)}...</td>
-          <td><strong>${s.cliente_nombre}</strong></td>
-          <td>${s.codigo_cliente}</td>
+          <td>${esc(s.codigo_cliente || '-')}</td>
+          <td><strong>${esc(s.cliente_nombre)}</strong></td>
+          <td>${esc(s.cuit || '-')}</td>
           <td class="text-end">${formatMoney(s.total_debe)}</td>
           <td class="text-end">${formatMoney(s.total_haber)}</td>
           <td class="text-end fw-bold">${formatMoney(s.saldo)}</td>
-          <td><span class="badge ${estadoClass}">${estadoTexto}</span></td>
-          <td>
-            <button class="btn btn-sm btn-outline-primary" onclick="verDetalle('${s.cliente_id}')">
+          <td><span class="badge ${estado.clase}">${estado.texto}</span></td>
+          <td class="text-nowrap">
+            <button class="btn btn-sm btn-outline-primary" onclick="verDetalle('${s.cliente_id}')" title="Ver estado de cuenta">
               <i class="bi bi-eye"></i> Ver
+            </button>
+          </td>
+          <td class="text-nowrap">
+            <button class="btn btn-sm btn-outline-success rounded-circle me-1" title="Enviar por WhatsApp"
+                    onclick="enviarWhatsApp('${s.cliente_id}')">
+              <i class="bi bi-whatsapp"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary rounded-circle" title="Enviar por Email"
+                    onclick="enviarEmail('${s.cliente_id}')">
+              <i class="bi bi-envelope"></i>
             </button>
           </td>
         </tr>`;
       }).join('');
+
+      // Fila de sumatorias
+      document.getElementById('footDebe').textContent = formatMoney(sumDebe);
+      document.getElementById('footHaber').textContent = formatMoney(sumHaber);
+      document.getElementById('footSaldo').textContent = formatMoney(sumSaldo);
+      tfoot.style.display = '';
     }
 
-    function verDetalle(clienteId) {
+    // El botón "Ver" de cada fila: selecciona el cliente y abre la vista previa
+    async function verDetalle(clienteId) {
       document.getElementById('selectClienteIndividual').value = clienteId;
-      window.scrollTo({ top: document.querySelector('.card:last-child').offsetTop - 100, behavior: 'smooth' });
+      await vistaPreviaIndividual(clienteId);
     }
 
-    // ✅ FUNCIÓN PARA GENERAR PDF INDIVIDUAL CON LOGO A LA IZQUIERDA Y DATOS A LA DERECHA
+    function abrirModalPreview(titulo) {
+      document.getElementById('tituloPreview').innerHTML = `<i class="bi bi-eye"></i> ${titulo}`;
+      const el = document.getElementById('modalVistaPrevia');
+      const modal = bootstrap.Modal.getOrCreateInstance(el);
+      modal.show();
+      return modal;
+    }
+
+    // Lee el alcance elegido en la UI (historial completo o sólo deuda + rango de fechas)
+    function parametrosAlcance() {
+      return {
+        modo: document.getElementById('alcanceIndividual').value || 'historial',
+        desde: document.getElementById('indDesde').value || '',
+        hasta: document.getElementById('indHasta').value || ''
+      };
+    }
+
+    // Si la vista previa está abierta, la regenera con el nuevo alcance
+    function alcanceCambio() {
+      const modal = document.getElementById('modalVistaPrevia');
+      if (previewActual && previewActual.tipo === 'individual' && modal.classList.contains('show')) {
+        vistaPreviaIndividual(previewActual.clienteId);
+      }
+    }
+
+    function limpiarAlcance() {
+      document.getElementById('alcanceIndividual').value = 'historial';
+      document.getElementById('indDesde').value = '';
+      document.getElementById('indHasta').value = '';
+      alcanceCambio();
+    }
+
+    // Trae los movimientos de un cliente ya ordenados cronológicamente.
+    // El alcance sólo cambia lo que se MUESTRA: los datos y estadísticas no se tocan.
+    async function obtenerMovimientos(clienteId, alcance) {
+      const res = await fetch(`${API}/cuenta-corriente/cliente/${clienteId}`);
+      const data = await res.json();
+      const todos = (data.movimientos || []).slice();
+      // Orden ascendente por fecha (del más antiguo al más reciente)
+      todos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+      // Saldo acumulado real: siempre sobre el historial COMPLETO
+      let acumulado = 0;
+      todos.forEach(m => {
+        acumulado += (parseFloat(m.debe || 0) - parseFloat(m.haber || 0));
+        m.saldoAcum = acumulado;
+      });
+
+      const saldoTotal = todos.length
+        ? acumulado
+        : parseFloat(data.saldo_total || 0);
+
+      // ---- Filtro de alcance ----
+      const a = alcance || { modo: 'historial', desde: '', hasta: '' };
+      let movimientos = todos;
+
+      if (a.desde || a.hasta) {
+        movimientos = movimientos.filter(m => {
+          const f = String(m.fecha || '').split('T')[0];
+          return (!a.desde || f >= a.desde) && (!a.hasta || f <= a.hasta);
+        });
+      }
+      if (a.modo === 'deuda') {
+        // Facturas con saldo pendiente > 0 (los cobrados y ajustes quedan fuera)
+        movimientos = movimientos.filter(m => parseFloat(m.saldo || 0) > 0);
+      }
+
+      // Totales de lo que se muestra
+      const totales = movimientos.reduce((acc, m) => {
+        acc.debe += parseFloat(m.debe || 0);
+        acc.haber += parseFloat(m.haber || 0);
+        return acc;
+      }, { debe: 0, haber: 0 });
+
+      const pendiente = movimientos.reduce((s, m) => s + Math.max(0, parseFloat(m.saldo || 0)), 0);
+      // 💰 Fase 4: crédito a cuenta (transferencias sin repartir) y total real a pagar
+      const saldoACuenta = parseFloat(data.saldo_a_cuenta || 0);
+      const totalAPagar = Math.max(0, pendiente - saldoACuenta);
+
+      return { movimientos, todos, saldoTotal, totales, pendiente, saldoACuenta, totalAPagar, alcance: a };
+    }
+
+    // Valor de cierre del reporte según el alcance (deuda → total real a pagar;
+    // historial → saldo final o saldo al cierre del período)
+    function cierreReporte(movimientos, alcance, saldoTotal, pendiente, saldoACuenta) {
+      const rojo = '#dc3545', verde = '#198754', gris = '#6c757d';
+      if (alcance.modo === 'deuda') {
+        const real = Math.max(0, pendiente - (saldoACuenta || 0));
+        return { etiqueta: 'Total a pagar', valor: real, color: real > 0 ? rojo : verde };
+      }
+      if ((alcance.desde || alcance.hasta) && movimientos.length) {
+        const ultimo = movimientos[movimientos.length - 1];
+        return {
+          etiqueta: `Saldo al ${formatFecha(ultimo.fecha)}`,
+          valor: ultimo.saldoAcum,
+          color: ultimo.saldoAcum > 0 ? rojo : (ultimo.saldoAcum < 0 ? verde : gris)
+        };
+      }
+      return { etiqueta: 'Saldo Final', valor: saldoTotal, color: saldoTotal > 0 ? rojo : (saldoTotal < 0 ? verde : gris) };
+    }
+
+    // ✅ PDF INDIVIDUAL: encabezado con logo, fechas dd/mm/aaaa, ordenadas y totales
     async function generarPDFIndividual() {
       const clienteId = document.getElementById('selectClienteIndividual').value;
       if (!clienteId) { alert('Seleccioná un cliente primero'); return; }
+      await asegurarClientes();
+      const alcance = parametrosAlcance();
+      const esDeuda = alcance.modo === 'deuda';
+      window._ultimoEstado = null; // se completa si el PDF sale bien
 
       try {
-        const resMov = await fetch(`${API}/cuenta-corriente/cliente/${clienteId}`);
-        const dataMov = await resMov.json();
-        const movimientos = dataMov.movimientos || []; 
-        
+        const { movimientos, saldoTotal, totales, pendiente, saldoACuenta, totalAPagar } = await obtenerMovimientos(clienteId, alcance);
         const cliente = clientesList.find(c => c.id === clienteId);
-        
+        const cierre = cierreReporte(movimientos, alcance, saldoTotal, pendiente, saldoACuenta);
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        // --- ENCABEZADO PROFESIONAL ---
-        let yPos = 20;
-        const logoWidth = 40;
-        const logoHeight = 20;
-        const leftMargin = 14;
-        
-        // 1. Logo a la Izquierda
-        if (empresaData && empresaData.logo) {
-          try {
-            doc.addImage(empresaData.logo, 'PNG', leftMargin, yPos, logoWidth, logoHeight);
-          } catch (e) {
-            console.warn('Error al cargar logo en PDF:', e);
-          }
-        }
-        
-        // 2. Datos de la Empresa Alineados a la Derecha
-        const rightX = 196; // Margen derecho aprox
-        doc.setFontSize(14);
-        doc.setFont(undefined, 'bold');
-        doc.text(empresaData?.nombre || 'Data Technology', rightX, yPos + 5, { align: 'right' });
-        
-        doc.setFontSize(10);
+        const doc = new jsPDF('p', 'mm', 'a4');
+
+        const y = encabezadoPDF(doc, esDeuda ? 'ESTADO DE CUENTA · DEUDA PENDIENTE' : 'ESTADO DE CUENTA CORRIENTE', {
+          izquierda: `Generado: ${fechaHoraActual()}`,
+          derecha: movimientos.length ? `Período: ${formatFecha(movimientos[0].fecha)} al ${formatFecha(movimientos[movimientos.length - 1].fecha)}` : ''
+        });
+
+        // Datos del cliente
+        let yPos = y + 4;
+        doc.setFillColor(241, 243, 247);
+        doc.roundedRect(14, yPos, doc.internal.pageSize.getWidth() - 28, 22, 2, 2, 'F');
+        doc.setDrawColor(102, 126, 234);
+        doc.setLineWidth(0.8);
+        doc.line(14, yPos, 14, yPos + 22);
+
+        doc.setFontSize(10); doc.setFont(undefined, 'bold'); doc.setTextColor(60, 65, 80);
+        doc.text('Cliente:', 19, yPos + 7);
+        doc.text('CUIT / Código:', 19, yPos + 14);
+        doc.text(esDeuda ? 'Facturas abiertas:' : 'Movimientos:', 19, yPos + 20.5);
         doc.setFont(undefined, 'normal');
-        doc.text(empresaData?.direccion || 'Jujuy 1156 - Ciudad - Mendoza', rightX, yPos + 12, { align: 'right' });
-        doc.text(empresaData?.telefono || 'Cel 261-6080860', rightX, yPos + 18, { align: 'right' });
-        
-        // Título Centrado debajo del encabezado
-        yPos += 35;
-        doc.setFontSize(14);
-        doc.setFont(undefined, 'bold');
-        doc.text('RESUMEN DE CUENTA CORRIENTE', 105, yPos, { align: 'center' });
-        
-        // Datos del Cliente
-        yPos += 15;
-        doc.setFontSize(11);
-        doc.setFont(undefined, 'normal');
-        doc.text(`Cliente: ${cliente?.nombre || 'N/A'}`, leftMargin, yPos);
-        yPos += 6;
-        doc.text(`CUIT: ${cliente?.cuit || 'N/A'}`, leftMargin, yPos);
-        yPos += 6;
-        doc.text(`Mendoza ${new Date().toLocaleDateString('es-AR')}.`, leftMargin, yPos);
-        
-        // Línea separadora
-        yPos += 8;
-        doc.setDrawColor(0);
-        doc.setLineWidth(0.5);
-        doc.line(leftMargin, yPos, 196, yPos);
-        
-        // Tabla de Movimientos
-        yPos += 10;
+        doc.text(cliente?.nombre || 'N/A', 52, yPos + 7);
+        doc.text(`${cliente?.cuit || '—'}   ·   ${cliente?.codigo || ''}`, 52, yPos + 14);
+        doc.text(`${movimientos.length}`, 52, yPos + 20.5);
+
+        // Tabla de movimientos
+        yPos += 29;
         doc.autoTable({
           startY: yPos,
-          head: [['Fecha', 'Descripción', 'Debe', 'Haber', 'Saldo']],
+          head: [['Fecha', 'Descripción', 'Estado', 'DEBE', esDeuda ? 'PAGADO' : 'HABER', esDeuda ? 'PENDIENTE' : 'SALDO ACUM.']],
           body: movimientos.map(m => [
-            m.fecha ? m.fecha.split('T')[0] : '-',
-            m.descripcion || '-',
+            formatFecha(m.fecha),
+            (m.descripcion || '-') +
+              (m.categoria ? `  [${m.categoria}]` : '') +
+              (m.tipo && m.tipo !== 'Factura' ? `  [${m.tipo}]` : ''),
+            m.estado || '-',
             formatMoney(m.debe || 0),
             formatMoney(m.haber || 0),
-            formatMoney(m.saldo || 0)
+            esDeuda ? formatMoney(m.saldo || 0) : formatMoney(m.saldoAcum ?? m.saldo ?? 0)
           ]),
-          styles: { fontSize: 9, cellPadding: 2 },
-          headStyles: { fillColor: [102, 126, 234], textColor: 255, fontStyle: 'bold' },
-          alternateRowStyles: { fillColor: [245, 245, 245] },
+          styles: { fontSize: 8.5, cellPadding: 2.2, lineColor: [220, 226, 230], lineWidth: 0.1 },
+          headStyles: { fillColor: [61, 69, 85], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+          alternateRowStyles: { fillColor: [246, 247, 251] },
           columnStyles: {
-            0: { cellWidth: 25 },
+            0: { cellWidth: 22, halign: 'center' },
             1: { cellWidth: 'auto' },
-            2: { halign: 'right', cellWidth: 30 },
-            3: { halign: 'right', cellWidth: 30 },
-            4: { halign: 'right', cellWidth: 30, fontStyle: 'bold' }
-          }
+            2: { cellWidth: 20, halign: 'center', fontSize: 8 },
+            3: { halign: 'right', cellWidth: 27 },
+            4: { halign: 'right', cellWidth: 27 },
+            5: { halign: 'right', cellWidth: 27, fontStyle: 'bold' }
+          },
+          didParseCell: (d) => {
+            if (d.section === 'body' && d.column.index === 2) {
+              const est = String(d.cell.raw || '');
+              if (est === 'Pagada') { d.cell.styles.textColor = [25, 135, 84]; d.cell.styles.fontStyle = 'bold'; }
+              else if (est === 'Parcial') { d.cell.styles.textColor = [255, 193, 7]; d.cell.styles.fontStyle = 'bold'; }
+              else if (est === 'Pendiente') { d.cell.styles.textColor = [220, 53, 69]; d.cell.styles.fontStyle = 'bold'; }
+              else if (est === 'A cuenta') { d.cell.styles.textColor = [10, 140, 170]; d.cell.styles.fontStyle = 'bold'; }
+              else if (est === 'Repartida') { d.cell.styles.textColor = [108, 117, 125]; }
+            }
+          },
+          margin: { left: 14, right: 14, bottom: 22 }
         });
-        
-        // Saldo Final
-        const finalY = doc.lastAutoTable.finalY + 10;
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'bold');
-        doc.text(`SALDO TOTAL: ${formatMoney(dataMov.saldo_total || 0)}`, 196, finalY, { align: 'right' });
-        
-        const fileName = `CtaCte_${cliente?.nombre?.replace(/\s+/g, '_') || 'Cliente'}_${new Date().toISOString().split('T')[0]}.pdf`;
-        doc.save(fileName);
-        
+
+        // Sumatorias + cierre (según alcance)
+        let fin = doc.lastAutoTable.finalY + 8;
+        const anchoPagina = doc.internal.pageSize.getWidth();
+
+        doc.setFillColor(233, 236, 245);
+        doc.setDrawColor(201, 207, 224);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(14, fin, anchoPagina - 28, 26, 2, 2, 'FD');
+
+        doc.setFontSize(9.5); doc.setTextColor(60, 65, 80); doc.setFont(undefined, 'bold');
+        doc.text('TOTALES', 19, fin + 7);
+        doc.setFont(undefined, 'normal');
+        doc.text(esDeuda ? 'Sumatoria de DEBE (facturas abiertas):' : 'Sumatoria de DEBE (facturado):', 19, fin + 13.5);
+        doc.text(esDeuda ? 'Sumatoria de PAGADO:' : 'Sumatoria de HABER (pagado):', 19, fin + 20);
+
+        doc.setFont(undefined, 'bold'); doc.setTextColor(60, 65, 80);
+        doc.text(formatMoney(totales.debe), anchoPagina - 19, fin + 13.5, { align: 'right' });
+        doc.text(formatMoney(totales.haber), anchoPagina - 19, fin + 20, { align: 'right' });
+
+        // Caja destacada de cierre (saldo final / total pendiente / saldo del período)
+        fin += 32;
+        const cierreRgb = cierre.color === '#dc3545' ? [220, 53, 69]
+          : cierre.color === '#198754' ? [25, 135, 84] : [108, 117, 125];
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(...cierreRgb);
+        doc.setLineWidth(0.7);
+        doc.roundedRect(anchoPagina - 118, fin, 104, 15, 2, 2, 'FD');
+        doc.setFontSize(10); doc.setTextColor(...cierreRgb); doc.setFont(undefined, 'bold');
+        doc.text(`${cierre.etiqueta}: ${formatMoney(cierre.valor)}`, anchoPagina - 66, fin + 9.6, { align: 'center' });
+
+        // Nota lateral según alcance
+        doc.setFont(undefined, 'normal'); doc.setTextColor(108, 117, 125); doc.setFontSize(9);
+        if (esDeuda) {
+          if (movimientos.length) {
+            doc.setTextColor(108, 117, 125);
+            doc.text(`${movimientos.length} factura${movimientos.length > 1 ? 's' : ''} abierta${movimientos.length > 1 ? 's' : ''}`, 19, fin + 7.5);
+            if (saldoACuenta > 0.009) doc.setTextColor(10, 140, 170); else doc.setTextColor(108, 117, 125);
+            doc.text(saldoACuenta > 0.009
+              ? `− Crédito a cuenta: ${formatMoney(saldoACuenta)}`
+              : 'Sin crédito a cuenta', 19, fin + 12.5);
+          } else {
+            doc.text('Sin facturas pendientes', 19, fin + 9.6);
+          }
+        } else if (alcance.desde || alcance.hasta) {
+          doc.text('Período seleccionado', 19, fin + 9.6);
+        }
+
+        doc.setTextColor(33, 37, 41);
+        piePDF(doc, `${empresaData?.nombre || 'Data Technology'} · Estado de cuenta de ${cliente?.nombre || ''} · Emitido ${fechaHoraActual()}`);
+
+        // Info que retoman los botones de WhatsApp / Email
+        // (en modo deuda, pendiente = total REAL a pagar ya descontado el crédito a cuenta)
+        window._ultimoEstado = {
+          modo: alcance.modo,
+          pendiente: esDeuda ? totalAPagar : pendiente,
+          bruto: pendiente,
+          saldoACuenta,
+          cantidad: movimientos.length,
+          saldoTotal
+        };
+
+        const nombre = (cliente?.nombre || 'Cliente').replace(/\s+/g, '_').replace(/[^\wáéíóúÁÉÍÓÚñÑ-]/g, '');
+        doc.save(`${esDeuda ? 'CtaCte_Deuda' : 'CtaCte'}_${nombre}_${fechaArchivo()}.pdf`);
+
       } catch (error) {
         console.error('Error al generar PDF:', error);
         alert('Error al generar PDF: ' + error.message);
       }
     }
 
+    // ✅ PDF GENERAL: tabla de saldos con fila de TOTALES
     async function generarPDFGeneral() {
       try {
+        if (!saldosData.length) { alert('No hay datos para exportar'); return; }
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('landscape');
-        
-        let yPos = 20;
-        if (empresaData && empresaData.logo) {
-          try { doc.addImage(empresaData.logo, 'PNG', 14, yPos, 30, 15); } catch(e) {}
-        }
-        const empX = empresaData && empresaData.logo ? 50 : 14;
-        doc.setFontSize(14); doc.setFont(undefined, 'bold');
-        doc.text(empresaData?.nombre || 'Data Technology', empX, yPos + 5);
-        doc.setFontSize(10); doc.setFont(undefined, 'normal');
-        doc.text(empresaData?.direccion || '', empX, yPos + 11);
-        
-        yPos += 25;
-        doc.setFontSize(14); doc.setFont(undefined, 'bold');
-        doc.text('REPORTE GENERAL DE SALDOS DE CLIENTES', 148, yPos, { align: 'center' });
-        yPos += 8;
-        doc.setFontSize(10); doc.setFont(undefined, 'normal');
-        doc.text(`Generado: ${new Date().toLocaleString('es-AR')}`, 14, yPos);
-        
-        yPos += 10;
+        const doc = new jsPDF('l', 'mm', 'a4');
+
+        const sumDebe = saldosData.reduce((a, s) => a + s.total_debe, 0);
+        const sumHaber = saldosData.reduce((a, s) => a + s.total_haber, 0);
+        const sumSaldo = saldosData.reduce((a, s) => a + s.saldo, 0);
+        const sumACobrar = saldosData.filter(s => s.saldo > 0).reduce((a, s) => a + s.saldo, 0);
+
+        const y = encabezadoPDF(doc, 'REPORTE GENERAL DE SALDOS DE CLIENTES', {
+          izquierda: `Generado: ${fechaHoraActual()}`,
+          derecha: `Clientes: ${saldosData.length}`
+        });
+
         doc.autoTable({
-          startY: yPos,
-          head: [['Cliente', 'CUIT', 'DEBE', 'HABER', 'SALDO', 'Estado']],
+          startY: y + 4,
+          head: [['Cliente', 'Código', 'CUIT', 'DEBE', 'HABER', 'SALDO', 'Estado']],
           body: saldosData.map(s => [
             s.cliente_nombre,
             s.codigo_cliente,
+            s.cuit || '-',
             formatMoney(s.total_debe),
             formatMoney(s.total_haber),
             formatMoney(s.saldo),
-            s.saldo > 0 ? 'Deudor' : (s.saldo < 0 ? 'Acreedor' : 'Al día')
+            colorEstado(s.saldo).texto
           ]),
-          styles: { fontSize: 9, cellPadding: 2 },
-          headStyles: { fillColor: [102, 126, 234], textColor: 255 },
-          alternateRowStyles: { fillColor: [245, 245, 245] },
+          foot: [[
+            'TOTALES GENERALES', '', '',
+            formatMoney(sumDebe), formatMoney(sumHaber), formatMoney(sumSaldo),
+            saldosData.length + ' clientes'
+          ]],
+          styles: { fontSize: 9, cellPadding: 2.4, lineColor: [220, 226, 230], lineWidth: 0.1 },
+          headStyles: { fillColor: [61, 69, 85], textColor: 255, fontStyle: 'bold' },
+          footStyles: { fillColor: [233, 236, 245], textColor: [33, 37, 41], fontStyle: 'bold', lineWidth: 0.2 },
+          alternateRowStyles: { fillColor: [246, 247, 251] },
           columnStyles: {
-            2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right', fontStyle: 'bold' }
-          }
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 24, halign: 'center' },
+            2: { cellWidth: 32, halign: 'center' },
+            3: { halign: 'right', cellWidth: 32 },
+            4: { halign: 'right', cellWidth: 32 },
+            5: { halign: 'right', cellWidth: 34, fontStyle: 'bold' },
+            6: { halign: 'center', cellWidth: 26 }
+          },
+          didParseCell: (d) => {
+            if (d.section === 'body' && d.column.index === 6) {
+              const t = String(d.cell.raw || '');
+              if (t === 'Deudor') d.cell.styles.textColor = [220, 53, 69];
+              else if (t === 'Acreedor') d.cell.styles.textColor = [25, 135, 84];
+              else d.cell.styles.textColor = [108, 117, 125];
+            }
+          },
+          margin: { left: 14, right: 14, bottom: 22 }
         });
-        
-        doc.save('Reporte_General_Saldos.pdf');
+
+        // Resumen debajo de la tabla (incluye lo que te deben)
+        const aCobrar = saldosData.filter(s => s.saldo > 0).reduce((a, s) => a + s.saldo, 0);
+        const aPagar = saldosData.filter(s => s.saldo < 0).reduce((a, s) => a + Math.abs(s.saldo), 0);
+        let fin = doc.lastAutoTable.finalY + 10;
+        const ancho = doc.internal.pageSize.getWidth();
+        doc.setFillColor(241, 243, 247);
+        doc.setDrawColor(201, 207, 224);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(ancho - 122, fin, 108, 32, 2, 2, 'FD');
+        doc.setFontSize(9.5); doc.setFont(undefined, 'normal'); doc.setTextColor(80, 85, 95);
+        doc.text('Total DEBE (facturado):', ancho - 116, fin + 7);
+        doc.text('Total HABER (cobrado):', ancho - 116, fin + 13.5);
+        doc.text('Total a PAGAR:', ancho - 116, fin + 20);
+        doc.setFont(undefined, 'bold');
+        doc.text('SALDO NETO:', ancho - 116, fin + 27.5);
+        doc.setFont(undefined, 'normal');
+        doc.text(formatMoney(sumDebe), ancho - 18, fin + 7, { align: 'right' });
+        doc.text(formatMoney(sumHaber), ancho - 18, fin + 13.5, { align: 'right' });
+        doc.setTextColor(25, 135, 84);
+        doc.text(formatMoney(aPagar), ancho - 18, fin + 20, { align: 'right' });
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(sumSaldo > 0 ? 220 : 25, sumSaldo > 0 ? 53 : 135, sumSaldo > 0 ? 69 : 84);
+        doc.text(formatMoney(sumSaldo), ancho - 18, fin + 27.5, { align: 'right' });
+        doc.setTextColor(33, 37, 41);
+
+        // Caja destacada: TOTAL A COBRAR (lo que te deben)
+        doc.setFillColor(255, 248, 245);
+        doc.setDrawColor(232, 89, 12);
+        doc.setLineWidth(0.7);
+        doc.roundedRect(14, fin, 120, 32, 2, 2, 'FD');
+        doc.setFontSize(10); doc.setTextColor(232, 89, 12); doc.setFont(undefined, 'bold');
+        doc.text('TOTAL A COBRAR', 22, fin + 9);
+        doc.setFontSize(15);
+        doc.text(formatMoney(aCobrar), 126, fin + 17, { align: 'right' });
+        doc.setFontSize(8.5); doc.setFont(undefined, 'normal'); doc.setTextColor(120, 90, 70);
+        doc.text(`${saldosData.filter(s => s.saldo > 0).length} clientes te deben · ${saldosData.filter(s => s.saldo <= 0).length} al día o a favor`, 22, fin + 26);
+
+        piePDF(doc, `${empresaData?.nombre || 'Data Technology'} · Reporte general de saldos · Emitido ${fechaHoraActual()}`);
+
+        doc.save(`Reporte_General_Saldos_${fechaArchivo()}.pdf`);
       } catch (error) {
         alert('Error al generar PDF general: ' + error.message);
       }
     }
 
-    function verVistaPrevia() {
+    // ============ VISTA PREVIA EN PANTALLA ============
+    function esc(texto) {
+      return String(texto ?? '').replace(/[&<>"']/g, c => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+      ));
+    }
+
+    function hojaCabecera(titulo, meta) {
+      const logo = logoEmpresa();
+      const img = logo ? `<img src="${logo}" alt="Logo">` : '';
+      return `
+        <div class="sheet-encabezado">
+          <div>${img}</div>
+          <div class="sheet-empresa">
+            <div class="nombre">${esc(empresaData?.nombre || 'Data Technology')}</div>
+            <div>${esc(empresaData?.direccion || '')}</div>
+            <div>${esc(empresaData?.telefono || '')}</div>
+            ${empresaData?.cuit ? `<div>CUIT: ${esc(empresaData.cuit)}</div>` : ''}
+            ${empresaData?.email ? `<div>${esc(empresaData.email)}</div>` : ''}
+          </div>
+        </div>
+        <div class="sheet-titulo">${esc(titulo)}</div>
+        <div class="sheet-meta">${meta.map(m => `<div><b>${esc(m[0])}:</b> ${esc(m[1])}</div>`).join('')}</div>`;
+    }
+
+    function hojaPie(extra) {
+      return `<div class="sheet-pie">
+        <span>${esc(empresaData?.nombre || 'Data Technology')} · ${extra || ''}</span>
+        <span>Emitido: ${fechaHoraActual()}</span>
+      </div>`;
+    }
+
+    async function verVistaPrevia() {
       const clienteId = document.getElementById('selectClienteIndividual').value;
       if (!clienteId) { alert('Seleccioná un cliente primero'); return; }
-      window.open(`${API}/cuenta-corriente/cliente/${clienteId}`, '_blank');
+      await vistaPreviaIndividual(clienteId);
     }
+
+    async function vistaPreviaIndividual(clienteId) {
+      const id = clienteId || document.getElementById('selectClienteIndividual').value;
+      if (!id) { alert('Seleccioná un cliente primero'); return; }
+      await asegurarClientes();
+
+      const alcance = parametrosAlcance();
+      const esDeuda = alcance.modo === 'deuda';
+
+      const contenedor = document.getElementById('previewContenido');
+      contenedor.innerHTML = '<div class="text-center text-muted py-5">Generando vista previa...</div>';
+      abrirModalPreview(esDeuda ? 'Estado de Cuenta · Deuda Pendiente' : 'Estado de Cuenta Corriente');
+      previewActual = { tipo: 'individual', clienteId: id };
+      actualizarBotonesEnvioModal();
+
+      try {
+        const { movimientos, saldoTotal, totales, pendiente, saldoACuenta, totalAPagar } = await obtenerMovimientos(id, alcance);
+        const cliente = clientesList.find(c => c.id === id) || {};
+        const cierre = cierreReporte(movimientos, alcance, saldoTotal, pendiente, saldoACuenta);
+        const periodos = movimientos.length
+          ? `Del ${formatFecha(movimientos[0].fecha)} al ${formatFecha(movimientos[movimientos.length - 1].fecha)}`
+          : 'Sin movimientos';
+
+        const filas = movimientos.map(m => {
+          const est = m.estado || '-';
+          let color = '#6c757d';
+          if (est === 'Pagada') color = '#198754';
+          else if (est === 'Parcial') color = '#d68910';
+          else if (est === 'Pendiente') color = '#dc3545';
+          else if (est === 'A cuenta') color = '#0aa2c0';
+          else if (est === 'Repartida') color = '#6c757d';
+          return `<tr>
+            <td class="text-center">${formatFecha(m.fecha)}</td>
+            <td>${esc(m.descripcion || '-')}${m.categoria ? ` <small class="text-muted">[${esc(m.categoria)}]</small>` : ''}${m.tipo && m.tipo !== 'Factura' ? ` <small class="text-muted">[${esc(m.tipo)}]</small>` : ''}</td>
+            <td class="text-center"><span class="estado-pill" style="background:${color}">${esc(est)}</span></td>
+            <td class="num">${formatMoney(m.debe || 0)}</td>
+            <td class="num">${formatMoney(m.haber || 0)}</td>
+            <td class="num fw-bold">${esDeuda ? formatMoney(m.saldo || 0) : formatMoney(m.saldoAcum ?? m.saldo ?? 0)}</td>
+          </tr>`;
+        }).join('') || `<tr><td colspan="6" class="text-center text-muted">${
+          esDeuda ? '✅ Sin facturas pendientes: el cliente está al día' : 'Sin movimientos'
+        }</td></tr>`;
+
+        const alcanceTexto = esDeuda ? '💰 Sólo deuda pendiente' : '📄 Historial completo';
+        const rangoTexto = (alcance.desde || alcance.hasta)
+          ? `${alcance.desde ? formatFecha(alcance.desde) : 'inicio'} al ${alcance.hasta ? formatFecha(alcance.hasta) : 'hoy'}`
+          : null;
+
+        // Cajas superiores según alcance (en deuda: abiertas, − a cuenta, total real)
+        const cajasCabecera = esDeuda
+          ? [
+              ['Cliente', cliente.nombre || 'N/A'],
+              ['CUIT', cliente.cuit || '—'],
+              ['Código', cliente.codigo || '—'],
+              ['Alcance', alcanceTexto + (rangoTexto ? ` · ${rangoTexto}` : '')],
+              ['Período', periodos],
+              ['Facturas abiertas', movimientos.length],
+              ['💰 Crédito a cuenta', formatMoney(saldoACuenta)],
+              ['Total a pagar', formatMoney(totalAPagar)]
+            ]
+          : [
+              ['Cliente', cliente.nombre || 'N/A'],
+              ['CUIT', cliente.cuit || '—'],
+              ['Código', cliente.codigo || '—'],
+              ['Alcance', alcanceTexto + (rangoTexto ? ` · ${rangoTexto}` : '')],
+              ['Período', periodos],
+              ['Movimientos', movimientos.length]
+            ];
+
+        contenedor.innerHTML = `<div class="sheet">
+          ${hojaCabecera(esDeuda ? 'ESTADO DE CUENTA · DEUDA PENDIENTE' : 'ESTADO DE CUENTA CORRIENTE', cajasCabecera)}
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align:center;width:90px">Fecha</th>
+                <th>Descripción</th>
+                <th style="text-align:center;width:95px">Estado</th>
+                <th class="num" style="width:105px">DEBE</th>
+                <th class="num" style="width:105px">${esDeuda ? 'PAGADO' : 'HABER'}</th>
+                <th class="num" style="width:110px">${esDeuda ? 'PENDIENTE' : 'SALDO ACUM.'}</th>
+              </tr>
+            </thead>
+            <tbody>${filas}</tbody>
+            <tfoot>
+              <tr>
+                <td colspan="3" style="text-align:right">SUMATORIA GENERAL →</td>
+                <td class="num">${formatMoney(totales.debe)}</td>
+                <td class="num">${formatMoney(totales.haber)}</td>
+                <td class="num">${esDeuda ? formatMoney(pendiente) : formatMoney(cierre.valor)}</td>
+              </tr>
+            </tfoot>
+          </table>
+          <div class="sheet-totales">
+            <div class="caja"><div class="etiqueta">Total DEBE</div><div class="valor">${formatMoney(totales.debe)}</div></div>
+            <div class="caja"><div class="etiqueta">${esDeuda ? 'Total PAGADO' : 'Total HABER'}</div><div class="valor">${formatMoney(totales.haber)}</div></div>
+            <div class="caja" style="border-color:${cierre.color}"><div class="etiqueta" style="color:${cierre.color}">${esDeuda ? '💰 ' : ''}${esc(cierre.etiqueta)}</div><div class="valor" style="color:${cierre.color}">${formatMoney(cierre.valor)}</div></div>
+          </div>
+          ${hojaPie(`Estado de cuenta de ${cliente.nombre || ''}${esDeuda ? ' · Deuda pendiente' : ''}`)}
+        </div>`;
+      } catch (error) {
+        console.error('Error en vista previa:', error);
+        contenedor.innerHTML = `<div class="alert alert-danger mb-0">No se pudo generar la vista previa: ${esc(error.message)}</div>`;
+      }
+    }
+
+    function vistaPreviaGeneral() {
+      if (!saldosData.length) { alert('No hay datos para mostrar'); return; }
+
+      const contenedor = document.getElementById('previewContenido');
+      abrirModalPreview('Reporte General de Saldos');
+      previewActual = { tipo: 'general' };
+      actualizarBotonesEnvioModal();
+
+      const sumDebe = saldosData.reduce((a, s) => a + s.total_debe, 0);
+      const sumHaber = saldosData.reduce((a, s) => a + s.total_haber, 0);
+      const sumSaldo = saldosData.reduce((a, s) => a + s.saldo, 0);
+      const sumACobrar = saldosData.filter(s => s.saldo > 0).reduce((a, s) => a + s.saldo, 0);
+
+      const filas = saldosData.map(s => {
+        const estado = colorEstado(s.saldo);
+        return `<tr>
+          <td>${esc(s.cliente_nombre)}</td>
+          <td class="text-center">${esc(s.codigo_cliente || '-')}</td>
+          <td class="text-center">${esc(s.cuit || '-')}</td>
+          <td class="num">${formatMoney(s.total_debe)}</td>
+          <td class="num">${formatMoney(s.total_haber)}</td>
+          <td class="num fw-bold">${formatMoney(s.saldo)}</td>
+          <td class="text-center"><span class="estado-pill" style="background:${estado.hex}">${estado.texto}</span></td>
+        </tr>`;
+      }).join('');
+
+      contenedor.innerHTML = `<div class="sheet">
+        ${hojaCabecera('REPORTE GENERAL DE SALDOS DE CLIENTES', [
+          ['Total de clientes', saldosData.length],
+          ['💰 Total a cobrar', formatMoney(sumACobrar)],
+          ['Generado', fechaHoraActual()]
+        ])}
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th style="text-align:center;width:95px">Código</th>
+              <th style="text-align:center;width:120px">CUIT</th>
+              <th class="num" style="width:115px">DEBE</th>
+              <th class="num" style="width:115px">HABER</th>
+              <th class="num" style="width:120px">SALDO</th>
+              <th style="text-align:center;width:100px">Estado</th>
+            </tr>
+          </thead>
+          <tbody>${filas}</tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" style="text-align:right">TOTALES GENERALES →</td>
+              <td class="num">${formatMoney(sumDebe)}</td>
+              <td class="num">${formatMoney(sumHaber)}</td>
+              <td class="num">${formatMoney(sumSaldo)}</td>
+              <td class="text-center">${saldosData.length}</td>
+            </tr>
+          </tfoot>
+        </table>
+        <div class="sheet-totales">
+          <div class="caja" style="border-color:#e8590c;background:#fff8f5"><div class="etiqueta" style="color:#e8590c">💰 A COBRAR</div><div class="valor" style="color:#e8590c">${formatMoney(sumACobrar)}</div></div>
+          <div class="caja"><div class="etiqueta">Total DEBE</div><div class="valor">${formatMoney(sumDebe)}</div></div>
+          <div class="caja"><div class="etiqueta">Total HABER</div><div class="valor">${formatMoney(sumHaber)}</div></div>
+          <div class="caja" style="border-color:#6f42c1"><div class="etiqueta" style="color:#6f42c1">Saldo Neto</div><div class="valor" style="color:#6f42c1">${formatMoney(sumSaldo)}</div></div>
+        </div>
+        ${hojaPie('Reporte general de saldos de clientes')}
+      </div>`;
+    }
+
+    // ============ ENVIAR CUENTA CORRIENTE (EMAIL / WHATSAPP) ============
+    async function clienteDe(id) {
+      await asegurarClientes();
+      return clientesList.find(c => c.id === id) || null;
+    }
+    function saldoDe(id) { return saldosData.find(s => s.cliente_id === id) || null; }
+
+    // Normaliza teléfonos argentinos al formato internacional que usa WhatsApp
+    function normalizarTelefono(tel) {
+      let d = String(tel || '').replace(/\D/g, '');
+      if (!d) return '';
+      if (d.startsWith('54')) return d;          // ya es internacional
+      if (d.startsWith('0')) return '54' + d.slice(1); // 0261... -> 54261...
+      if (d.length <= 9) return '549' + d;        // celular sin prefijo
+      return d;
+    }
+
+    function textoEstadoCuenta(s, estado) {
+      const nombreEmp = empresaData?.nombre || 'Data Technology';
+
+      // Versión "sólo deuda": lo que el cliente debe ahora mismo
+      if (estado && estado.modo === 'deuda') {
+        if (!estado.pendiente) {
+          return `¡Hola ${s.cliente_nombre}! 👋
+
+Tu cuenta en *${nombreEmp}* está *al día* ✅
+
+No tenés facturas pendientes.
+
+¡Gracias!`;
+        }
+        return `¡Hola ${s.cliente_nombre}! 👋
+
+Te compartimos tus facturas pendientes en *${nombreEmp}*:
+
+• Facturas abiertas: *${estado.cantidad}*
+${estado.saldoACuenta > 0.009 ? `• Crédito a cuenta: *${formatMoney(estado.saldoACuenta)}* 🔄
+` : ''}• Total a pagar: *${formatMoney(estado.pendiente)}* 💰
+
+Te adjuntamos el detalle en PDF.
+
+¡Gracias!`;
+      }
+
+      let resumen;
+      if (s.saldo > 0) resumen = `Saldo pendiente: *${formatMoney(s.saldo)}* 💰`;
+      else if (s.saldo < 0) resumen = `Saldo a tu favor: ${formatMoney(Math.abs(s.saldo))}`;
+      else resumen = 'Tu cuenta está *al día* ✅';
+
+      return `¡Hola ${s.cliente_nombre}! 👋
+
+Te compartimos el resumen de tu cuenta corriente en *${nombreEmp}*:
+
+• Facturado (DEBE): ${formatMoney(s.total_debe)}
+• Pagado (HABER): ${formatMoney(s.total_haber)}
+• ${resumen}
+
+Te adjuntamos el estado de cuenta en PDF con el detalle movimiento por movimiento.
+
+¡Gracias!`;
+    }
+
+    // Genera y descarga el PDF del cliente para adjuntarlo al mensaje
+    // (usa el alcance elegido en pantalla: historial o sólo deuda)
+    async function prepararPDFParaAdjuntar(clienteId) {
+      document.getElementById('selectClienteIndividual').value = clienteId;
+      await generarPDFIndividual();
+    }
+
+    function avisarSinContacto(cliente, campo) {
+      const detalle = campo === 'teléfono'
+        ? 'Cargalo en la sección Clientes (campo Teléfono) y volvé a intentar.'
+        : 'Cargalo en la sección Clientes (campo Email) y volvé a intentar.';
+      alert(`El cliente "${cliente.nombre}" no tiene ${campo} cargado.\n\n${detalle}`);
+    }
+
+    async function enviarWhatsApp(clienteId) {
+      const cliente = await clienteDe(clienteId);
+      const saldo = saldoDe(clienteId);
+      if (!cliente || !saldo) return;
+
+      const tel = normalizarTelefono(cliente.telefono);
+      if (!tel) { avisarSinContacto(cliente, 'teléfono'); return; }
+
+      try { await prepararPDFParaAdjuntar(clienteId); } catch (e) { console.warn('PDF adjunto no generado:', e); }
+      const mensaje = textoEstadoCuenta(saldo, window._ultimoEstado);
+      window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(mensaje)}`, '_blank');
+    }
+
+    async function enviarEmail(clienteId) {
+      const cliente = await clienteDe(clienteId);
+      const saldo = saldoDe(clienteId);
+      if (!cliente || !saldo) return;
+
+      if (!cliente.email) { avisarSinContacto(cliente, 'email'); return; }
+
+      try { await prepararPDFParaAdjuntar(clienteId); } catch (e) { console.warn('PDF adjunto no generado:', e); }
+      const esDeuda = window._ultimoEstado && window._ultimoEstado.modo === 'deuda';
+      const asunto = esDeuda
+        ? `Deuda pendiente - Estado de cuenta - ${empresaData?.nombre || 'Data Technology'}`
+        : `Estado de cuenta corriente - ${empresaData?.nombre || 'Data Technology'}`;
+      const cuerpo = encodeURIComponent(textoEstadoCuenta(saldo, window._ultimoEstado)).replace(/%0A/g, '%0D%0A');
+      window.open(`mailto:${cliente.email}?subject=${encodeURIComponent(asunto)}&body=${cuerpo}`, '_blank');
+    }
+
+    // Muestra/oculta los botones de envío del modal según el tipo de reporte
+    function actualizarBotonesEnvioModal() {
+      const visible = previewActual && previewActual.tipo === 'individual';
+      document.getElementById('btnWhatsModal').style.display = visible ? '' : 'none';
+      document.getElementById('btnMailModal').style.display = visible ? '' : 'none';
+      if (visible) {
+        document.getElementById('btnWhatsModal').onclick = () => enviarWhatsApp(previewActual.clienteId);
+        document.getElementById('btnMailModal').onclick = () => enviarEmail(previewActual.clienteId);
+      }
+    }
+
+    // Botón "Descargar PDF" del modal
+    document.getElementById('btnDescargarPreview').addEventListener('click', () => {
+      if (!previewActual) return;
+      if (previewActual.tipo === 'general') generarPDFGeneral();
+      else generarPDFIndividual();
+    });
 
     function formatMoney(amount) {
       return '$' + parseFloat(amount || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

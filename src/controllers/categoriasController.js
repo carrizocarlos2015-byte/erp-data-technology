@@ -73,7 +73,13 @@ exports.crearCategoria = async (req, res) => {
         const ambitoValido = ['INGRESO', 'EGRESO', 'GENERAL'].includes(ambito?.toUpperCase()) ? ambito.toUpperCase() : 'EGRESO';
         // Validar y normalizar ámbito (Casa/Empresa/General)
         const ambitoNegocioValido = ['CASA', 'EMPRESA', 'GENERAL'].includes(ambito_negocio?.toUpperCase()) ? ambito_negocio.toUpperCase() : 'GENERAL';
-        
+
+        // Evitar duplicados (la tabla tiene índice único por nombre)
+        const existe = await pool.query('SELECT id FROM categorias_finanzas WHERE LOWER(nombre) = LOWER($1)', [nombre.trim()]);
+        if (existe.rows.length > 0) {
+            return res.status(409).json({ success: false, message: `Ya existe una categoría llamada "${nombre.trim()}"` });
+        }
+
         const query = `INSERT INTO categorias_finanzas (nombre, icono, color_hex, ambito, ambito_negocio) VALUES ($1, $2, $3, $4, $5) RETURNING id, nombre, icono, color_hex, ambito, ambito_negocio`;
         const result = await pool.query(query, [nombre.trim(), icono || '', color_hex || '#6c757d', ambitoValido, ambitoNegocioValido]);
         
@@ -90,6 +96,15 @@ exports.editarCategoria = async (req, res) => {
         const { id } = req.params;
         const { nombre, icono, color_hex, ambito, ambito_negocio } = req.body;
         if (!nombre || nombre.trim() === '') return res.status(400).json({ success: false, message: 'El nombre es obligatorio' });
+
+        // Evitar duplicados al renombrar
+        const existe = await pool.query(
+            'SELECT id FROM categorias_finanzas WHERE LOWER(nombre) = LOWER($1) AND id <> $2',
+            [nombre.trim(), id]
+        );
+        if (existe.rows.length > 0) {
+            return res.status(409).json({ success: false, message: `Ya existe una categoría llamada "${nombre.trim()}"` });
+        }
         
         const sets = ['nombre = $1', 'icono = $2', 'color_hex = $3'];
         const values = [nombre.trim(), icono || '', color_hex || ''];

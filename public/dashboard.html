@@ -1,583 +1,1076 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Financiero - ERP</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .kpi-card { border-left: 4px solid #0d6efd; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .kpi-delta { font-size: 0.78rem; font-weight: 600; display: inline-block; margin-top: 6px; }
-        .kpi-delta.up { color: #198754; }
-        .kpi-delta.down { color: #dc3545; }
-        .kpi-delta.flat { color: #6c757d; }
-        .kpi-delta.muted { color: #adb5bd; font-weight: 400; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Financiero - ERP Data Technology</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #4338ca;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --info: #06b6d4;
+      --slate: #64748b;
+      --slate-dark: #1e293b;
+      --bg: #f8fafc;
+      --card: #ffffff;
+    }
 
-        /* ---- Impresión / PDF ---- */
-        @media print {
-            @page { size: landscape; margin: 10mm; }
-            body { background: #fff !important; }
-            .no-print, nav, .card.shadow-sm.border-0.mb-4:first-of-type, button { display: none !important; }
-            #cardAlertas { box-shadow: none !important; border: 1px solid #dee2e6 !important; break-inside: avoid; }
-            .kpi-card, .chart-container { box-shadow: none !important; border: 1px solid #dee2e6 !important; break-inside: avoid; }
-            .chart-container { height: auto !important; }
-            canvas { max-height: 300px; }
-            h5 { break-after: avoid; }
-        }
-        .chart-container { position: relative; height: 300px; width: 100%; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    </style>
+    body { background-color: var(--bg); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+
+    .navbar {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, #312e81 100%) !important;
+      box-shadow: 0 4px 20px rgba(79, 70, 229, 0.35);
+    }
+
+    .navbar-brand { font-weight: 700; letter-spacing: -0.5px; }
+
+    /* KPI Cards */
+    .kpi-card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border: 1px solid rgba(0,0,0,0.04);
+      transition: transform 0.2s, box-shadow 0.2s;
+      height: 100%;
+    }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+
+    .kpi-border { height: 4px; border-radius: 4px 4px 0 0; position: absolute; top: 0; left: 0; right: 0; }
+    .kpi-border-success { background: var(--success); }
+    .kpi-border-danger { background: var(--danger); }
+    .kpi-border-info { background: var(--info); }
+    .kpi-border-warning { background: var(--warning); }
+    .kpi-border-primary { background: var(--primary); }
+    .kpi-border-slate { background: var(--slate); }
+
+    .kpi-position-relative { position: relative; padding-top: 12px; }
+
+    .kpi-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--slate);
+      margin-bottom: 6px;
+    }
+
+    .kpi-value {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin: 2px 0 4px 0;
+      line-height: 1.2;
+    }
+
+    .kpi-sub { font-size: 0.8rem; color: var(--slate); font-weight: 500; }
+
+    .kpi-delta {
+      font-size: 0.72rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-top: 4px;
+    }
+    .kpi-delta.up { background: #dcfce7; color: #15803d; }
+    .kpi-delta.down { background: #fee2e2; color: #b91c1c; }
+    .kpi-delta.flat { background: #e2e8f0; color: #64748b; }
+    .kpi-delta.muted { background: #f1f5f9; color: #94a3b8; }
+
+    /* Secciones */
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--slate-dark);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-modern {
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,0.04);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+
+    .card-modern .card-header {
+      background: #f8fafc;
+      border-bottom: 1px solid rgba(0,0,0,0.04);
+      padding: 14px 20px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--slate-dark);
+    }
+
+    .card-modern .card-body { padding: 20px; }
+
+    /* Chart containers */
+    .chart-container {
+      position: relative;
+      height: 320px;
+      width: 100%;
+    }
+
+    .chart-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--slate-dark);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Tabla Top Movimientos */
+    .table-modern {
+      background: var(--card);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+    .table-modern thead th {
+      background: #f8fafc;
+      color: var(--slate);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      border-bottom: 1px solid rgba(0,0,0,0.04);
+      padding: 12px 14px;
+    }
+    .table-modern tbody td {
+      font-size: 0.85rem;
+      color: var(--slate-dark);
+      border-bottom: 1px solid rgba(0,0,0,0.03);
+      padding: 10px 14px;
+    }
+    .table-modern tbody tr:hover { background: #f1f5f9; }
+    .badge-ingreso { background: #dcfce7; color: #15803d; }
+    .badge-egreso { background: #fee2e2; color: #b91c1c; }
+
+    /* Filtros */
+    .filter-row { background: var(--card); border-radius: 12px; padding: 18px 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.04); }
+    .filter-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--slate); margin-bottom: 4px; display: block; }
+
+    .btn-outline-primary { border-color: var(--primary); color: var(--primary); }
+    .btn-outline-primary:hover { background: var(--primary); color: #fff; }
+
+    .btn-success { background: var(--success); border: none; }
+    .btn-success:hover { background: #059669; }
+
+    .btn-danger { background: var(--danger); border: none; }
+    .btn-danger:hover { background: #dc2626; }
+
+    .periodo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+      margin-left: 12px;
+    }
+
+    .nota-comparativa {
+      font-size: 0.85rem;
+      color: var(--slate);
+      margin-top: 10px;
+      padding: 8px 14px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border-left: 3px solid var(--primary);
+    }
+
+    .alertas-empty {
+      text-align: center;
+      padding: 30px;
+      color: var(--slate);
+    }
+
+    /* Print */
+    @media print {
+      .no-print, nav, .filter-row, .btn, .table-modern .actions-col { display: none !important; }
+      body { background: #fff !important; }
+      .card-modern { box-shadow: none !important; border: 1px solid #dee2e6 !important; }
+      .chart-container { height: auto !important; }
+    }
+  </style>
 </head>
-<body class="bg-light">
+<body>
 
-<nav class="navbar navbar-dark bg-dark mb-4">
-    <div class="container-fluid">
-        <span class="navbar-brand"><i class="fas fa-chart-line me-2"></i>ERP Data Technology - Dashboard</span>
-        <a href="finanzas.html" class="btn btn-outline-light btn-sm"><i class="fas fa-arrow-left me-1"></i>Volver a Finanzas</a>
+<nav class="navbar navbar-expand-lg navbar-dark mb-4">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand" href="index.html"><i class="fas fa-chart-line me-2"></i>ERP Data Technology - Dashboard</a>
+    <div class="d-flex align-items-center">
+      <a href="finanzas.html" class="btn btn-outline-light btn-sm me-2"><i class="fas fa-arrow-left me-1"></i>Volver a Finanzas</a>
     </div>
+  </div>
 </nav>
 
 <div class="container-fluid px-4">
-    
-    <!-- FILTROS -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-body">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Año</label>
-                    <select id="filtroAnio" class="form-select" onchange="cargarDashboard()"></select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Mes</label>
-                    <select id="filtroMes" class="form-select" onchange="cargarDashboard()">
-                        <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
-                        <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
-                        <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
-                        <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
-                    </select>
-                </div>
-                <div class="col-md-6 text-end">
-                    <div class="btn-group mb-2 me-2" role="group">
-                        <button type="button" class="btn btn-outline-secondary btn-sm tipo-btn" data-tipo="GENERAL" onclick="setTipoDashboard(this)">General</button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm tipo-btn" data-tipo="INGRESO" onclick="setTipoDashboard(this)">Ingresos</button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm tipo-btn active" data-tipo="EGRESO" onclick="setTipoDashboard(this)">Egresos</button>
-                    </div>
-                    <div class="btn-group mb-2 me-3" role="group">
-                        <button type="button" class="btn btn-outline-primary btn-sm ambito-btn active" data-ambito="GENERAL" onclick="setAmbitoDashboard(this)">General</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm ambito-btn" data-ambito="EMPRESA" onclick="setAmbitoDashboard(this)">🏢 Empresa</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm ambito-btn" data-ambito="CASA" onclick="setAmbitoDashboard(this)">🏠 Casa</button>
-                    </div>
-                    <button class="btn btn-primary btn-lg" onclick="cargarDashboard()">
-                        <i class="fas fa-sync-alt me-2"></i>Actualizar Dashboard
-                    </button>
-                    <div class="btn-group mb-2 ms-2" role="group">
-                        <button class="btn btn-outline-success btn-sm" onclick="exportarCSV(this)" title="Descargar datos del período en Excel/CSV">
-                            <i class="fas fa-file-csv me-1"></i>CSV
-                        </button>
-                        <button class="btn btn-outline-danger btn-sm" onclick="exportarPDF()" title="Guardar o imprimir el dashboard como PDF">
-                            <i class="fas fa-file-pdf me-1"></i>PDF
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- KPIS -->
-    <div class="row g-4 mb-4">
-        <div class="col-md-3">
-            <div class="kpi-card h-100" style="border-left-color: #198754;">
-                <h6 class="text-muted text-uppercase small">Ingresos del Mes</h6>
-                <h2 class="fw-bold text-success mb-0" id="kpiIngresos">$0</h2>
-                <span class="kpi-delta muted" id="kpiIngresosDelta">—</span>
-            </div>
+  <!-- FILTROS -->
+  <div class="filter-row mb-4">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-2">
+        <span class="filter-label">Año</span>
+        <select id="filtroAnio" class="form-select form-select-sm" onchange="cargarDashboard()"></select>
+      </div>
+      <div class="col-md-2">
+        <span class="filter-label">Mes</span>
+        <select id="filtroMes" class="form-select form-select-sm" onchange="cargarDashboard()"></select>
+      </div>
+      <div class="col-md-2">
+        <span class="filter-label">Desde</span>
+        <input type="date" id="filtroDesde" class="form-control form-control-sm" onchange="cargarDashboard()">
+      </div>
+      <div class="col-md-2">
+        <span class="filter-label">Hasta</span>
+        <input type="date" id="filtroHasta" class="form-control form-control-sm" onchange="cargarDashboard()">
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <div class="btn-group w-100" role="group">
+          <button type="button" class="btn btn-outline-primary btn-sm flex-fill tipo-btn" data-tipo="GENERAL" onclick="setTipoDashboard(this)">General</button>
+          <button type="button" class="btn btn-outline-primary btn-sm flex-fill tipo-btn" data-tipo="INGRESO" onclick="setTipoDashboard(this)">Ingresos</button>
+          <button type="button" class="btn btn-outline-primary btn-sm flex-fill tipo-btn active" data-tipo="EGRESO" onclick="setTipoDashboard(this)">Egresos</button>
         </div>
-        <div class="col-md-3">
-            <div class="kpi-card h-100" style="border-left-color: #dc3545;">
-                <h6 class="text-muted text-uppercase small">Egresos del Mes</h6>
-                <h2 class="fw-bold text-danger mb-0" id="kpiEgresos">$0</h2>
-                <span class="kpi-delta muted" id="kpiEgresosDelta">—</span>
-            </div>
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <div class="btn-group w-100" role="group">
+          <button type="button" class="btn btn-outline-primary btn-sm flex-fill ambito-btn active" data-ambito="GENERAL" onclick="setAmbitoDashboard(this)">General</button>
+          <button type="button" class="btn btn-outline-primary btn-sm flex-fill ambito-btn" data-ambito="EMPRESA" onclick="setAmbitoDashboard(this)">🏢 Empresa</button>
+          <button type="button" class="btn btn-outline-primary btn-sm flex-fill ambito-btn" data-ambito="CASA" onclick="setAmbitoDashboard(this)">🏠 Casa</button>
         </div>
-        <div class="col-md-3">
-            <div class="kpi-card h-100" style="border-left-color: #0d6efd;">
-                <h6 class="text-muted text-uppercase small">Balance Neto</h6>
-                <h2 class="fw-bold mb-0" id="kpiBalance">$0</h2>
-                <span class="kpi-delta muted" id="kpiBalanceDelta">—</span>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="kpi-card h-100" style="border-left-color: #0dcaf0;">
-                <h6 class="text-muted text-uppercase small">Operaciones</h6>
-                <h2 class="fw-bold text-info mb-0" id="kpiOps">0</h2>
-                <span class="kpi-delta muted" id="kpiOpsDelta">—</span>
-            </div>
-        </div>
+      </div>
+      <div class="col-md-4 d-flex align-items-end gap-2">
+        <button class="btn btn-primary btn-sm w-auto" onclick="cargarDashboard()"><i class="fas fa-sync-alt me-1"></i>Actualizar</button>
+        <button class="btn btn-success btn-sm w-auto" onclick="exportarCSV()"><i class="fas fa-file-csv me-1"></i>CSV</button>
+        <button class="btn btn-danger btn-sm w-auto" onclick="exportarPDF()"><i class="fas fa-file-pdf me-1"></i>PDF</button>
+      </div>
     </div>
-    <p class="text-muted small mb-4 mt-2" id="notaComparativa"></p>
+    <div class="periodo-badge mt-3" id="periodoBadge"></div>
+  </div>
 
-    <!-- ALERTAS DEL MES -->
-    <div class="card shadow-sm border-0 mb-4" id="cardAlertas">
-        <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
-            <h5 class="mb-0 fw-bold"><i class="fas fa-bell me-2 text-warning"></i>Alertas del Mes
-                <span class="badge bg-secondary ms-2" id="badgeAlertas">0</span>
-            </h5>
-            <small class="text-muted" id="periodoAlertas"></small>
-        </div>
-        <div class="card-body" id="listaAlertas">
-            <div class="text-center text-muted py-3"><i class="fas fa-spinner fa-spin me-2"></i>Cargando alertas...</div>
-        </div>
+  <!-- KPIS -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-2 col-6">
+      <div class="kpi-card kpi-position-relative">
+        <div class="kpi-border kpi-border-success"></div>
+        <div class="kpi-label">Ingresos del Período</div>
+        <div class="kpi-value text-success" id="kpiIngresos">$0,00</div>
+        <div class="kpi-delta muted" id="kpiIngresosDelta">—</div>
+      </div>
     </div>
+    <div class="col-md-2 col-6">
+      <div class="kpi-card kpi-position-relative">
+        <div class="kpi-border kpi-border-danger"></div>
+        <div class="kpi-label">Egresos del Período</div>
+        <div class="kpi-value text-danger" id="kpiEgresos">$0,00</div>
+        <div class="kpi-delta muted" id="kpiEgresosDelta">—</div>
+      </div>
+    </div>
+    <div class="col-md-2 col-6">
+      <div class="kpi-card kpi-position-relative">
+        <div class="kpi-border kpi-border-info"></div>
+        <div class="kpi-label">Balance Neto</div>
+        <div class="kpi-value" id="kpiBalance">$0,00</div>
+        <div class="kpi-delta muted" id="kpiBalanceDelta">—</div>
+      </div>
+    </div>
+    <div class="col-md-2 col-6">
+      <div class="kpi-card kpi-position-relative">
+        <div class="kpi-border kpi-border-primary"></div>
+        <div class="kpi-label">Operaciones</div>
+        <div class="kpi-value text-primary" id="kpiOps">0</div>
+        <div class="kpi-delta muted" id="kpiOpsDelta">—</div>
+      </div>
+    </div>
+    <div class="col-md-2 col-6">
+      <div class="kpi-card kpi-position-relative">
+        <div class="kpi-border kpi-border-warning"></div>
+        <div class="kpi-label">Ticket Promedio</div>
+        <div class="kpi-value text-warning" id="kpiTicket">$0,00</div>
+        <div class="kpi-sub">por movimiento</div>
+      </div>
+    </div>
+    <div class="col-md-2 col-6">
+      <div class="kpi-card kpi-position-relative">
+        <div class="kpi-border kpi-border-slate"></div>
+        <div class="kpi-label">Categorías Usadas</div>
+        <div class="kpi-value text-slate" id="kpiCategorias">0</div>
+        <div class="kpi-sub">del total</div>
+      </div>
+    </div>
+  </div>
 
-    <!-- GRÁFICOS -->
-    <div class="row g-4">
-        <div class="col-md-8">
-            <div class="chart-container">
-                <h5 class="mb-3 text-muted"><i class="fas fa-chart-bar me-2"></i>Evolución Anual (Ingresos vs Egresos)</h5>
-                <canvas id="chartBarras"></canvas>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="chart-container">
-                <h5 class="mb-3 text-muted" id="tituloDonut"><i class="fas fa-chart-pie me-2"></i>Egresos por Categoría</h5>
-                <canvas id="chartCircular"></canvas>
-            </div>
-        </div>
+  <div class="nota-comparativa mb-3" id="notaComparativa"></div>
+
+  <!-- ALERTAS -->
+  <div class="card-modern mb-4">
+    <div class="card-header">
+      <i class="fas fa-bell me-2 text-warning"></i> Alertas del Período
+      <span class="badge bg-light text-dark ms-2" id="badgeAlertas">0</span>
     </div>
+    <div class="card-body" id="listaAlertas">
+      <div class="alertas-empty"><i class="fas fa-spinner fa-spin me-2"></i>Cargando alertas...</div>
+    </div>
+  </div>
+
+  <!-- GRÁFICOS -->
+  <div class="row g-4">
+    <!-- Evolución anual -->
+    <div class="col-md-7">
+      <div class="card-modern">
+        <div class="card-header">
+          <i class="fas fa-chart-bar me-2 text-primary"></i> Evolución del Período
+        </div>
+        <div class="card-body p-0">
+          <div class="chart-title mt-3 mb-2 ms-3">Ingresos vs Egresos por mes</div>
+          <div class="chart-container"><canvas id="chartBarras"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <!-- Métodos de pago -->
+    <div class="col-md-5">
+      <div class="card-modern">
+        <div class="card-header">
+          <i class="fas fa-wallet me-2 text-info"></i> Métodos de Pago
+        </div>
+        <div class="card-body p-0">
+          <div class="chart-title mt-3 mb-2 ms-3">Distribución por medio</div>
+          <div class="chart-container"><canvas id="chartMetodos"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-5">
+    <!-- Categorías -->
+    <div class="col-md-6">
+      <div class="card-modern">
+        <div class="card-header">
+          <i class="fas fa-folder-open me-2 text-warning"></i> Egresos por Categoría
+        </div>
+        <div class="card-body p-0">
+          <div class="chart-title mt-3 mb-2 ms-3">Participación por categoría</div>
+          <div class="chart-container"><canvas id="chartCategorias"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <!-- Evolución por categoría seleccionada -->
+    <div class="col-md-6">
+      <div class="card-modern">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="fas fa-chart-line me-2 text-success"></i> Evolución por Categoría</span>
+          <select id="filtroCategoriaEvolucion" class="form-select form-select-sm" onchange="cargarEvolucionCategorias()" style="width: 180px;">
+            <option value="">Seleccionar categoría...</option>
+          </select>
+        </div>
+        <div class="card-body p-0">
+          <div class="chart-title mt-3 mb-2 ms-3">Tendencia mensual</div>
+          <div class="chart-container"><canvas id="chartEvolucionCat"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP MOVIMIENTOS -->
+  <div class="card-modern mb-5">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span><i class="fas fa-sort-amount-down me-2 text-danger"></i> Top Movimientos del Período</span>
+      <div class="btn-group btn-group-sm" role="group">
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="filtrarTop('TODOS')">Todos</button>
+        <button type="button" class="btn btn-outline-success btn-sm" onclick="filtrarTop('INGRESO')">Ingresos</button>
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="filtrarTop('EGRESO')">Egresos</button>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-modern">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th style="width: 110px">Fecha</th>
+              <th>Descripción</th>
+              <th style="width: 130px">Categoría</th>
+              <th style="width: 110px">Tipo</th>
+              <th style="width: 120px">Método de Pago</th>
+              <th class="text-end" style="width: 120px">Monto</th>
+              <th class="actions-col" style="width: 60px"></th>
+            </tr>
+          </thead>
+          <tbody id="tablaTopMovimientos">
+            <tr><td colspan="7" class="text-center text-muted py-4">Cargando movimientos...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
 </div>
 
 <script>
-    let chartBarrasInstance = null;
-    let chartCircularInstance = null;
-    let tipoDashboard = 'EGRESO';
-    let ambitoDashboard = 'GENERAL';
+  const API = '/api';
+  let chartBarrasInstance = null;
+  let chartMetodosInstance = null;
+  let chartCategoriasInstance = null;
+  let chartEvolucionCatInstance = null;
+  let tipoDashboard = 'EGRESO';
+  let ambitoDashboard = 'GENERAL';
+  let filtroTopTipo = 'TODOS';
+  let datosTopMovimientos = [];
+  let datosCategorias = [];
 
-    // Constantes globales
-    const MESES_ES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    const MESES_LARGOS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const MESES_ES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const MESES_LARGOS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-    document.addEventListener('DOMContentLoaded', () => {
-        inicializarFiltros();
-        cargarDashboard();
+  document.addEventListener('DOMContentLoaded', async () => {
+    inicializarFiltros();
+    await cargarDashboard();
+  });
+
+  function inicializarFiltros() {
+    const selectAnio = document.getElementById('filtroAnio');
+    const currentYear = new Date().getFullYear();
+    for (let i = currentYear - 2; i <= currentYear + 1; i++) {
+      let opt = document.createElement('option');
+      opt.value = i; opt.text = i;
+      if (i === currentYear) opt.selected = true;
+      selectAnio.appendChild(opt);
+    }
+    // Mes actual por defecto
+    const mesActual = String(new Date().getMonth() + 1);
+    const selectMes = document.getElementById('filtroMes');
+    selectMes.value = mesActual;
+    // Forzar actualización del valor para getFiltros
+    if (!selectMes.value) selectMes.value = mesActual;
+  }
+
+  function setTipoDashboard(btn) {
+    document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    tipoDashboard = btn.dataset.tipo;
+    cargarDashboard();
+  }
+
+  function setAmbitoDashboard(btn) {
+    document.querySelectorAll('.ambito-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    ambitoDashboard = btn.dataset.ambito;
+    cargarDashboard();
+  }
+
+  function getFiltros() {
+    const desde = document.getElementById('filtroDesde').value;
+    const hasta = document.getElementById('filtroHasta').value;
+    const anio = document.getElementById('filtroAnio').value;
+    let mes = document.getElementById('filtroMes').value;
+    // Fallback: mes actual si el select no tiene valor
+    if (!mes) mes = String(new Date().getMonth() + 1);
+    return {
+      anio: desde || hasta ? '' : anio,
+      mes: desde || hasta ? '' : mes,
+      fecha_inicio: desde || '',
+      fecha_fin: hasta || '',
+      tipo: tipoDashboard === 'GENERAL' ? '' : tipoDashboard,
+      ambito: ambitoDashboard
+    };
+  }
+
+  async function cargarDashboard() {
+    const f = getFiltros();
+    actualizarPeriodoBadge(f);
+
+    try {
+      await Promise.all([
+        cargarKPIs(f),
+        cargarEvolucion(f),
+        cargarCategorias(f),
+        cargarMetodosPago(f),
+        cargarAlertas(f),
+        cargarTopMovimientos(f)
+      ]);
+    } catch (e) {
+      console.error('Error cargando dashboard:', e);
+    }
+  }
+
+  function actualizarPeriodoBadge(f) {
+    const badge = document.getElementById('periodoBadge');
+    if (f.fecha_inicio && f.fecha_fin) {
+      badge.innerHTML = `<i class="fas fa-calendar-range me-1"></i> ${f.fecha_inicio} al ${f.fecha_fin}`;
+    } else if (f.anio && f.mes) {
+      badge.innerHTML = `<i class="fas fa-calendar me-1"></i> ${MESES_LARGOS[parseInt(f.mes) - 1]} ${f.anio}`;
+    } else {
+      badge.innerHTML = `<i class="fas fa-calendar me-1"></i> Período actual`;
+    }
+  }
+
+  // ---- KPIs ----
+  async function cargarKPIs(f) {
+    const qs = new URLSearchParams();
+    if (f.anio) qs.set('anio', f.anio);
+    if (f.mes) qs.set('mes', f.mes);
+    if (f.fecha_inicio) qs.set('fecha_inicio', f.fecha_inicio);
+    if (f.fecha_fin) qs.set('fecha_fin', f.fecha_fin);
+    if (f.tipo) qs.set('tipo', f.tipo);
+    if (f.ambito) qs.set('ambito', f.ambito);
+
+    const res = await fetch(`${API}/finanzas/dashboard/kpis?${qs}`);
+    const data = await res.json();
+    if (!data.success || !data.data) return;
+
+    const kpis = data.data.kpis;
+    const comp = data.data.comparativa || {};
+
+    document.getElementById('kpiIngresos').textContent = formatMoney(kpis.ingresos || 0);
+    document.getElementById('kpiEgresos').textContent = formatMoney(kpis.egresos || 0);
+
+    const balEl = document.getElementById('kpiBalance');
+    const balance = kpis.balance || 0;
+    balEl.textContent = formatMoney(balance);
+    balEl.className = `kpi-value ${balance >= 0 ? 'text-success' : 'text-danger'}`;
+
+    document.getElementById('kpiOps').textContent = kpis.operaciones || 0;
+    document.getElementById('kpiTicket').textContent = formatMoney(kpis.ticketPromedio || 0);
+    document.getElementById('kpiCategorias').textContent = kpis.categoriasUsadas || 0;
+
+    // Badges de variación
+    pintarDeltaKpi('kpiIngresosDelta', kpis.ingresos || 0, comp.ingresosAnteriores, true, 'pct');
+    pintarDeltaKpi('kpiEgresosDelta', kpis.egresos || 0, comp.egresosAnteriores, false, 'pct');
+    pintarDeltaKpi('kpiBalanceDelta', balance, (comp.ingresosAnteriores || 0) - (comp.egresosAnteriores || 0), true, 'money');
+    pintarDeltaKpi('kpiOpsDelta', kpis.operaciones || 0, comp.operacionesAnteriores, true, 'int');
+
+    // Nota comparativa
+    const nota = document.getElementById('notaComparativa');
+    const mAnt = parseInt(f.mes) - 1;
+    const anioAnt = mAnt === 0 ? parseInt(f.anio) - 1 : parseInt(f.anio);
+    const mesAnt = mAnt === 0 ? 12 : mAnt;
+    const etiqueta = `${MESES_LARGOS[mesAnt - 1]} ${anioAnt}`;
+    const sinDatos = !comp.hayComparativa;
+    if (sinDatos) {
+      nota.textContent = `Sin datos en ${etiqueta} → no hay comparativa disponible.`;
+      nota.className = 'nota-comparativa text-muted';
+    } else {
+      const varBal = balance - ((comp.ingresosAnteriores || 0) - (comp.egresosAnteriores || 0));
+      nota.innerHTML = `Comparativa contra <strong>${etiqueta}</strong>: el balance <strong>${varBal >= 0 ? 'mejoró' : 'empeoró'}</strong> ${formatMoney(Math.abs(varBal))}.`;
+      nota.className = 'nota-comparativa';
+    }
+  }
+
+  function pintarDeltaKpi(id, valorActual, valorAnterior, subeEsBueno, modo) {
+    const el = document.getElementById(id);
+    if (valorAnterior === undefined || valorAnterior === null || valorAnterior === 0) {
+      el.textContent = 'sin base';
+      el.className = 'kpi-delta muted';
+      el.title = 'No hay datos del período anterior';
+      return;
+    }
+    const dif = valorActual - valorAnterior;
+    let texto;
+    if (modo === 'money') texto = (dif >= 0 ? '▲ ' : '▼ ') + formatMoney(Math.abs(dif));
+    else if (modo === 'int') texto = (dif >= 0 ? '▲ +' : '▼ ') + Math.abs(dif);
+    else {
+      const pct = Math.abs(dif / valorAnterior * 100);
+      texto = (dif >= 0 ? '▲ +' : '▼ -') + pct.toFixed(1).replace('.', ',') + '%';
+    }
+    if (dif === 0) {
+      el.textContent = '= igual';
+      el.className = 'kpi-delta flat';
+    } else {
+      const esBueno = dif > 0 ? subeEsBueno : !subeEsBueno;
+      el.textContent = texto;
+      el.className = 'kpi-delta ' + (esBueno ? 'up' : 'down');
+    }
+    el.title = `Valor en período anterior: ${modo === 'int' ? valorAnterior : formatMoney(valorAnterior)}`;
+  }
+
+  // ---- Evolución (barras) ----
+  async function cargarEvolucion(f) {
+    const qs = new URLSearchParams();
+    if (f.anio) qs.set('anio', f.anio);
+    if (f.fecha_inicio) qs.set('fecha_inicio', f.fecha_inicio);
+    if (f.fecha_fin) qs.set('fecha_fin', f.fecha_fin);
+    if (f.tipo) qs.set('tipo', f.tipo);
+    if (f.ambito) qs.set('ambito', f.ambito);
+
+    const res = await fetch(`${API}/finanzas/dashboard/evolucion?${qs}`);
+    const data = await res.json();
+    if (!data.success || !Array.isArray(data.data)) return;
+
+    renderChartBarras(data.data);
+  }
+
+  function renderChartBarras(data) {
+    const ctx = document.getElementById('chartBarras').getContext('2d');
+    if (chartBarrasInstance) chartBarrasInstance.destroy();
+
+    const ingresos = new Array(12).fill(0);
+    const egresos = new Array(12).fill(0);
+    const labels = [];
+
+    data.forEach(item => {
+      const idx = (item.mes_num || 0) - 1;
+      if (idx >= 0 && idx < 12) {
+        ingresos[idx] = item.ingresos || 0;
+        egresos[idx] = item.egresos || 0;
+        labels[idx] = MESES_ES[idx];
+      }
     });
 
-    function inicializarFiltros() {
-        const selectAnio = document.getElementById('filtroAnio');
-        const currentYear = new Date().getFullYear();
-        for(let i = currentYear - 2; i <= currentYear + 1; i++) {
-            let opt = document.createElement('option');
-            opt.value = i; opt.text = i;
-            if(i === currentYear) opt.selected = true;
-            selectAnio.appendChild(opt);
-        }
-        document.getElementById('filtroMes').value = new Date().getMonth() + 1;
+    chartBarrasInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels.filter(l => l),
+        datasets: [
+          { label: 'Ingresos', data: ingresos.filter((_, i) => labels[i]), backgroundColor: '#10b981' },
+          { label: 'Egresos', data: egresos.filter((_, i) => labels[i]), backgroundColor: '#ef4444' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v.toLocaleString('es-AR') } } }
+      }
+    });
+  }
+
+  // ---- Categorías (donut) ----
+  async function cargarCategorias(f) {
+    const qs = new URLSearchParams();
+    if (f.anio) qs.set('anio', f.anio);
+    if (f.mes) qs.set('mes', f.mes);
+    if (f.fecha_inicio) qs.set('fecha_inicio', f.fecha_inicio);
+    if (f.fecha_fin) qs.set('fecha_fin', f.fecha_fin);
+    if (f.tipo) qs.set('tipo', f.tipo);
+    if (f.ambito) qs.set('ambito', f.ambito);
+
+    const res = await fetch(`${API}/finanzas/dashboard/categorias?${qs}`);
+    const data = await res.json();
+    if (!data.success || !data.data) return;
+
+    datosCategorias = data.data.categorias || [];
+    renderChartCategorias(datosCategorias);
+    cargarSelectCategorias(datosCategorias);
+  }
+
+  function renderChartCategorias(categorias) {
+    const ctx = document.getElementById('chartCategorias').getContext('2d');
+    if (chartCategoriasInstance) chartCategoriasInstance.destroy();
+
+    if (categorias.length === 0) {
+      chartCategoriasInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: ['Sin datos'], datasets: [{ data: [1], backgroundColor: ['#e2e8f0'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+      return;
     }
 
-    function setTipoDashboard(btn) {
-        document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        tipoDashboard = btn.dataset.tipo;
-        cargarDashboard();
+    chartCategoriasInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: categorias.map(c => c.nombre),
+        datasets: [{
+          data: categorias.map(c => c.total),
+          backgroundColor: categorias.map(c => c.color || '#94a3b8'),
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11 } } },
+          tooltip: { callbacks: { label: ctx => `$${ctx.parsed.toLocaleString('es-AR')}` } }
+        }
+      }
+    });
+  }
+
+  function cargarSelectCategorias(categorias) {
+    const select = document.getElementById('filtroCategoriaEvolucion');
+    select.innerHTML = '<option value="">Seleccionar categoría...</option>';
+    categorias.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.nombre;
+      select.appendChild(opt);
+    });
+  }
+
+  async function cargarEvolucionCategorias() {
+    const catId = document.getElementById('filtroCategoriaEvolucion').value;
+    if (!catId) {
+      if (chartEvolucionCatInstance) chartEvolucionCatInstance.destroy();
+      return;
     }
 
-    function setAmbitoDashboard(btn) {
-        document.querySelectorAll('.ambito-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        ambitoDashboard = btn.dataset.ambito;
-        cargarDashboard();
+    const f = getFiltros();
+    const qs = new URLSearchParams();
+    qs.set('ids', catId);
+    qs.set('fecha_inicio', f.fecha_inicio || '');
+    qs.set('fecha_fin', f.fecha_fin || '');
+    if (f.ambito) qs.set('ambito', f.ambito);
+
+    const res = await fetch(`${API}/finanzas/dashboard/analisis-categorias?${qs}`);
+    const data = await res.json();
+    if (!data.success || !data.data || data.data.length === 0) return;
+
+    const cat = data.data[0];
+    renderChartEvolucionCat(cat);
+  }
+
+  function renderChartEvolucionCat(cat) {
+    const ctx = document.getElementById('chartEvolucionCat').getContext('2d');
+    if (chartEvolucionCatInstance) chartEvolucionCatInstance.destroy();
+
+    const labels = cat.evolucion.map(e => e.mes).filter(m => m);
+    const ingresos = cat.evolucion.map(e => e.ingresos);
+    const egresos = cat.evolucion.map(e => e.egresos);
+
+    chartEvolucionCatInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Ingresos', data: ingresos, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.3 },
+          { label: 'Egresos', data: egresos, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, tension: 0.3 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v.toLocaleString('es-AR') } } }
+      }
+    });
+  }
+
+  // ---- Métodos de pago (donut) ----
+  async function cargarMetodosPago(f) {
+    const qs = new URLSearchParams();
+    if (f.anio) qs.set('anio', f.anio);
+    if (f.mes) qs.set('mes', f.mes);
+    if (f.fecha_inicio) qs.set('fecha_inicio', f.fecha_inicio);
+    if (f.fecha_fin) qs.set('fecha_fin', f.fecha_fin);
+    if (f.tipo) qs.set('tipo', f.tipo);
+    if (f.ambito) qs.set('ambito', f.ambito);
+
+    const res = await fetch(`${API}/finanzas/dashboard/metodos-pago?${qs}`);
+    const data = await res.json();
+    if (!data.success || !data.data) return;
+
+    renderChartMetodos(data.data.metodos || []);
+  }
+
+  function renderChartMetodos(metodos) {
+    const ctx = document.getElementById('chartMetodos').getContext('2d');
+    if (chartMetodosInstance) chartMetodosInstance.destroy();
+
+    if (metodos.length === 0) {
+      chartMetodosInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: ['Sin datos'], datasets: [{ data: [1], backgroundColor: ['#e2e8f0'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+      return;
     }
 
-    async function cargarDashboard() {
-        const anio = document.getElementById('filtroAnio').value;
-        const mes = document.getElementById('filtroMes').value;
-        const tipo = tipoDashboard === 'GENERAL' ? '' : tipoDashboard;
-        const ambito = ambitoDashboard;
-
-        try {
-            // 1. KPIs
-            await cargarKPIs(anio, mes, tipo, ambito);
-        } catch (e) {
-            console.error('Error KPIs:', e);
+    chartMetodosInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: metodos.map(m => m.metodo),
+        datasets: [{
+          data: metodos.map(m => m.total),
+          backgroundColor: metodos.map(m => m.color || '#64748b'),
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11 } } },
+          tooltip: { callbacks: { label: ctx => `$${ctx.parsed.toLocaleString('es-AR')}` } }
         }
+      }
+    });
+  }
 
-        try {
-            // 2. Evolución (gráfico de barras)
-            await cargarEvolucion(anio, tipo, ambito);
-        } catch (e) {
-            console.error('Error Evolución:', e);
-        }
+  // ---- Alertas ----
+  async function cargarAlertas(f) {
+    const qs = new URLSearchParams();
+    if (f.anio) qs.set('anio', f.anio);
+    if (f.mes) qs.set('mes', f.mes);
+    if (f.fecha_inicio) qs.set('fecha_inicio', f.fecha_inicio);
+    if (f.fecha_fin) qs.set('fecha_fin', f.fecha_fin);
+    if (f.tipo) qs.set('tipo', f.tipo);
+    if (f.ambito) qs.set('ambito', f.ambito);
 
-        try {
-            // 3. Categorías (gráfico circular)
-            await cargarCategorias(anio, mes, tipo, ambito);
-        } catch (e) {
-            console.error('Error Categorías:', e);
-        }
+    const res = await fetch(`${API}/finanzas/dashboard/alertas?${qs}`);
+    const data = await res.json();
+    const cont = document.getElementById('listaAlertas');
+    const alertas = (data.success && data.data) ? data.data : [];
 
-        try {
-            // 4. Alertas del mes
-            await cargarAlertas(anio, mes, tipo, ambito);
-        } catch (e) {
-            console.error('Error Alertas:', e);
-        }
+    document.getElementById('badgeAlertas').textContent = alertas.length;
+    document.getElementById('badgeAlertas').className = 'badge ' + (alertas.length ? 'bg-warning text-dark' : 'bg-success');
+
+    if (!alertas.length) {
+      cont.innerHTML = '<div class="alertas-empty"><i class="fas fa-circle-check me-2"></i>Sin alertas: todo en orden para este período.</div>';
+      return;
     }
 
-    // ---- Alertas del mes ----
-    const ALERTA_ICONOS = {
-        danger: ['fa-triangle-exclamation', 'alert-danger'],
-        warning: ['fa-circle-exclamation', 'alert-warning'],
-        info: ['fa-circle-info', 'alert-info'],
-        success: ['fa-circle-check', 'alert-success']
-    };
+    const TIPO_LABEL = { danger: 'ALERTA', warning: 'AVISO', info: 'INFO', success: 'OK' };
+    const TIPO_ICON = { danger: 'fa-triangle-exclamation', warning: 'fa-circle-exclamation', info: 'fa-circle-info', success: 'fa-circle-check' };
+    const TIPO_CLASS = { danger: 'alert-danger', warning: 'alert-warning', info: 'alert-info', success: 'alert-success' };
 
-    async function cargarAlertas(anio, mes, tipo, ambito) {
-        const cont = document.getElementById('listaAlertas');
-        try {
-            const res = await fetch(`/api/finanzas/dashboard/alertas?anio=${anio}&mes=${mes}&tipo=${tipo}&ambito=${ambito}`);
-            const data = await res.json();
-            const alertas = (data.success && data.data) ? data.data : [];
+    cont.innerHTML = alertas.map(a => {
+      const cfg = TIPO_ICON[a.tipo] || TIPO_ICON.info;
+      const monto = (a.monto !== undefined && a.monto !== null)
+        ? ` <span class="badge bg-white text-dark border ms-1">${formatMoney(Math.abs(a.monto))}</span>`
+        : '';
+      return `<div class="alert ${TIPO_CLASS[a.tipo]} py-3 d-flex align-items-start mb-2 border-0" role="alert">
+          <i class="fas ${cfg} me-3 mt-1"></i>
+          <div><strong class="text-uppercase" style="font-size:0.7rem; letter-spacing:0.5px; opacity:0.7;">${TIPO_LABEL[a.tipo] || 'INFO'}</strong>${monto}<br>${a.mensaje}</div>
+      </div>`;
+    }).join('');
+  }
 
-            document.getElementById('badgeAlertas').textContent = alertas.length;
-            document.getElementById('badgeAlertas').className = 'badge ' + (alertas.length ? 'bg-warning text-dark' : 'bg-success');
-            document.getElementById('periodoAlertas').textContent = (data.meta && data.meta.periodo) ? data.meta.periodo : '';
+  // ---- Top Movimientos ----
+  async function cargarTopMovimientos(f) {
+    const qs = new URLSearchParams();
+    if (f.anio) qs.set('anio', f.anio);
+    if (f.mes) qs.set('mes', f.mes);
+    if (f.fecha_inicio) qs.set('fecha_inicio', f.fecha_inicio);
+    if (f.fecha_fin) qs.set('fecha_fin', f.fecha_fin);
+    if (f.tipo) qs.set('tipo', f.tipo);
+    if (f.ambito) qs.set('ambito', f.ambito);
 
-            if (!alertas.length) {
-                cont.innerHTML = '<div class="alert alert-success mb-0 py-3 text-center"><i class="fas fa-circle-check me-2"></i>Sin alertas: todo en orden para este período.</div>';
-                return;
-            }
+    const res = await fetch(`${API}/finanzas/dashboard/top-movimientos?${qs}`);
+    const data = await res.json();
+    datosTopMovimientos = (data.success && data.data) ? data.data : [];
+    renderizarTopMovimientos();
+  }
 
-            const TIPO_LABEL = { danger: 'ALERTA', warning: 'AVISO', info: 'INFO', success: 'OK' };
-            cont.innerHTML = alertas.map(a => {
-                const cfg = ALERTA_ICONOS[a.tipo] || ALERTA_ICONOS.info;
-                const monto = (a.monto !== undefined && a.monto !== null)
-                    ? ` <span class="badge bg-white text-dark border ms-1">${formatMoney(Math.abs(a.monto))}</span>`
-                    : '';
-                return `<div class="alert ${cfg[1]} py-3 d-flex align-items-start mb-2" role="alert">
-                    <i class="fas ${cfg[0]} me-3 mt-1"></i>
-                    <div><strong class="text-uppercase" style="font-size:0.7rem; letter-spacing:0.5px; opacity:0.7;">${TIPO_LABEL[a.tipo] || 'INFO'}</strong>${monto}<br>${a.mensaje}</div>
-                </div>`;
-            }).join('');
-        } catch (e) {
-            cont.innerHTML = '<div class="alert alert-secondary mb-0 py-3 text-center"><i class="fas fa-triangle-exclamation me-2"></i>No se pudieron cargar las alertas.</div>';
-        }
+  function filtrarTop(tipo) {
+    filtroTopTipo = tipo;
+    renderizarTopMovimientos();
+  }
+
+  function renderizarTopMovimientos() {
+    const tbody = document.getElementById('tablaTopMovimientos');
+    let filtrados = datosTopMovimientos;
+    if (filtroTopTipo === 'INGRESO') filtrados = filtrados.filter(m => m.tipo === 'Ingreso');
+    else if (filtroTopTipo === 'EGRESO') filtrados = filtrados.filter(m => m.tipo === 'Egreso');
+
+    if (filtrados.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No hay movimientos para este filtro.</td></tr>';
+      return;
     }
 
-    async function cargarKPIs(anio, mes, tipo, ambito) {
-        const res = await fetch(`/api/finanzas/dashboard/kpis?anio=${anio}&mes=${mes}&tipo=${tipo}&ambito=${ambito}`);
-        const data = await res.json();
+    tbody.innerHTML = filtrados.map(m => `
+      <tr>
+        <td>${m.fecha ? formatFecha(m.fecha) : '-'}</td>
+        <td>${m.descripcion || '-'}</td>
+        <td>${m.categoria || 'Sin categoría'}</td>
+        <td><span class="badge ${m.tipo === 'Ingreso' ? 'badge-ingreso' : 'badge-egreso'}">${m.tipo || '-'}</span></td>
+        <td>${m.metodo_pago || '-'}</td>
+        <td class="text-end fw-bold">${formatMoney(m.monto || 0)}</td>
+        <td class="text-center"><i class="fas fa-file-invoice text-slate"></i></td>
+      </tr>
+    `).join('');
+  }
 
-        if (data.success && data.data) {
-            const kpis = data.data.kpis || data.data;
-            
-            document.getElementById('kpiIngresos').textContent = formatMoney(kpis.ingresos || 0);
-            document.getElementById('kpiEgresos').textContent = formatMoney(kpis.egresos || 0);
-            
-            const balEl = document.getElementById('kpiBalance');
-            const balance = kpis.balance || 0;
-            balEl.textContent = formatMoney(balance);
-            balEl.className = `fw-bold mb-0 ${balance >= 0 ? 'text-success' : 'text-danger'}`;
-            
-            document.getElementById('kpiOps').textContent = kpis.operaciones || 0;
+  // ---- Exportar ----
+  function exportarCSV() {
+    const f = getFiltros();
+    const btn = event ? event.target : null;
+    if (btn) { btn.innerHTML = '<i class="fas fa-circle-notch fa-spin me-1"></i>Procesando...'; btn.disabled = true; }
 
-            // ---- Comparativa con el mes anterior ----
-            const mAnt = parseInt(mes) - 1;
-            const anioAnt = mAnt === 0 ? parseInt(anio) - 1 : parseInt(anio);
-            const mesAnt = mAnt === 0 ? 12 : mAnt;
-            try {
-                const resAnt = await fetch(`/api/finanzas/dashboard/kpis?anio=${anioAnt}&mes=${mesAnt}&tipo=${tipo}&ambito=${ambito}`);
-                const dataAnt = await resAnt.json();
-                const kpisAnt = dataAnt.success && dataAnt.data ? (dataAnt.data.kpis || dataAnt.data) : null;
-                renderComparativa(kpis, kpisAnt, mesAnt, anioAnt);
-            } catch (e) {
-                console.error('Error comparativa mes anterior:', e);
-                ocultarComparativa();
-            }
-        }
-    }
+    Promise.all([
+      fetch(`${API}/finanzas/dashboard/kpis?${new URLSearchParams(f)}`).then(r => r.json()),
+      fetch(`${API}/finanzas/dashboard/alertas?${new URLSearchParams(f)}`).then(r => r.json()),
+      fetch(`${API}/finanzas/dashboard/categorias?${new URLSearchParams(f)}`).then(r => r.json()),
+      fetch(`${API}/finanzas/dashboard/top-movimientos?${new URLSearchParams(f)}`).then(r => r.json())
+    ]).then(([rKpi, rAlert, rCat, rTop]) => {
+      const kpi = (rKpi.success && rKpi.data) ? (rKpi.data.kpis || rKpi.data) : {};
+      const alertas = (rAlert.success && rAlert.data) ? rAlert.data : [];
+      const cats = (rCat.success && rCat.data && rCat.data.categorias) ? rCat.data.categorias : [];
+      const tops = (rTop.success && rTop.data) ? rTop.data : [];
 
-    // ---- Pinta los indicadores ▲/▼ de cada KPI respecto del mes anterior ----
-    function renderComparativa(actual, anterior, mesAnt, anioAnt) {
-        const nombreMes = MESES_LARGOS[mesAnt - 1];
-        const etiqueta = `${nombreMes} ${anioAnt}`;
-        const nota = document.getElementById('notaComparativa');
+      const filas = [];
+      filas.push(['ERP Data Technology - Dashboard Financiero']);
+      filas.push(['Período', f.fecha_inicio && f.fecha_fin ? `${f.fecha_inicio} al ${f.fecha_fin}` : `${MESES_LARGOS[parseInt(f.mes) - 1]} ${f.anio}`]);
+      filas.push(['Ambito', f.ambito]);
+      filas.push(['Tipo', f.tipo || 'General']);
+      filas.push(['Fecha de exportación', new Date().toLocaleString('es-AR')]);
+      filas.push([]);
+      filas.push(['KPI', 'Valor']);
+      filas.push(['Ingresos', num(kpi.ingresos)]);
+      filas.push(['Egresos', num(kpi.egresos)]);
+      filas.push(['Balance', num(kpis.balance)]);
+      filas.push(['Operaciones', kpis.operaciones || 0]);
+      filas.push(['Ticket Promedio', num(kpis.ticketPromedio || 0)]);
+      filas.push(['Categorías Usadas', kpis.categoriasUsadas || 0]);
+      filas.push([]);
+      filas.push(['Categoría', 'Monto', 'Operaciones']);
+      cats.forEach(c => filas.push([c.nombre, num(c.total), c.cantidad]));
+      filas.push([]);
+      filas.push(['Top Movimientos', 'Fecha', 'Tipo', 'Descripción', 'Monto']);
+      tops.forEach(t => filas.push(['', formatFecha(t.fecha), t.tipo, t.descripcion, num(t.monto)]));
+      filas.push([]);
+      filas.push(['Alertas']);
+      alertas.forEach(a => filas.push([a.tipo, a.mensaje]));
 
-        // Sin datos del mes anterior: no se puede comparar
-        const sinDatos = !anterior || ((anterior.ingresos || 0) === 0 && (anterior.egresos || 0) === 0 && (anterior.operaciones || 0) === 0);
-        if (sinDatos) {
-            ['kpiIngresosDelta', 'kpiEgresosDelta', 'kpiBalanceDelta', 'kpiOpsDelta'].forEach(id => {
-                const el = document.getElementById(id);
-                el.textContent = 'sin datos previos';
-                el.className = 'kpi-delta muted';
-                el.title = `No hay movimientos en ${etiqueta} para comparar`;
-            });
-            nota.textContent = `Sin datos en ${etiqueta} → no hay comparativa disponible.`;
-            return;
-        }
+      const csv = '\ufeff' + filas.map(fila => fila.map(campoCsv).join(';')).join('\r\n');
+      descargar(csv, `dashboard_${f.fecha_inicio || f.anio}_${f.ambito}.csv`, 'text/csv;charset=utf-8;');
 
-        // 'subeEsBueno': subir es positivo (ingresos/balance/ops), bajar es positivo (egresos)
-        pintarDelta('kpiIngresosDelta', actual.ingresos || 0, anterior.ingresos || 0, true, 'pct', etiqueta);
-        pintarDelta('kpiEgresosDelta', actual.egresos || 0, anterior.egresos || 0, false, 'pct', etiqueta);
-        pintarDelta('kpiBalanceDelta', actual.balance || 0, anterior.balance || 0, true, 'money', etiqueta);
-        pintarDelta('kpiOpsDelta', actual.operaciones || 0, anterior.operaciones || 0, true, 'int', etiqueta);
+      if (btn) { btn.innerHTML = '<i class="fas fa-check me-1"></i>CSV'; btn.disabled = false; setTimeout(() => { btn.innerHTML = '<i class="fas fa-file-csv me-1"></i>CSV'; }, 2000); }
+    }).catch(e => {
+      console.error('Error exportar CSV:', e);
+      alert('No se pudo generar el CSV.');
+      if (btn) { btn.innerHTML = '<i class="fas fa-file-csv me-1"></i>CSV'; btn.disabled = false; }
+    });
+  }
 
-        const varBal = (actual.balance || 0) - (anterior.balance || 0);
-        nota.textContent = `Comparativa contra ${etiqueta}: el balance ${varBal >= 0 ? 'mejoró' : 'empeoró'} ${formatMoney(Math.abs(varBal))}.`;
-    }
+  function exportarPDF() {
+    const f = getFiltros();
+    const periodoLabel = f.fecha_inicio && f.fecha_fin ? `${f.fecha_inicio} al ${f.fecha_fin}` : `${MESES_LARGOS[parseInt(f.mes) - 1]} ${f.anio}`;
 
-    function pintarDelta(id, valorActual, valorAnterior, subeEsBueno, modo, etiqueta) {
-        const el = document.getElementById(id);
-        const dif = valorActual - valorAnterior;
+    Promise.all([
+      fetch(`${API}/finanzas/dashboard/kpis?${new URLSearchParams(f)}`).then(r => r.json()),
+      fetch(`${API}/finanzas/dashboard/categorias?${new URLSearchParams(f)}`).then(r => r.json()),
+      fetch(`${API}/finanzas/dashboard/top-movimientos?${new URLSearchParams(f)}`).then(r => r.json())
+    ]).then(async ([rKpi, rCat, rTop]) => {
+      const kpi = (rKpi.success && rKpi.data) ? (rKpi.data.kpis || rKpi.data) : {};
+      const cats = (rCat.success && rCat.data && rCat.data.categorias) ? rCat.data.categorias : [];
+      const tops = (rTop.success && rTop.data) ? rTop.data : [];
 
-        if (valorAnterior === 0) {
-            el.textContent = dif === 0 ? '= igual' : (dif > 0 ? '▲' : '▼') + ' (sin base)';
-            el.className = 'kpi-delta flat';
-            el.title = `En ${etiqueta} el valor fue 0`;
-            return;
-        }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
 
-        let texto;
-        if (modo === 'money') texto = (dif >= 0 ? '▲ ' : '▼ ') + formatMoney(Math.abs(dif));
-        else if (modo === 'int') texto = (dif >= 0 ? '▲ +' : '▼ ') + Math.abs(dif);
-        else {
-            const pct = Math.abs(dif / valorAnterior * 100);
-            texto = (dif >= 0 ? '▲ +' : '▼ -') + pct.toFixed(1).replace('.', ',') + '%';
-        }
+      // Encabezado
+      doc.setFillColor(79, 70, 229);
+      doc.rect(0, 0, pageWidth, 30, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text('ERP Data Technology', 15, 14);
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.text('Dashboard Financiero - Informe de Gestión', 15, 24);
 
-        if (dif === 0) {
-            el.textContent = '= igual';
-            el.className = 'kpi-delta flat';
-        } else {
-            const esBueno = dif > 0 ? subeEsBueno : !subeEsBueno;
-            el.textContent = texto;
-            el.className = 'kpi-delta ' + (esBueno ? 'up' : 'down');
-        }
-        el.title = `Valor en ${etiqueta}: ${modo === 'int' ? valorAnterior : formatMoney(valorAnterior)}`;
-    }
+      let y = 45;
+      doc.setTextColor(30, 41, 59);
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text('Resumen del Período', 15, y);
+      y += 8;
 
-    function ocultarComparativa() {
-        ['kpiIngresosDelta', 'kpiEgresosDelta', 'kpiBalanceDelta', 'kpiOpsDelta'].forEach(id => {
-            const el = document.getElementById(id);
-            el.textContent = '—';
-            el.className = 'kpi-delta muted';
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      doc.text(`Período: ${periodoLabel}`, 15, y); y += 6;
+      doc.text(`Ámbito: ${f.ambito}`, 15, y); y += 6;
+      doc.text(`Tipo: ${f.tipo || 'General'}`, 15, y); y += 10;
+
+      // KPIs en tabla
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      doc.text('Indicadores Clave', 15, y); y += 7;
+
+      const kpiRows = [
+        ['Ingresos', formatMoney(kpi.ingresos || 0)],
+        ['Egresos', formatMoney(kpi.egresos || 0)],
+        ['Balance Neto', formatMoney(kpis.balance || 0)],
+        ['Operaciones', String(kpis.operaciones || 0)],
+        ['Ticket Promedio', formatMoney(kpis.ticketPromedio || 0)],
+        ['Categorías Usadas', String(kpis.categoriasUsadas || 0)]
+      ];
+      doc.autoTable({
+        startY: y,
+        head: [['Indicador', 'Valor']],
+        body: kpiRows,
+        theme: 'grid',
+        headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 9 },
+        styles: { fontSize: 9, cellPadding: 4 },
+        margin: { left: 15, right: 15 }
+      });
+      y = doc.lastAutoTable.finalY + 10;
+
+      // Top Movimientos
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'bold');
+      doc.text('Top Movimientos', 15, y); y += 7;
+
+      if (tops.length > 0) {
+        const topRows = tops.map(t => [
+          formatFecha(t.fecha),
+          t.descripcion || '-',
+          t.tipo || '-',
+          t.metodo_pago || '-',
+          formatMoney(t.monto || 0)
+        ]);
+        doc.autoTable({
+          startY: y,
+          head: [['Fecha', 'Descripción', 'Tipo', 'Método de Pago', 'Monto']],
+          body: topRows,
+          theme: 'grid',
+          headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 8 },
+          styles: { fontSize: 8, cellPadding: 3 },
+          margin: { left: 15, right: 15 }
         });
-        document.getElementById('notaComparativa').textContent = '';
-    }
+      } else {
+        doc.setFontSize(9);
+        doc.setFont(undefined, 'normal');
+        doc.text('No hay movimientos registrados en el período.', 15, y);
+      }
 
-    async function cargarEvolucion(anio, tipo, ambito) {
-        const res = await fetch(`/api/finanzas/dashboard/evolucion?anio=${anio}&tipo=${tipo}&ambito=${ambito}`);
-        const data = await res.json();
-        
-        if (data.success && data.data) {
-            // Determinar si hay comparativa con el año anterior
-            let dataComparacion = null;
-            const anioAnt = parseInt(anio) - 1;
-            try {
-                const resAnt = await fetch(`/api/finanzas/dashboard/evolucion?anio=${anioAnt}&tipo=${tipo}&ambito=${ambito}`);
-                const dataAnt = await resAnt.json();
-                if (dataAnt.success && Array.isArray(dataAnt.data) && dataAnt.data.length > 0) {
-                    dataComparacion = dataAnt.data;
-                }
-            } catch (e) {
-                console.error('Error Evolución comparación:', e);
-            }
-            renderChartBarras(data.data, dataComparacion, anio, dataComparacion ? anioAnt : null);
-        }
-    }
+      const nombre = `Dashboard_${f.fecha_inicio || f.anio}_${f.ambito}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      doc.save(nombre);
+    }).catch(e => {
+      console.error('Error exportar PDF:', e);
+      alert('No se pudo generar el PDF.');
+    });
+  }
 
-    function renderChartBarras(data, dataComparacion, anio, anioComparacion) {
-        const ctx = document.getElementById('chartBarras').getContext('2d');
-        if(chartBarrasInstance) chartBarrasInstance.destroy();
-
-        // Inicializar arrays de 12 meses en 0
-        const ingresos = new Array(12).fill(0);
-        const egresos = new Array(12).fill(0);
-
-        // Mapear datos del backend a los 12 meses
-        data.forEach(item => {
-            // item.mes_num viene del backend (1-12)
-            const idx = (item.mes_num || 0) - 1;
-            if (idx >= 0 && idx < 12) {
-                ingresos[idx] = item.ingresos || 0;
-                egresos[idx] = item.egresos || 0;
-            }
-        });
-
-        const datasets = [
-            { label: `Ingresos ${anio}`, data: ingresos, backgroundColor: '#198754' },
-            { label: `Egresos ${anio}`, data: egresos, backgroundColor: '#dc3545' }
-        ];
-
-        // Comparativa con el año anterior (48 barras = 2 años x 12 meses x ingresos/egresos)
-        if (dataComparacion && Array.isArray(dataComparacion) && dataComparacion.length > 0) {
-            const ingresosAnt = new Array(12).fill(0);
-            const egresosAnt = new Array(12).fill(0);
-            dataComparacion.forEach(item => {
-                const idx = (item.mes_num || 0) - 1;
-                if (idx >= 0 && idx < 12) {
-                    ingresosAnt[idx] = item.ingresos || 0;
-                    egresosAnt[idx] = item.egresos || 0;
-                }
-            });
-            datasets.push(
-                { label: `Ingresos ${anioComparacion}`, data: ingresosAnt, backgroundColor: 'rgba(25, 135, 84, 0.45)' },
-                { label: `Egresos ${anioComparacion}`, data: egresosAnt, backgroundColor: 'rgba(220, 53, 69, 0.45)' }
-            );
-        }
-
-        chartBarrasInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: MESES_ES,
-                datasets: datasets
-            },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } },
-                scales: { y: { beginAtZero: true } }
-            }
-        });
-    }
-
-    async function cargarCategorias(anio, mes, tipo, ambito) {
-        const titulo = document.getElementById('tituloDonut');
-        if (titulo) {
-            const label = tipo === 'INGRESO' ? 'Ingresos' : (tipo === 'EGRESO' ? 'Egresos' : 'Movimientos');
-            const sufijoAmbito = ambito === 'EMPRESA' ? ' (Empresa)' : (ambito === 'CASA' ? ' (Casa)' : '');
-            titulo.innerHTML = `<i class="fas fa-chart-pie me-2"></i>${label} por Categoría${sufijoAmbito}`;
-        }
-        const res = await fetch(`/api/finanzas/dashboard/categorias?anio=${anio}&mes=${mes}&tipo=${tipo}&ambito=${ambito}`);
-        const data = await res.json();
-        
-        if (data.success && data.data) {
-            renderChartCircular(data.data);
-        }
-    }
-
-    function renderChartCircular(data) {
-        const ctx = document.getElementById('chartCircular').getContext('2d');
-        if(chartCircularInstance) chartCircularInstance.destroy();
-
-        const categorias = data.categorias || [];
-
-        if (categorias.length === 0) {
-            chartCircularInstance = new Chart(ctx, {
-                type: 'doughnut',
-                data: { labels: ['Sin datos'], datasets: [{ data: [1], backgroundColor: ['#eee'] }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-            return;
-        }
-
-        chartCircularInstance = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: categorias.map(c => c.nombre),
-                datasets: [{
-                    data: categorias.map(c => c.total),
-                    backgroundColor: categorias.map(c => c.color || '#cccccc')
-                }]
-            },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } }
-            }
-        });
-    }
-
-    function formatMoney(amount) {
-        return '$' + parseFloat(amount || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    // ==================== EXPORTAR ====================
-    function getFiltrosActuales() {
-        return {
-            anio: document.getElementById('filtroAnio').value,
-            mes: document.getElementById('filtroMes').value,
-            tipo: tipoDashboard === 'GENERAL' ? '' : tipoDashboard,
-            ambito: ambitoDashboard
-        };
-    }
-
-    const LABEL_TIPO = { '': 'General', 'INGRESO': 'Ingresos', 'EGRESO': 'Egresos' };
-    const LABEL_AMBITO = { 'GENERAL': 'General', 'EMPRESA': 'Empresa', 'CASA': 'Casa' };
-    const LABEL_ALERTA = { danger: 'ALERTA', warning: 'AVISO', info: 'INFO', success: 'OK' };
-
-    async function exportarCSV(btn) {
-        try {
-            const f = getFiltrosActuales();
-            const mesIdx = parseInt(f.mes) - 1;                       // 0-based del mes actual
-            const mesAntIdx = mesIdx === 0 ? 11 : mesIdx - 1;         // 0-based del mes anterior
-            const anioAnt = mesIdx === 0 ? parseInt(f.anio) - 1 : parseInt(f.anio);
-
-            const [rAct, rAnt, rAlert, rCat] = await Promise.all([
-                fetch(`/api/finanzas/dashboard/kpis?anio=${f.anio}&mes=${f.mes}&tipo=${f.tipo}&ambito=${f.ambito}`).then(r => r.json()),
-                fetch(`/api/finanzas/dashboard/kpis?anio=${anioAnt}&mes=${mesAntIdx + 1}&tipo=${f.tipo}&ambito=${f.ambito}`).then(r => r.json()),
-                fetch(`/api/finanzas/dashboard/alertas?anio=${f.anio}&mes=${f.mes}&tipo=${f.tipo}&ambito=${f.ambito}`).then(r => r.json()),
-                fetch(`/api/finanzas/dashboard/categorias?anio=${f.anio}&mes=${f.mes}&tipo=${f.tipo}&ambito=${f.ambito}`).then(r => r.json())
-            ]);
-
-            const kpi = (rAct.success && rAct.data) ? (rAct.data.kpis || rAct.data) : {};
-            const kpiAnt = (rAnt.success && rAnt.data) ? (rAnt.data.kpis || rAnt.data) : null;
-            const alertas = (rAlert.success && rAlert.data) ? rAlert.data : [];
-            const cats = (rCat.success && rCat.data && rCat.data.categorias) ? rCat.data.categorias : [];
-
-            const filas = [];
-            filas.push(['ERP Data Technology - Dashboard Financiero']);
-            filas.push(['Periodo', `${MESES_LARGOS[mesIdx]} ${f.anio}`]);
-            filas.push(['Ambito', LABEL_AMBITO[f.ambito] || f.ambito]);
-            filas.push(['Tipo', LABEL_TIPO[f.tipo] || 'General']);
-            filas.push(['Fecha de exportacion', new Date().toLocaleString('es-AR')]);
-            filas.push([]);
-            filas.push(['KPI', 'Valor del mes', `Valor ${MESES_LARGOS[mesAntIdx]} ${anioAnt}`, 'Variacion']);
-            filas.push(['Ingresos', num(kpi.ingresos), kpiAnt ? num(kpiAnt.ingresos) : '', variacion(kpi.ingresos, kpiAnt && kpiAnt.ingresos)]);
-            filas.push(['Egresos', num(kpi.egresos), kpiAnt ? num(kpiAnt.egresos) : '', variacion(kpi.egresos, kpiAnt && kpiAnt.egresos)]);
-            filas.push(['Balance', num(kpi.balance), kpiAnt ? num(kpiAnt.balance) : '', variacion(kpi.balance, kpiAnt && kpiAnt.balance)]);
-            filas.push(['Operaciones', kpi.operaciones || 0, kpiAnt ? (kpiAnt.operaciones || 0) : '', '']);
-            filas.push([]);
-            filas.push(['Categorias', 'Monto']);
-            cats.forEach(c => filas.push([c.nombre, num(c.total)]));
-            filas.push([]);
-            filas.push(['Alertas']);
-            if (alertas.length) alertas.forEach(a => filas.push([LABEL_ALERTA[a.tipo] || 'INFO', a.mensaje]));
-            else filas.push(['OK', 'Sin alertas para este periodo.']);
-
-            const csv = '\ufeff' + filas.map(fila => fila.map(campoCsv).join(';')).join('\r\n');
-            descargar(csv, `dashboard_${f.anio}-${String(f.mes).padStart(2, '0')}_${f.ambito}_${f.tipo || 'GENERAL'}.csv`, 'text/csv;charset=utf-8;');
-            btn.innerHTML = '<i class="fas fa-check me-1"></i>Descargado';
-            setTimeout(() => { btn.innerHTML = '<i class="fas fa-file-csv me-1"></i>CSV'; }, 2000);
-        } catch (e) {
-            console.error('Error exportar CSV:', e);
-            alert('No se pudo generar el CSV.');
-        }
-    }
-
-    function exportarPDF() {
-        window.print();
-    }
-
-    // helpers de exportación
-    function num(v) { return parseFloat(v || 0).toFixed(2).replace('.', ','); }
-    function variacion(actual, anterior) {
-        const a = parseFloat(actual || 0), b = parseFloat(anterior || 0);
-        if (!b) return 'sin base';
-        return (((a - b) / Math.abs(b)) * 100).toFixed(1).replace('.', ',') + '%';
-    }
-    function campoCsv(v) {
-        const s = String(v === null || v === undefined ? '' : v);
-        return /[";\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-    }
-    function descargar(contenido, nombreArchivo, tipo) {
-        const blob = new Blob([contenido], { type: tipo });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = nombreArchivo;
-        document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
+  // helpers
+  function formatMoney(amount) {
+    return '$' + parseFloat(amount || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function formatFecha(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('es-AR');
+  }
+  function num(v) { return parseFloat(v || 0).toFixed(2).replace('.', ','); }
+  function campoCsv(v) {
+    const s = String(v === null || v === undefined ? '' : v);
+    return /[";\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function descargar(contenido, nombreArchivo, tipo) {
+    const blob = new Blob([contenido], { type: tipo });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = nombreArchivo;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 </script>
 </body>
 </html>

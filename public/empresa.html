@@ -27,6 +27,7 @@
           <li class="nav-item"><a class="nav-link" href="clientes.html"><i class="bi bi-people"></i> Clientes</a></li>
           <li class="nav-item"><a class="nav-link" href="cuenta-corriente.html"><i class="bi bi-wallet2"></i> Cta. Cte.</a></li>
           <li class="nav-item"><a class="nav-link" href="finanzas.html"><i class="bi bi-cash-stack"></i> Finanzas</a></li>
+          <li class="nav-item"><a class="nav-link" href="categorias.html"><i class="bi bi-tags"></i> Categorías</a></li>
           <li class="nav-item"><a class="nav-link" href="cheques.html"><i class="bi bi-receipt"></i> Cheques</a></li>
           <li class="nav-item"><a class="nav-link" href="trabajos.html"><i class="bi bi-briefcase"></i> Trabajos</a></li>
           <li class="nav-item"><a class="nav-link" href="agenda.html"><i class="bi bi-calendar"></i> Agenda</a></li>
@@ -109,7 +110,8 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     const API = '/api';
-    let logoBase64 = null;
+    // undefined = logo sin tocar (se conserva el guardado) | '' = borrado | dataURI = nuevo logo
+    let logoBase64 = undefined;
 
     document.addEventListener('DOMContentLoaded', cargarDatos);
 
@@ -124,15 +126,17 @@
           document.getElementById('empDireccion').value = data.direccion || '';
           document.getElementById('empTelefono').value = data.telefono || '';
           document.getElementById('empEmail').value = data.email || '';
-          document.getElementById('empWeb').value = data.web || '';
+          document.getElementById('empWeb').value = data.sitio_web || data.web || '';
           
-          if (data.logo) {
-            logoBase64 = data.logo;
-            document.getElementById('logoPreview').src = data.logo;
+          const logoActual = data.logo_base64 || data.logo || '';
+          if (logoActual) {
+            logoBase64 = logoActual;
+            document.getElementById('logoPreview').src = logoActual;
             document.getElementById('logoPreview').classList.remove('d-none');
             document.getElementById('noLogoText').classList.add('d-none');
             document.getElementById('btnEliminarLogo').style.display = 'block';
           } else {
+            logoBase64 = '';
             resetLogoUI();
           }
         }
@@ -163,7 +167,7 @@
     });
 
     function eliminarLogo() {
-      logoBase64 = null;
+      logoBase64 = ''; // se borra al guardar
       document.getElementById('logoInput').value = '';
       resetLogoUI();
     }
@@ -183,9 +187,12 @@
         direccion: document.getElementById('empDireccion').value.trim(),
         telefono: document.getElementById('empTelefono').value.trim(),
         email: document.getElementById('empEmail').value.trim(),
-        web: document.getElementById('empWeb').value.trim(),
-        logo: logoBase64
+        sitio_web: document.getElementById('empWeb').value.trim()
       };
+
+      // Solo enviamos el logo si se tocó (nuevo) o si se pidió borrarlo ('').
+      // Si queda undefined, el backend CONSERVA el logo guardado.
+      if (logoBase64 !== undefined) data.logo_base64 = logoBase64;
 
       try {
         const res = await fetch(`${API}/empresa`, {

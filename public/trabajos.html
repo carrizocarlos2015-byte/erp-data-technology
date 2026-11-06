@@ -40,6 +40,7 @@
           <li class="nav-item"><a class="nav-link" href="clientes.html"><i class="bi bi-people"></i> Clientes</a></li>
           <li class="nav-item"><a class="nav-link" href="cuenta-corriente.html"><i class="bi bi-wallet2"></i> Cta. Cte.</a></li>
           <li class="nav-item"><a class="nav-link" href="finanzas.html"><i class="bi bi-cash-stack"></i> Finanzas</a></li>
+          <li class="nav-item"><a class="nav-link" href="categorias.html"><i class="bi bi-tags"></i> Categorías</a></li>
           <li class="nav-item"><a class="nav-link" href="cheques.html"><i class="bi bi-receipt"></i> Cheques</a></li>
           <li class="nav-item"><a class="nav-link active" href="trabajos.html"><i class="bi bi-briefcase"></i> Trabajos</a></li>
           <li class="nav-item"><a class="nav-link" href="agenda.html"><i class="bi bi-calendar"></i> Agenda</a></li>
@@ -246,9 +247,14 @@
               <label class="form-label">Observaciones</label>
               <textarea class="form-control" id="trabajoObservaciones" rows="2"></textarea>
             </div>
-            <div class="mb-3 form-check">
-              <input type="checkbox" class="form-check-input" id="trabajoPagado">
-              <label class="form-check-label" for="trabajoPagado">✅ Marcar como PAGADO (se registrará en Finanzas)</label>
+            <div class="mb-3">
+              <label class="form-label">Forma de cobro</label>
+              <select class="form-select" id="trabajoFormaCobro" onchange="actualizarAyudaCobroTrabajo()">
+                <option value="Pendiente">Pendiente (no cobrado)</option>
+                <option value="Pagado">Pagado (se registra en Finanzas)</option>
+                <option value="CuentaCorriente">Cuenta Corriente (queda como deuda del cliente)</option>
+              </select>
+              <div class="form-text" id="ayudaFormaCobro"></div>
             </div>
           </form>
         </div>
@@ -310,16 +316,21 @@
     }
 
     function actualizarKPIs(kpis) {
-      // Estados
-      const estados = ['pendiente', 'diagnostico', 'reparacion', 'terminado', 'entregado'];
-      estados.forEach(estado => {
-        const key = estado.charAt(0).toUpperCase() + estado.slice(1);
-        document.getElementById(`kpi${key}`).textContent = kpis[estado]?.cantidad || 0;
-        document.getElementById(`monto${key}`).textContent = formatMoney(kpis[estado]?.total || 0);
+      // Estados (las claves del backend están sin acentos)
+      const estados = [
+        { key: 'pendiente', ui: 'Pendiente' },
+        { key: 'en_diagnostico', ui: 'Diagnostico' },
+        { key: 'en_reparacion', ui: 'Reparacion' },
+        { key: 'terminado', ui: 'Terminado' },
+        { key: 'entregado', ui: 'Entregado' }
+      ];
+      estados.forEach(({ key, ui }) => {
+        document.getElementById(`kpi${ui}`).textContent = kpis[key]?.cantidad || 0;
+        document.getElementById(`monto${ui}`).textContent = formatMoney(kpis[key]?.total || 0);
       });
       
-      document.getElementById('kpiTotal').textContent = kpis.total_general?.cantidad || 0;
-      document.getElementById('montoTotal').textContent = formatMoney(kpis.total_general?.total || 0);
+      document.getElementById('kpiTotal').textContent = kpis.cantidad_general || 0;
+      document.getElementById('montoTotal').textContent = formatMoney(kpis.total_general?.total ?? kpis.total_general ?? 0);
       
       // Financieros
       document.getElementById('kpiPagados').textContent = kpis.pagados?.cantidad || 0;
@@ -328,7 +339,8 @@
       document.getElementById('kpiPendientesCobro').textContent = kpis.pendientes_cobro?.cantidad || 0;
       document.getElementById('montoPendientesCobro').textContent = formatMoney(kpis.pendientes_cobro?.total || 0);
       
-      document.getElementById('kpiFacturado').textContent = formatMoney(kpis.total_facturado || 0);
+      const facturado = kpis.total_facturado ?? kpis.total_general?.total ?? kpis.total_general ?? 0;
+      document.getElementById('kpiFacturado').textContent = formatMoney(facturado);
       document.getElementById('cantTrabajos').textContent = `${kpis.cantidad_general || 0} trabajos`;
     }
 
@@ -344,23 +356,31 @@
         const cliente = clientesList.find(c => c.id === tr.cliente_id);
         const clienteNombre = cliente ? `${cliente.codigo} - ${cliente.nombre}` : '-';
         const total = (tr.monto_diagnostico || 0) + (tr.monto_reparacion || 0);
+        let pagoBadge;
+        if (tr.a_cuenta_corriente) {
+          pagoBadge = '<span class="badge bg-info text-dark" title="Deuda registrada en Cuenta Corriente">Cta. Cte.</span>';
+        } else if (tr.pagado) {
+          pagoBadge = '<span class="badge bg-success">Pagado</span>';
+        } else {
+          pagoBadge = '<span class="badge bg-danger">Pendiente</span>';
+        }
         
         return `
         <tr>
-          <td><strong>${tr.codigo}</strong></td>
+          <td><strong>${tr.codigo_orden || '-'}</strong></td>
           <td>${clienteNombre}</td>
           <td>${tr.tipo_equipo} ${tr.marca_modelo ? `(${tr.marca_modelo})` : ''}</td>
           <td>${tr.falla}</td>
           <td class="text-end fw-bold">${formatMoney(total)}</td>
           <td>${formatDate(tr.fecha_ingreso)}</td>
-          <td>${tr.fecha_entrega_estimada ? formatDate(tr.fecha_entrega_estimada) : '-'}</td>
+          <td>${tr.fecha_estimada_entrega ? formatDate(tr.fecha_estimada_entrega) : '-'}</td>
           <td><span class="badge ${getBadgeClass(tr.estado)}">${tr.estado}</span></td>
-          <td>${tr.pagado ? '<span class="badge bg-success">Pagado</span>' : '<span class="badge bg-danger">Pendiente</span>'}</td>
+          <td>${pagoBadge}</td>
           <td>
             <button class="btn btn-sm btn-outline-primary me-1" onclick="editarTrabajo('${tr.id}')">
               <i class="bi bi-pencil"></i>
             </button>
-            <button class="btn btn-sm btn-outline-danger" onclick="eliminarTrabajo('${tr.id}', '${tr.codigo}')">
+            <button class="btn btn-sm btn-outline-danger" onclick="eliminarTrabajo('${tr.id}', '${tr.codigo_orden || ''}')">
               <i class="bi bi-trash"></i>
             </button>
           </td>
@@ -376,7 +396,7 @@
       
       if (texto) {
         filtrados = filtrados.filter(tr => 
-          tr.codigo.toLowerCase().includes(texto) ||
+          (tr.codigo_orden || '').toLowerCase().includes(texto) ||
           tr.tipo_equipo.toLowerCase().includes(texto) ||
           tr.falla.toLowerCase().includes(texto) ||
           (tr.cliente_id && clientesList.find(c => c.id === tr.cliente_id)?.nombre.toLowerCase().includes(texto))
@@ -390,11 +410,28 @@
       renderizarTabla(filtrados);
     }
 
+    function actualizarAyudaCobroTrabajo() {
+      const forma = document.getElementById('trabajoFormaCobro').value;
+      const ayuda = document.getElementById('ayudaFormaCobro');
+      if (forma === 'CuentaCorriente') {
+        ayuda.className = 'form-text text-info';
+        ayuda.innerHTML = '<i class="bi bi-wallet2"></i> Se generará una factura pendiente en la Cuenta Corriente del cliente. No se registra en Finanzas hasta que se cobre.';
+      } else if (forma === 'Pagado') {
+        ayuda.className = 'form-text text-success';
+        ayuda.innerHTML = '<i class="bi bi-check-circle"></i> Se registrará el ingreso automáticamente en Finanzas.';
+      } else {
+        ayuda.className = 'form-text text-muted';
+        ayuda.innerHTML = 'El trabajo queda sin cobrar.';
+      }
+    }
+
     function abrirModalNuevo() {
       document.getElementById('modalTitulo').textContent = 'Nuevo Trabajo';
       document.getElementById('formTrabajo').reset();
       document.getElementById('trabajoId').value = '';
       document.getElementById('trabajoFechaIngreso').value = new Date().toISOString().split('T')[0];
+      document.getElementById('trabajoFormaCobro').value = 'Pendiente';
+      actualizarAyudaCobroTrabajo();
       new bootstrap.Modal(document.getElementById('modalTrabajo')).show();
     }
 
@@ -406,7 +443,7 @@
       document.getElementById('trabajoId').value = tr.id;
       document.getElementById('trabajoCliente').value = tr.cliente_id;
       document.getElementById('trabajoFechaIngreso').value = tr.fecha_ingreso.split('T')[0];
-      document.getElementById('trabajoFechaEntrega').value = tr.fecha_entrega_estimada ? tr.fecha_entrega_estimada.split('T')[0] : '';
+      document.getElementById('trabajoFechaEntrega').value = tr.fecha_estimada_entrega ? tr.fecha_estimada_entrega.split('T')[0] : '';
       document.getElementById('trabajoTipoEquipo').value = tr.tipo_equipo;
       document.getElementById('trabajoMarcaModelo').value = tr.marca_modelo || '';
       document.getElementById('trabajoNumeroSerie').value = tr.numero_serie || '';
@@ -415,17 +452,21 @@
       document.getElementById('trabajoMontoReparacion').value = tr.monto_reparacion || 0;
       document.getElementById('trabajoEstado').value = tr.estado;
       document.getElementById('trabajoObservaciones').value = tr.observaciones || '';
-      document.getElementById('trabajoPagado').checked = tr.pagado || false;
+      document.getElementById('trabajoFormaCobro').value = tr.a_cuenta_corriente
+        ? 'CuentaCorriente'
+        : (tr.pagado ? 'Pagado' : 'Pendiente');
+      actualizarAyudaCobroTrabajo();
       
       new bootstrap.Modal(document.getElementById('modalTrabajo')).show();
     }
 
     async function guardarTrabajo() {
       const id = document.getElementById('trabajoId').value;
+      const formaCobro = document.getElementById('trabajoFormaCobro').value;
       const data = {
         cliente_id: document.getElementById('trabajoCliente').value,
         fecha_ingreso: document.getElementById('trabajoFechaIngreso').value,
-        fecha_entrega_estimada: document.getElementById('trabajoFechaEntrega').value || null,
+        fecha_estimada_entrega: document.getElementById('trabajoFechaEntrega').value || null,
         tipo_equipo: document.getElementById('trabajoTipoEquipo').value.trim(),
         marca_modelo: document.getElementById('trabajoMarcaModelo').value.trim(),
         numero_serie: document.getElementById('trabajoNumeroSerie').value.trim(),
@@ -434,11 +475,20 @@
         monto_reparacion: parseFloat(document.getElementById('trabajoMontoReparacion').value) || 0,
         estado: document.getElementById('trabajoEstado').value,
         observaciones: document.getElementById('trabajoObservaciones').value.trim(),
-        pagado: document.getElementById('trabajoPagado').checked
+        pagado: formaCobro === 'Pagado',
+        a_cuenta_corriente: formaCobro === 'CuentaCorriente',
+        metodo_pago: formaCobro === 'CuentaCorriente' ? 'Cuenta Corriente' : null
       };
 
       if (!data.cliente_id || !data.fecha_ingreso || !data.tipo_equipo || !data.falla) {
         alert('Cliente, Fecha de Ingreso, Tipo de Equipo y Falla son obligatorios');
+        return;
+      }
+
+      // Si se cobra (pagado o cuenta corriente), debe tener monto total > 0
+      const montoTotal = data.monto_diagnostico + data.monto_reparacion;
+      if (formaCobro !== 'Pendiente' && montoTotal <= 0) {
+        alert('Para registrar el cobro ingresá un monto en Diagnóstico o Reparación mayor a 0');
         return;
       }
 
@@ -457,6 +507,13 @@
         if (result.success) {
           bootstrap.Modal.getInstance(document.getElementById('modalTrabajo')).hide();
           await cargarTrabajos();
+          if (result.registradoCuentaCorriente) {
+            alert('✅ Trabajo guardado. Se generó la deuda en la Cuenta Corriente del cliente.');
+          } else if (result.registradoFinanzas) {
+            alert('✅ Trabajo guardado y el cobro se registró automáticamente en Finanzas.');
+          } else if (id && formaCobro === 'Pagado') {
+            alert('✅ Trabajo guardado. (El cobro ya estaba registrado en Finanzas o no tiene monto.)');
+          }
         } else {
           alert(result.message);
         }

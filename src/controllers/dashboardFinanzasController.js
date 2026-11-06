@@ -67,7 +67,7 @@ exports.obtenerKPIs = async (req, res) => {
     const egresos = parseFloat(kpis.egresos || 0);
     const balance = ingresos - egresos;
     const operaciones = parseInt(kpis.operaciones || 0);
-    const ticketPromedio = operaciones > 0 ? egresos / operaciones : 0;
+    const ticketPromedio = operaciones > 0 ? (ingresos + egresos) / operaciones : 0;
 
     let comparativa = {
       variacionIngresosPct: 0,
@@ -88,7 +88,8 @@ exports.obtenerKPIs = async (req, res) => {
       const kpiAntQuery = `
         SELECT
           COALESCE(SUM(CASE WHEN mf.tipo = 'Ingreso' THEN mf.monto ELSE 0 END), 0) AS ingresos,
-          COALESCE(SUM(CASE WHEN mf.tipo = 'Egreso' THEN mf.monto ELSE 0 END), 0) AS egresos
+          COALESCE(SUM(CASE WHEN mf.tipo = 'Egreso' THEN mf.monto ELSE 0 END), 0) AS egresos,
+          COUNT(*) AS operaciones
         FROM movimientos_finanzas mf
         LEFT JOIN categorias_finanzas cf ON mf.categoria_id = cf.id
         ${whereAnt}
@@ -97,11 +98,13 @@ exports.obtenerKPIs = async (req, res) => {
       if (kpiAntResult.rows[0]) {
         const ingAnt = parseFloat(kpiAntResult.rows[0].ingresos || 0);
         const egrAnt = parseFloat(kpiAntResult.rows[0].egresos || 0);
+        const opsAnt = parseInt(kpiAntResult.rows[0].operaciones || 0);
         if (ingAnt > 0) comparativa.variacionIngresosPct = ((ingresos - ingAnt) / ingAnt) * 100;
         if (egrAnt > 0) comparativa.variacionEgresosPct = ((egresos - egrAnt) / egrAnt) * 100;
         comparativa.hayComparativa = true;
         comparativa.ingresosAnteriores = ingAnt;
         comparativa.egresosAnteriores = egrAnt;
+        comparativa.operacionesAnteriores = opsAnt;
       }
     }
 
@@ -135,7 +138,7 @@ exports.obtenerKPIs = async (req, res) => {
 // 🟢 Evolución
 exports.obtenerEvolucion = async (req, res) => {
   try {
-    const { ambito, anio, meses, tipo } = req.query;
+    const { ambito, anio, meses, tipo, fecha_inicio, fecha_fin } = req.query;
     const values = [];
     const conditions = [];
     let idx = 1;
@@ -151,12 +154,23 @@ exports.obtenerEvolucion = async (req, res) => {
     } else {
       conditions.push(`(mf.es_transferencia_interna = false OR mf.es_transferencia_interna IS NULL)`);
     }
-    const numMeses = meses ? parseInt(meses) : 24;
-    if (anio) {
+    // Rango de fechas personalizado tiene prioridad sobre año/meses
+    if (fecha_inicio) {
+      conditions.push(`mf.fecha_movimiento >= $${idx}::date`);
+      values.push(fecha_inicio);
+      idx++;
+    }
+    if (fecha_fin) {
+      conditions.push(`mf.fecha_movimiento <= $${idx}::date`);
+      values.push(fecha_fin);
+      idx++;
+    }
+    if (anio && !fecha_inicio) {
       conditions.push(`EXTRACT(YEAR FROM mf.fecha_movimiento) = $${idx}`);
       values.push(parseInt(anio));
       idx++;
-    } else {
+    } else if (!fecha_inicio) {
+      const numMeses = meses ? parseInt(meses) : 24;
       conditions.push(`mf.fecha_movimiento >= CURRENT_DATE - INTERVAL '${numMeses} months'`);
     }
     const whereClause = 'WHERE ' + conditions.join(' AND ');
@@ -213,8 +227,6 @@ exports.obtenerDistribucionCategorias = async (req, res) => {
   try {
     const params = req.query;
     const { where, values } = buildWhere(params);
-    // buildWhere ya agrega el filtro de tipo con UPPER() (la BD guarda 'Egreso'/'Ingreso'
-    // con mezcla de mayúsculas): agregarlo de nuevo con el valor crudo dejaba el gráfico vacío.
     const query = `
       SELECT
         cf.id AS categoria_id,
@@ -290,24 +302,36 @@ exports.obtenerDistribucionMetodosPago = async (req, res) => {
   }
 };
 
-// 🟢 Alertas del mes (útiles, no solo balance)
+// 🟢 Alertas del período (útiles, no solo balance)
 exports.obtenerAlertas = async (req, res) => {
   try {
-    const { anio, mes, ambito, tipo } = req.query;
+    const { anio, mes, ambito, tipo, fecha_inicio, fecha_fin } = req.query;
     const alertas = [];
-    if (!anio || !mes) {
-      return res.json({ success: true, data: [] });
-    }
 
     const conditions = [];
     const values = [];
     let idx = 1;
-    conditions.push(`EXTRACT(YEAR FROM mf.fecha_movimiento) = $${idx}`);
-    values.push(parseInt(anio));
-    idx++;
-    conditions.push(`EXTRACT(MONTH FROM mf.fecha_movimiento) = $${idx}`);
-    values.push(parseInt(mes));
-    idx++;
+
+    if (fecha_inicio) {
+      conditions.push(`mf.fecha_movimiento >= $${idx}::date`);
+      values.push(fecha_inicio);
+      idx++;
+    }
+    if (fecha_fin) {
+      conditions.push(`mf.fecha_movimiento <= $${idx}::date`);
+      values.push(fecha_fin);
+      idx++;
+    }
+    if (!fecha_inicio && anio) {
+      conditions.push(`EXTRACT(YEAR FROM mf.fecha_movimiento) = $${idx}`);
+      values.push(parseInt(anio));
+      idx++;
+    }
+    if (!fecha_inicio && mes) {
+      conditions.push(`EXTRACT(MONTH FROM mf.fecha_movimiento) = $${idx}`);
+      values.push(parseInt(mes));
+      idx++;
+    }
     if (tipo && tipo !== 'GENERAL') {
       conditions.push(`UPPER(mf.tipo) = UPPER($${idx})`);
       values.push(tipo.toUpperCase());
@@ -321,9 +345,18 @@ exports.obtenerAlertas = async (req, res) => {
       conditions.push(`(mf.es_transferencia_interna = false OR mf.es_transferencia_interna IS NULL)`);
     }
     const whereClause = 'WHERE ' + conditions.join(' AND ');
-    const params = { anio: parseInt(anio), mes: parseInt(mes), ambito, tipo };
 
-    // 1) Totales del mes
+    // Etiqueta de período para mostrar
+    let periodoLabel;
+    if (fecha_inicio && fecha_fin) {
+      periodoLabel = `${fecha_inicio} al ${fecha_fin}`;
+    } else if (anio && mes) {
+      periodoLabel = `${MESES[parseInt(mes) - 1]} ${anio}`;
+    } else {
+      periodoLabel = 'Período seleccionado';
+    }
+
+    // 1) Totales del período
     const balanceQuery = `
       SELECT
         COALESCE(SUM(CASE WHEN mf.tipo = 'Ingreso' THEN mf.monto ELSE 0 END), 0) AS ingresos,
@@ -341,9 +374,9 @@ exports.obtenerAlertas = async (req, res) => {
     if (operaciones === 0) {
       alertas.push({
         tipo: 'info',
-        mensaje: `Sin movimientos registrados en ${MESES[parseInt(mes) - 1]} ${anio}.`
+        mensaje: `Sin movimientos registrados en ${periodoLabel}.`
       });
-      return res.json({ success: true, data: alertas, meta: { ingresos: 0, egresos: 0, operaciones: 0, periodo: `${MESES[parseInt(mes) - 1]} ${anio}` } });
+      return res.json({ success: true, data: alertas, meta: { ingresos: 0, egresos: 0, operaciones: 0, periodo: periodoLabel } });
     }
 
     // 2) Balance negativo (solo tiene sentido sin filtro de tipo)
@@ -357,57 +390,60 @@ exports.obtenerAlertas = async (req, res) => {
     } else if (sinFiltroTipo && egresos > 0 && ingresos === 0) {
       alertas.push({
         tipo: 'danger',
-        mensaje: `Mes sin ingresos: se registraron $${egresos.toLocaleString('es-AR')} en egresos.`
+        mensaje: `Período sin ingresos: se registraron $${egresos.toLocaleString('es-AR')} en egresos.`,
+        monto: egresos
       });
     }
 
-    // 3) Comparativa de egresos contra el mes anterior
-    const mAnt = parseInt(mes) - 1;
-    const anioAnt = mAnt === 0 ? parseInt(anio) - 1 : parseInt(anio);
-    const mesAnt = mAnt === 0 ? 12 : mAnt;
-    try {
-      const condAnt = [
-        `EXTRACT(YEAR FROM mf.fecha_movimiento) = $1`,
-        `EXTRACT(MONTH FROM mf.fecha_movimiento) = $2`
-      ];
-      const valAnt = [anioAnt, mesAnt];
-      let iAnt = 3;
-      if (tipo && tipo !== 'GENERAL') {
-        condAnt.push(`UPPER(mf.tipo) = UPPER($${iAnt})`);
-        valAnt.push(tipo.toUpperCase());
-        iAnt++;
-      }
-      if (ambito && ambito !== 'GENERAL') {
-        condAnt.push(`UPPER(cf.ambito_negocio) = UPPER($${iAnt})`);
-        valAnt.push(ambito);
-      } else {
-        condAnt.push(`(mf.es_transferencia_interna = false OR mf.es_transferencia_interna IS NULL)`);
-      }
-      const rAnt = await pool.query(`
-        SELECT COALESCE(SUM(CASE WHEN mf.tipo = 'Egreso' THEN mf.monto ELSE 0 END), 0) AS egresos
-          FROM movimientos_finanzas mf
-          LEFT JOIN categorias_finanzas cf ON mf.categoria_id = cf.id
-         WHERE ${condAnt.join(' AND ')}
-      `, valAnt);
-      const egresosAnt = parseFloat(rAnt.rows[0].egresos || 0);
-      if (egresosAnt > 0) {
-        const delta = (egresos - egresosAnt) / egresosAnt * 100;
-        if (delta >= 20) {
-          alertas.push({
-            tipo: 'warning',
-            mensaje: `Los egresos subieron ${delta.toFixed(1)}% respecto de ${MESES[mesAnt - 1]} ${anioAnt} ($${egresosAnt.toLocaleString('es-AR')} → $${egresos.toLocaleString('es-AR')}).`,
-            monto: egresos - egresosAnt
-          });
-        } else if (delta <= -20) {
-          alertas.push({
-            tipo: 'success',
-            mensaje: `Los egresos bajaron ${Math.abs(delta).toFixed(1)}% respecto de ${MESES[mesAnt - 1]} ${anioAnt}.`,
-            monto: egresosAnt - egresos
-          });
+    // 3) Comparativa de egresos contra el período anterior (mismo largo)
+    if (!fecha_inicio && anio && mes) {
+      const mAnt = parseInt(mes) - 1;
+      const anioAnt = mAnt === 0 ? parseInt(anio) - 1 : parseInt(anio);
+      const mesAnt = mAnt === 0 ? 12 : mAnt;
+      try {
+        const condAnt = [
+          `EXTRACT(YEAR FROM mf.fecha_movimiento) = $1`,
+          `EXTRACT(MONTH FROM mf.fecha_movimiento) = $2`
+        ];
+        const valAnt = [anioAnt, mesAnt];
+        let iAnt = 3;
+        if (tipo && tipo !== 'GENERAL') {
+          condAnt.push(`UPPER(mf.tipo) = UPPER($${iAnt})`);
+          valAnt.push(tipo.toUpperCase());
+          iAnt++;
         }
+        if (ambito && ambito !== 'GENERAL') {
+          condAnt.push(`UPPER(cf.ambito_negocio) = UPPER($${iAnt})`);
+          valAnt.push(ambito);
+        } else {
+          condAnt.push(`(mf.es_transferencia_interna = false OR mf.es_transferencia_interna IS NULL)`);
+        }
+        const rAnt = await pool.query(`
+          SELECT COALESCE(SUM(CASE WHEN mf.tipo = 'Egreso' THEN mf.monto ELSE 0 END), 0) AS egresos
+            FROM movimientos_finanzas mf
+            LEFT JOIN categorias_finanzas cf ON mf.categoria_id = cf.id
+           WHERE ${condAnt.join(' AND ')}
+        `, valAnt);
+        const egresosAnt = parseFloat(rAnt.rows[0].egresos || 0);
+        if (egresosAnt > 0) {
+          const delta = (egresos - egresosAnt) / egresosAnt * 100;
+          if (delta >= 20) {
+            alertas.push({
+              tipo: 'warning',
+              mensaje: `Los egresos subieron ${delta.toFixed(1)}% respecto de ${MESES[mesAnt - 1]} ${anioAnt} ($${egresosAnt.toLocaleString('es-AR')} → $${egresos.toLocaleString('es-AR')}).`,
+              monto: egresos - egresosAnt
+            });
+          } else if (delta <= -20) {
+            alertas.push({
+              tipo: 'success',
+              mensaje: `Los egresos bajaron ${Math.abs(delta).toFixed(1)}% respecto de ${MESES[mesAnt - 1]} ${anioAnt}.`,
+              monto: egresosAnt - egresos
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Error comparativa en alertas:', e.message);
       }
-    } catch (e) {
-      console.error('Error comparativa en alertas:', e.message);
     }
 
     // 4) Categoría que se lleva una parte grande del gasto
@@ -427,7 +463,7 @@ exports.obtenerAlertas = async (req, res) => {
         if (pct >= 40) {
           alertas.push({
             tipo: 'warning',
-            mensaje: `"${top.nombre}" concentra el ${pct.toFixed(0)}% de los egresos del mes ($${parseFloat(top.total).toLocaleString('es-AR')}).`,
+            mensaje: `"${top.nombre}" concentra el ${pct.toFixed(0)}% de los egresos del período ($${parseFloat(top.total).toLocaleString('es-AR')}).`,
             monto: parseFloat(top.total)
           });
         }
@@ -452,7 +488,7 @@ exports.obtenerAlertas = async (req, res) => {
         if (promedio > 0 && maxMonto > promedio * 3 && operaciones >= 5) {
           alertas.push({
             tipo: 'info',
-            mensaje: `Movimiento atípico: "${rMax.rows[0].descripcion || 'Sin descripción'}" (${rMax.rows[0].categoria || 'sin categoría'}) por $${maxMonto.toLocaleString('es-AR')} — ${Math.round(maxMonto / promedio)}x el promedio del mes.`,
+            mensaje: `Movimiento atípico: "${rMax.rows[0].descripcion || 'Sin descripción'}" (${rMax.rows[0].categoria || 'sin categoría'}) por $${maxMonto.toLocaleString('es-AR')} — ${Math.round(maxMonto / promedio)}x el promedio del período.`,
             monto: maxMonto
           });
         }
@@ -461,7 +497,7 @@ exports.obtenerAlertas = async (req, res) => {
       console.error('Error movimiento atípico en alertas:', e.message);
     }
 
-    res.json({ success: true, data: alertas, meta: { ingresos, egresos, operaciones, periodo: `${MESES[parseInt(mes) - 1]} ${anio}` } });
+    res.json({ success: true, data: alertas, meta: { ingresos, egresos, operaciones, periodo: periodoLabel } });
   } catch (error) {
     console.error('Error en obtenerAlertas:', error);
     res.status(500).json({ success: false, message: error.message });

@@ -60,6 +60,7 @@
           <li class="nav-item"><a class="nav-link" href="clientes.html"><i class="bi bi-people"></i> Clientes</a></li>
           <li class="nav-item"><a class="nav-link active" href="cuenta-corriente.html"><i class="bi bi-wallet2"></i> Cta. Cte.</a></li>
           <li class="nav-item"><a class="nav-link" href="finanzas.html"><i class="bi bi-cash-stack"></i> Finanzas</a></li>
+          <li class="nav-item"><a class="nav-link" href="categorias.html"><i class="bi bi-tags"></i> Categorías</a></li>
           <li class="nav-item"><a class="nav-link" href="cheques.html"><i class="bi bi-receipt"></i> Cheques</a></li>
           <li class="nav-item"><a class="nav-link" href="trabajos.html"><i class="bi bi-briefcase"></i> Trabajos</a></li>
           <li class="nav-item"><a class="nav-link" href="agenda.html"><i class="bi bi-calendar"></i> Agenda</a></li>
@@ -84,34 +85,90 @@
 
     <!-- KPIs del Cliente Seleccionado -->
     <div class="row g-3 mb-4" id="kpiContainer" style="display: none;">
-      <div class="col-md-4">
+      <div class="col-md-3 col-6">
         <div class="kpi-card" style="border-left-color: #dc3545;">
           <div class="text-muted small">TOTAL DEBE</div>
           <div class="kpi-value text-danger" id="kpiDebe">$0,00</div>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3 col-6">
         <div class="kpi-card" style="border-left-color: #198754;">
           <div class="text-muted small">TOTAL HABER</div>
           <div class="kpi-value text-success" id="kpiHaber">$0,00</div>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3 col-6">
         <div class="kpi-card" style="border-left-color: #6f42c1;">
           <div class="text-muted small">SALDO ACTUAL</div>
           <div class="kpi-value" id="kpiSaldo">$0,00</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="kpi-card" style="border-left-color: #e8590c; background: #fff8f5;">
+          <div class="text-muted small">💰 A CUENTA</div>
+          <div class="kpi-value" style="color: #e8590c;" id="kpiACuenta">$0,00</div>
+          <small class="text-muted" id="kpiACuentaSub">Crédito para descontar</small>
         </div>
       </div>
     </div>
 
     <!-- Tabla de Movimientos AGRUPADA POR FACTURA -->
     <div class="table-container">
-      <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <h5 class="mb-0"><i class="bi bi-list-ul"></i> Movimientos por Factura</h5>
-        <button class="btn btn-primary btn-sm" onclick="abrirModalNuevo()" id="btnNuevoMov" disabled>
-          <i class="bi bi-plus-circle"></i> Registrar Movimiento
-        </button>
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-outline-warning btn-sm" id="btnRegularizar" onclick="abrirModalAplicar(null)" disabled
+                  title="Repartir los créditos acumulados contra las facturas abiertas (de la más vieja a la más nueva)">
+            <i class="bi bi-scale"></i> Regularizar cuenta
+          </button>
+          <button class="btn btn-outline-danger btn-sm" id="btnYoPague" onclick="abrirGastoCompartido('yo-pague')" disabled
+                  title="Gasto que vos pagaste por él (ej: seguro de flota) — suma al Debe">
+            <i class="bi bi-plus-circle"></i> Yo pagué por él
+          </button>
+          <button class="btn btn-outline-success btn-sm" id="btnElPago" onclick="abrirGastoCompartido('el-pago')" disabled
+                  title="Gasto que él pagó por vos (ej: internet) — suma al Haber y queda a cuenta">
+            <i class="bi bi-dash-circle"></i> Él pagó por mí
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="abrirModalNuevo()" id="btnNuevoMov" disabled>
+            <i class="bi bi-plus-circle"></i> Registrar Movimiento
+          </button>
+        </div>
       </div>
+
+      <!-- Barra de filtros: no borra nada, sólo oculta lo que no querés ver -->
+      <div class="card bg-light border-0 mb-3" id="filtrosContainer">
+        <div class="card-body py-2 px-3">
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <div class="btn-group btn-group-sm" role="group" aria-label="Filtro por estado">
+              <button type="button" class="btn btn-outline-secondary active" data-estado="todos" onclick="setFiltroEstado('todos')">
+                <i class="bi bi-list-ul"></i> Todos
+              </button>
+              <button type="button" class="btn btn-outline-danger" data-estado="deuda" onclick="setFiltroEstado('deuda')">
+                <i class="bi bi-exclamation-triangle"></i> Solo Deuda
+              </button>
+              <button type="button" class="btn btn-outline-success" data-estado="pagadas" onclick="setFiltroEstado('pagadas')">
+                <i class="bi bi-check2-circle"></i> Pagadas
+              </button>
+            </div>
+
+            <div class="d-flex align-items-center gap-1">
+              <label class="text-muted small mb-0" for="filtroDesde">Desde</label>
+              <input type="date" class="form-control form-control-sm" id="filtroDesde" style="width: 145px;" onchange="aplicarFiltros()">
+            </div>
+            <div class="d-flex align-items-center gap-1">
+              <label class="text-muted small mb-0" for="filtroHasta">Hasta</label>
+              <input type="date" class="form-control form-control-sm" id="filtroHasta" style="width: 145px;" onchange="aplicarFiltros()">
+            </div>
+
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="limpiarFiltros()" title="Quitar filtros">
+              <i class="bi bi-x-circle"></i> Limpiar
+            </button>
+
+            <span class="ms-auto text-muted small" id="infoFiltro"></span>
+          </div>
+        </div>
+      </div>
+
       <div class="table-responsive">
         <table class="table table-hover">
           <thead>
@@ -130,8 +187,9 @@
           </tbody>
         </table>
       </div>
-      <div class="mt-3 text-end fw-bold" id="saldoFinalContainer" style="display: none;">
-        Saldo Total Pendiente: <span id="saldoFinal" class="fs-5">$0,00</span>
+      <div class="mt-3 text-end fw-bold d-flex justify-content-end align-items-center flex-wrap gap-2" id="saldoFinalContainer" style="display: none;">
+        <span id="cajaACuenta" class="small fw-normal text-muted"></span>
+        <span>Saldo Total Pendiente: <span id="saldoFinal" class="fs-5">$0,00</span></span>
       </div>
     </div>
   </div>
@@ -164,6 +222,7 @@
               <label class="form-label">Descripción *</label>
               <input type="text" class="form-control" id="movDescripcion" required>
             </div>
+            <div class="alert alert-secondary py-2 mb-3 small" id="movHint" style="display:none;"></div>
             <div class="row">
               <div class="col-6 mb-3">
                 <label class="form-label">Debe ($)</label>
@@ -172,6 +231,24 @@
               <div class="col-6 mb-3">
                 <label class="form-label">Haber ($)</label>
                 <input type="number" class="form-control" id="movHaber" step="0.01" min="0">
+              </div>
+            </div>
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <label class="form-label mb-1">Categoría</label>
+                <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none" onclick="crearCategoriaRapida()">
+                  <i class="bi bi-plus-circle"></i> Nueva categoría
+                </button>
+              </div>
+              <select class="form-select" id="movCategoria">
+                <option value="">Sin categoría</option>
+              </select>
+              <div class="form-text d-flex justify-content-between align-items-center flex-wrap gap-1">
+                <span>Se administran desde <a href="categorias.html" target="_blank" rel="noopener">Categorías</a>.</span>
+                <label class="form-check-label small text-nowrap mb-0">
+                  <input class="form-check-input me-1" type="checkbox" id="movMostrarTodasCategorias" onchange="alternarCategoriasCc(this.checked)">
+                  Ver todas
+                </label>
               </div>
             </div>
           </form>
@@ -250,6 +327,59 @@
     </div>
   </div>
 
+  <!-- ✅ MODAL: Reparto asistido de cobros / Regularizar cuenta (Fase 1 + 4) -->
+  <div class="modal fade" id="modalAplicar" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title" id="aplicarTitulo"><i class="bi bi-scale"></i> Regularizar cuenta</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info py-2 mb-3 small" id="aplicarResumen"></div>
+
+          <div class="mb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h6 class="mb-0"><i class="bi bi-file-earmark-text"></i> Facturas abiertas <small class="text-muted">(de la más vieja a la más nueva)</small></h6>
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-outline-primary" onclick="propuestaFIFO()" title="Reparte los créditos automáticamente: factura vieja primero">
+                <i class="bi bi-magic"></i> Propuesta automática
+              </button>
+              <button type="button" class="btn btn-outline-secondary" onclick="limpiarMontos()">Limpiar</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-2">
+              <thead class="table-light">
+                <tr>
+                  <th style="width:95px">Fecha</th>
+                  <th>Factura</th>
+                  <th class="text-end" style="width:130px">Pendiente</th>
+                  <th style="width:175px">A aplicar ($)</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyAplicar"></tbody>
+            </table>
+          </div>
+
+          <div id="aplicarCreditos" class="mb-2"></div>
+
+          <div class="d-flex justify-content-between border-top pt-2 fw-bold">
+            <span>A aplicar: <span id="aplicarTotal" class="text-primary">$0,00</span></span>
+            <span>💰 Sobra a cuenta: <span id="aplicarSobra" style="color:#e8590c;">$0,00</span></span>
+          </div>
+          <div class="text-danger small mt-1" id="aplicarAviso" style="display:none;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-success" id="btnConfirmarAplicar" onclick="confirmarAplicar()" disabled>
+            <i class="bi bi-check-circle"></i> Confirmar reparto
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     const API = '/api';
@@ -258,10 +388,104 @@
     let clienteActualId = null;
     let saldoActualCliente = 0;
     let facturaActualParaPago = null;
+    let saldoACuentaActual = 0;  // 💰 crédito disponible sin repartir (Fase 2)
+    let aplicaState = null;      // estado del modal de reparto (Fase 1)
+    let categoriasCc = [];       // categorías administrables (tabla categorias_finanzas)
+    let mostrarTodasCategoriasCc = false; // false = sólo Egreso/General en Cta. Cte.
 
     document.addEventListener('DOMContentLoaded', async () => {
-      await cargarClientes();
+      deshabilitarFiltros(true); // sin cliente seleccionado no hay nada que filtrar
+      await Promise.all([cargarClientes(), cargarCategoriasCc()]);
     });
+
+    function escaparHtml(valor) {
+      return String(valor ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    // Carga las categorías reales de Finanzas en el selector de Cuenta Corriente
+    async function cargarCategoriasCc() {
+      try {
+        const res = await fetch(`${API}/finanzas/categorias-gestion`);
+        const data = await res.json();
+        categoriasCc = Array.isArray(data) ? data : [];
+        renderOpcionesCategoriasCc();
+        return categoriasCc;
+      } catch (error) {
+        console.error('Error al cargar categorías:', error);
+        return [];
+      }
+    }
+
+    // Pinta el selector. Por defecto oculta las categorías de Ingreso
+    // (se usan en Finanzas), salvo que se tilde "Ver todas".
+    function renderOpcionesCategoriasCc() {
+      const sel = document.getElementById('movCategoria');
+      if (!sel) return;
+      const valorActual = sel.value;
+
+      const visibles = mostrarTodasCategoriasCc
+        ? categoriasCc
+        : categoriasCc.filter(c => c.ambito !== 'INGRESO');
+
+      sel.innerHTML = '<option value="">Sin categoría</option>' + visibles.map(c => {
+        const texto = `${c.icono ? c.icono + ' ' : ''}${c.nombre}`;
+        return `<option value="${escaparHtml(c.nombre)}">${escaparHtml(texto)}</option>`;
+      }).join('');
+
+      if (valorActual) {
+        sel.value = valorActual;
+        // Si la categoría seleccionada quedó fuera del filtro, la agregamos
+        // igual para no perder la selección (ej: al editar un movimiento).
+        if (sel.value !== valorActual) {
+          const cat = categoriasCc.find(c => c.nombre === valorActual);
+          const opt = document.createElement('option');
+          opt.value = valorActual;
+          opt.textContent = cat
+            ? `${cat.icono ? cat.icono + ' ' : ''}${cat.nombre}`
+            : `${valorActual} (histórica)`;
+          sel.appendChild(opt);
+          sel.value = valorActual;
+        }
+      }
+    }
+
+    function alternarCategoriasCc(mostrarTodas) {
+      mostrarTodasCategoriasCc = mostrarTodas === true;
+      renderOpcionesCategoriasCc();
+    }
+
+    // Crea una categoría nueva sin salir del modal de movimiento
+    async function crearCategoriaRapida() {
+      const nombre = prompt('Nombre de la nueva categoría:');
+      if (!nombre || !nombre.trim()) return;
+      try {
+        const res = await fetch(`${API}/finanzas/categorias`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: nombre.trim(),
+            ambito: 'GENERAL',
+            ambito_negocio: 'GENERAL'
+          })
+        });
+        const result = await res.json();
+        if (!result.success) { alert(result.message || 'No se pudo crear la categoría'); return; }
+        await cargarCategoriasCc();
+        document.getElementById('movCategoria').value = result.data?.nombre || nombre.trim();
+      } catch (error) {
+        console.error(error);
+        alert('Error de conexión al crear la categoría');
+      }
+    }
+
+    // Selecciona una categoría sólo si existe en la lista administrable
+    function seleccionarCategoriaSiExiste(nombre) {
+      const sel = document.getElementById('movCategoria');
+      sel.value = nombre;
+      if (sel.value !== nombre) sel.value = '';
+    }
 
     async function cargarClientes() {
       try {
@@ -288,12 +512,20 @@
         document.getElementById('kpiContainer').style.display = 'none';
         document.getElementById('saldoFinalContainer').style.display = 'none';
         document.getElementById('btnNuevoMov').disabled = true;
+        document.getElementById('btnRegularizar').disabled = true;
+        document.getElementById('btnYoPague').disabled = true;
+        document.getElementById('btnElPago').disabled = true;
+        saldoACuentaActual = 0;
+        deshabilitarFiltros(true);
+        resetearFiltros();
+        document.getElementById('infoFiltro').textContent = '';
         document.getElementById('tablaMovimientos').innerHTML = 
           '<tr><td colspan="7" class="text-center text-muted">Seleccione un cliente para ver sus movimientos.</td></tr>';
         return;
       }
 
       document.getElementById('btnNuevoMov').disabled = false;
+      deshabilitarFiltros(false);
       
       try {
         // Cargar movimientos agrupados por factura
@@ -301,12 +533,14 @@
         const data = await res.json();
         movimientosData = data.movimientos || [];
         saldoActualCliente = data.saldo_total || 0;
+        saldoACuentaActual = parseFloat(data.saldo_a_cuenta || 0); // 💰 disponible antes de renderizar
         
         // Cargar saldo general del cliente
         const resSaldo = await fetch(`${API}/cuenta-corriente/saldo/${clienteId}`);
         const saldoData = await resSaldo.json();
         
-        renderizarTablaAgrupada(movimientosData);
+        // Aplica los filtros activos (o muestra todo si no hay ninguno)
+        aplicarFiltros();
         
         // Actualizar KPIs
         document.getElementById('kpiDebe').textContent = formatMoney(saldoData.total_debe);
@@ -315,6 +549,17 @@
         const saldoEl = document.getElementById('kpiSaldo');
         saldoEl.textContent = formatMoney(saldoData.saldo);
         saldoEl.className = `kpi-value ${saldoData.saldo >= 0 ? 'text-danger' : 'text-success'}`;
+
+        // 💰 Fase 2: tarjeta y línea de crédito a cuenta
+        document.getElementById('kpiACuenta').textContent = formatMoney(saldoACuentaActual);
+        document.getElementById('kpiACuentaSub').textContent = saldoACuentaActual > 0.009
+          ? 'Crédito para descontar' : 'Sin crédito disponible';
+        document.getElementById('cajaACuenta').innerHTML = saldoACuentaActual > 0.009
+          ? `💰 A cuenta: <span style="color:#e8590c">${formatMoney(saldoACuentaActual)}</span>`
+          : '<span class="text-muted">Sin crédito a cuenta</span>';
+        document.getElementById('btnRegularizar').disabled = saldoACuentaActual <= 0.009;
+        document.getElementById('btnYoPague').disabled = false;
+        document.getElementById('btnElPago').disabled = false;
         
         document.getElementById('kpiContainer').style.display = 'flex';
         
@@ -330,34 +575,66 @@
       }
     }
 
-    function renderizarTablaAgrupada(movimientos) {
+    function renderizarTablaAgrupada(movimientos, filtrando = false) {
       const tbody = document.getElementById('tablaMovimientos');
       
       if (movimientos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No hay movimientos registrados.</td></tr>';
+        tbody.innerHTML = filtrando
+          ? `<tr><td colspan="7" class="text-center text-muted py-4">
+               <i class="bi bi-funnel fs-4 d-block mb-1"></i>
+               Ningún movimiento coincide con el filtro.
+               <button class="btn btn-link btn-sm p-0 ms-1" onclick="limpiarFiltros()">Limpiar filtros</button>
+             </td></tr>`
+          : '<tr><td colspan="7" class="text-center text-muted">No hay movimientos registrados.</td></tr>';
         return;
       }
 
       let html = '';
       
       movimientos.forEach(mov => {
-        // Fila principal: FACTURA
-        const estadoClass = mov.estado === 'Pagada' ? 'badge-pagada' : 
-                           (mov.estado === 'Parcial' ? 'badge-parcial' : 'badge-pendiente');
+        // Fila principal: FACTURA o CRÉDITO (transferencia/gasto sin repartir)
+        const esCredito = mov.clase === 'credito';
+        let estadoClass;
+        if (mov.estado === 'Pagada') estadoClass = 'badge-pagada';
+        else if (mov.estado === 'Parcial') estadoClass = 'badge-parcial';
+        else if (mov.estado === 'A cuenta') estadoClass = 'bg-info text-dark';
+        else if (mov.estado === 'Repartida') estadoClass = 'bg-secondary';
+        else estadoClass = 'badge-pendiente';
         const saldoClass = mov.saldo > 0 ? 'saldo-negativo' : 'saldo-positivo';
+
+        // Celda de saldo: en créditos → lo disponible; en facturas → lo pendiente
+        let celdaSaldo;
+        if (esCredito) {
+          celdaSaldo = mov.disponible > 0
+            ? `<span class="text-info fw-bold" title="Crédito sin repartir todavía">${formatMoney(mov.disponible)}</span>`
+            : '<span class="text-muted">-</span>';
+        } else {
+          celdaSaldo = `<span class="${saldoClass}">${formatMoney(mov.saldo)}</span>`;
+          // 💰 Fase 2: cuánto cubriría el crédito a cuenta de esta factura
+          if (mov.saldo > 0 && saldoACuentaActual > 0.009) {
+            celdaSaldo += `<div class="small text-info" title="El crédito a cuenta cubriría hasta este monto de esta factura">💰 cubre ${formatMoney(Math.min(saldoACuentaActual, mov.saldo))}</div>`;
+          }
+        }
+
+        const catTag = mov.categoria ? ` <small class="text-muted">[${mov.categoria}]</small>` : '';
         
         html += `
           <tr class="fila-factura">
             <td>${formatDate(mov.fecha)}</td>
-            <td><strong>${mov.descripcion}</strong></td>
+            <td><strong>${mov.descripcion}</strong>${catTag}</td>
             <td class="text-end">${formatMoney(mov.debe)}</td>
             <td class="text-end">${mov.haber > 0 ? formatMoney(mov.haber) : '-'}</td>
-            <td class="text-end ${saldoClass}">${formatMoney(mov.saldo)}</td>
+            <td class="text-end ${esCredito ? '' : saldoClass}">${celdaSaldo}</td>
             <td><span class="badge ${estadoClass}">${mov.estado}</span></td>
             <td>
-              ${mov.saldo > 0 ? `
+              ${!esCredito && mov.saldo > 0 ? `
                 <button class="btn btn-sm btn-success me-1" onclick="abrirModalPago('${mov.id}', '${mov.descripcion.replace(/'/g, "\\'")}', ${mov.debe}, ${mov.haber}, ${mov.saldo})" title="Registrar Pago">
                   <i class="bi bi-cash-coin"></i> Pagar
+                </button>
+              ` : ''}
+              ${esCredito && mov.disponible > 0 ? `
+                <button class="btn btn-sm btn-info me-1" onclick="abrirModalAplicar('${mov.id}')" title="Aplicar este crédito contra facturas">
+                  <i class="bi bi-share-fill"></i> Aplicar
                 </button>
               ` : ''}
               <button class="btn btn-sm btn-outline-primary me-1" onclick="editarMovimiento('${mov.id}')" title="Editar">
@@ -390,9 +667,124 @@
             `;
           });
         }
+
+        // Filas indentadas: APLICACIONES (reparto de cobros) contra esta factura
+        if (mov.aplicaciones && mov.aplicaciones.length > 0) {
+          mov.aplicaciones.forEach(a => {
+            // En facturas: desde qué crédito vino · En créditos: a qué factura fue
+            const texto = esCredito
+              ? `↳ Aplicado a: ${a.factura_descripcion || 'factura'}${a.factura_fecha ? ` <small>(${formatDate(a.factura_fecha)})</small>` : ''}`
+              : `↳ Aplicado desde: ${a.origen_descripcion || 'crédito'} ${a.origen_fecha ? `<small>(${formatDate(a.origen_fecha)})</small>` : ''}`;
+            html += `
+              <tr class="fila-pago">
+                <td>${formatDate(a.fecha)}</td>
+                <td class="text-info">${texto}</td>
+                <td class="text-end">-</td>
+                <td class="text-end text-info fw-bold">${formatMoney(a.monto)}</td>
+                <td class="text-end">-</td>
+                <td><small class="text-muted">Vinculado</small></td>
+                <td>
+                  <button class="btn btn-sm btn-outline-warning" onclick="deshacerAplicacion('${a.id}')" title="Deshacer aplicación (el crédito vuelve a estar disponible)">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                  </button>
+                </td>
+              </tr>
+            `;
+          });
+        }
       });
       
       tbody.innerHTML = html;
+    }
+
+    // ============ FILTROS (sólo ocultan, nunca borran datos) ============
+    let filtroEstado = 'todos';
+
+    function deshabilitarFiltros(deshabilitar) {
+      document.querySelectorAll('#filtrosContainer button, #filtrosContainer input')
+        .forEach(el => { el.disabled = deshabilitar; });
+    }
+
+    function marcarBotonEstado(estado) {
+      document.querySelectorAll('#filtrosContainer [data-estado]').forEach(b => {
+        b.classList.toggle('active', b.dataset.estado === estado);
+        b.classList.remove('btn-outline-danger', 'btn-outline-success', 'btn-outline-secondary');
+        if (b.dataset.estado === 'deuda') b.classList.add('btn-outline-danger');
+        else if (b.dataset.estado === 'pagadas') b.classList.add('btn-outline-success');
+        else b.classList.add('btn-outline-secondary');
+      });
+    }
+
+    function resetearFiltros() {
+      filtroEstado = 'todos';
+      marcarBotonEstado('todos');
+      document.getElementById('filtroDesde').value = '';
+      document.getElementById('filtroHasta').value = '';
+    }
+
+    function setFiltroEstado(estado) {
+      filtroEstado = estado;
+      marcarBotonEstado(estado);
+      aplicarFiltros();
+    }
+
+    function limpiarFiltros() {
+      resetearFiltros();
+      aplicarFiltros();
+    }
+
+    function hayFiltroActivo() {
+      return filtroEstado !== 'todos' ||
+             document.getElementById('filtroDesde').value ||
+             document.getElementById('filtroHasta').value;
+    }
+
+    function movimientosFiltrados() {
+      const desde = document.getElementById('filtroDesde').value;
+      const hasta = document.getElementById('filtroHasta').value;
+
+      return movimientosData.filter(m => {
+        const saldo = parseFloat(m.saldo || 0);
+        const debe = parseFloat(m.debe || 0);
+
+        // 1) Estado: sólo deuda / sólo pagadas
+        if (filtroEstado === 'deuda' && !(saldo > 0)) return false;
+        if (filtroEstado === 'pagadas' && !(debe > 0 && saldo <= 0)) return false;
+
+        // 2) Rango de fechas (fecha viene como aaaa-mm-dd, comparable como texto)
+        const fecha = String(m.fecha || '').split('T')[0];
+        if (desde && fecha < desde) return false;
+        if (hasta && fecha > hasta) return false;
+
+        return true;
+      });
+    }
+
+    function aplicarFiltros() {
+      const info = document.getElementById('infoFiltro');
+
+      if (!document.getElementById('selectCliente').value) {
+        deshabilitarFiltros(true);
+        info.textContent = '';
+        return;
+      }
+
+      const lista = movimientosFiltrados();
+      const activo = hayFiltroActivo();
+      renderizarTablaAgrupada(lista, activo);
+
+      // Resumen de lo que se está mostrando (los KPIs siguen siendo globales)
+      const facturado = lista.reduce((a, m) => a + parseFloat(m.debe || 0), 0);
+      const cobrado = lista.reduce((a, m) => a + parseFloat(m.haber || 0), 0);
+      const pendiente = lista.reduce((a, m) => a + Math.max(0, parseFloat(m.saldo || 0)), 0);
+
+      if (activo) {
+        info.innerHTML = `Mostrando <strong>${lista.length}</strong> de ${movimientosData.length} facturas · ` +
+          `Facturado ${formatMoney(facturado)} · Cobrado ${formatMoney(cobrado)} · ` +
+          `<strong class="text-danger">Pendiente ${formatMoney(pendiente)}</strong>`;
+      } else {
+        info.innerHTML = `${movimientosData.length} facturas · Pendiente total <strong>${formatMoney(pendiente)}</strong>`;
+      }
     }
 
     // ✅ FUNCIONES PARA EL MODAL DE PAGO
@@ -467,12 +859,228 @@
     }
 
     // Funciones originales mantenidas
+    // ============ FASE 1 + 4: REPARTO ASISTIDO DE COBROS ============
+
+    // Abre el modal de reparto. origenId = null → regularización general;
+    // origenId = id → aplicar sólo ese crédito. facturaObjetivo → preselecciona un cargo (Fase 2)
+    function abrirModalAplicar(origenId, facturaObjetivo) {
+      if (!clienteActualId) return;
+
+      const creditos = (movimientosData || []).filter(m =>
+        m.clase === 'credito' && m.disponible > 0.009 && (!origenId || m.id === origenId)
+      );
+      const facturas = (movimientosData || [])
+        .filter(m => m.clase !== 'credito' && m.debe > 0 && m.saldo > 0.009)
+        .sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+
+      if (!facturas.length) { alert('No hay facturas abiertas para aplicar.'); return; }
+      if (!creditos.length) { alert('No hay créditos disponibles (transferencias o gastos sin repartir).'); return; }
+
+      aplicaState = { modo: origenId ? 'origen' : 'regularizar', origenId: origenId || null, creditos, facturas };
+
+      document.getElementById('aplicarTitulo').innerHTML = origenId
+        ? '<i class="bi bi-cash-coin"></i> Aplicar cobro a facturas'
+        : '<i class="bi bi-scale"></i> Regularizar cuenta';
+
+      const totalDisp = creditos.reduce((s, c) => s + c.disponible, 0);
+      const totalPend = facturas.reduce((s, f) => s + f.saldo, 0);
+      document.getElementById('aplicarResumen').innerHTML =
+        `💰 Crédito disponible: <strong>${formatMoney(totalDisp)}</strong> en ${creditos.length} movimiento${creditos.length > 1 ? 's' : ''} · ` +
+        `📄 Facturas abiertas: <strong>${facturas.length}</strong> por <strong>${formatMoney(totalPend)}</strong><br>` +
+        `<small>Se propone aplicar de la factura más vieja a la más nueva. Podés cambiar los montos antes de confirmar.</small>`;
+
+      renderAplicar();
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAplicar')).show();
+      propuestaFIFO();
+
+      // Fase 2: si nos pidieron aplicar a un cargo nuevo, apuntamos ahí
+      if (facturaObjetivo) {
+        document.querySelectorAll('#tbodyAplicar input').forEach(i => i.value = 0);
+        const inp = document.querySelector(`#tbodyAplicar input[data-factura="${facturaObjetivo}"]`);
+        const f = aplicaState.facturas.find(x => x.id === facturaObjetivo);
+        if (inp && f) inp.value = Math.min(f.saldo, totalDisp).toFixed(2);
+        recalcularAplicar();
+      }
+    }
+
+    function renderAplicar() {
+      const tb = document.getElementById('tbodyAplicar');
+      tb.innerHTML = aplicaState.facturas.map(f => `
+        <tr>
+          <td>${formatDate(f.fecha)}</td>
+          <td><strong>${f.descripcion}</strong>${f.categoria ? ` <small class="text-muted">[${f.categoria}]</small>` : ''}</td>
+          <td class="text-end">${formatMoney(f.saldo)}</td>
+          <td>
+            <input type="number" class="form-control form-control-sm text-end" min="0" max="${f.saldo}" step="0.01"
+                   value="0" data-factura="${f.id}" oninput="recalcularAplicar()">
+          </td>
+        </tr>`).join('');
+
+      document.getElementById('aplicarCreditos').innerHTML =
+        `<div class="small text-muted mb-1">Créditos que se usan (los más viejos primero):</div>` +
+        aplicaState.creditos.map(c => `
+          <span class="badge bg-light text-dark border me-1 mb-1">
+            💰 ${formatDate(c.fecha)} · ${c.descripcion} · disp. <strong>${formatMoney(c.disponible)}</strong>
+          </span>`).join('');
+    }
+
+    // Propuesta automática FIFO: factura vieja primero, crédito viejo primero
+    function propuestaFIFO() {
+      if (!aplicaState) return;
+      const creditos = aplicaState.creditos.map(c => ({ id: c.id, restante: c.disponible }));
+      document.querySelectorAll('#tbodyAplicar input').forEach(i => i.value = 0);
+
+      let ci = 0;
+      for (const f of aplicaState.facturas) {
+        if (ci >= creditos.length) break;
+        let restante = f.saldo;
+        let aAplicar = 0;
+        while (restante > 0.009 && ci < creditos.length) {
+          const c = creditos[ci];
+          const monto = Math.min(restante, c.restante);
+          if (monto > 0.009) { restante -= monto; c.restante -= monto; aAplicar += monto; }
+          if (c.restante <= 0.009) ci++;
+        }
+        if (aAplicar > 0.009) {
+          const inp = document.querySelector(`#tbodyAplicar input[data-factura="${f.id}"]`);
+          if (inp) inp.value = aAplicar.toFixed(2);
+        }
+      }
+      recalcularAplicar();
+    }
+
+    function limpiarMontos() {
+      document.querySelectorAll('#tbodyAplicar input').forEach(i => i.value = 0);
+      recalcularAplicar();
+    }
+
+    function recalcularAplicar() {
+      if (!aplicaState) return;
+      let total = 0;
+      document.querySelectorAll('#tbodyAplicar input').forEach(i => {
+        let v = parseFloat(i.value) || 0;
+        if (v < 0) v = 0;
+        const f = aplicaState.facturas.find(x => x.id === i.dataset.factura);
+        if (f && v > f.saldo) { v = f.saldo; i.value = v.toFixed(2); } // tope al pendiente
+        total += v;
+      });
+
+      const disp = aplicaState.creditos.reduce((s, c) => s + c.disponible, 0);
+      const sobra = Math.max(0, disp - total);
+      document.getElementById('aplicarTotal').textContent = formatMoney(total);
+      document.getElementById('aplicarSobra').textContent = formatMoney(sobra);
+
+      const aviso = document.getElementById('aplicarAviso');
+      const btn = document.getElementById('btnConfirmarAplicar');
+      if (total > disp + 0.009) {
+        aviso.style.display = '';
+        aviso.textContent = 'Estás aplicando más de lo disponible en créditos.';
+        btn.disabled = true;
+      } else if (total <= 0.009) {
+        aviso.style.display = 'none';
+        btn.disabled = true;
+      } else {
+        aviso.style.display = 'none';
+        btn.disabled = false;
+      }
+    }
+
+    async function confirmarAplicar() {
+      if (!aplicaState) return;
+
+      // Montos finales cargados por factura
+      const montos = [];
+      document.querySelectorAll('#tbodyAplicar input').forEach(i => {
+        const v = parseFloat(i.value) || 0;
+        if (v > 0.009) montos.push({ factura_id: i.dataset.factura, monto: Math.round(v * 100) / 100 });
+      });
+      if (!montos.length) { alert('Indicá cuánto aplicar en al menos una factura.'); return; }
+
+      // Asignación de créditos (FIFO) según el modo
+      const items = [];
+      if (aplicaState.modo === 'origen') {
+        const c = aplicaState.creditos[0];
+        montos.forEach(m => items.push({ origen_id: c.id, factura_id: m.factura_id, monto: m.monto }));
+      } else {
+        const creditos = aplicaState.creditos.map(c => ({ id: c.id, restante: c.disponible }));
+        let ci = 0;
+        for (const m of montos) {
+          let falta = m.monto;
+          while (falta > 0.009 && ci < creditos.length) {
+            const c = creditos[ci];
+            const monto = Math.min(falta, c.restante);
+            if (monto > 0.009) {
+              items.push({ origen_id: c.id, factura_id: m.factura_id, monto: Math.round(monto * 100) / 100 });
+              falta -= monto; c.restante -= monto;
+            }
+            if (c.restante <= 0.009) ci++;
+          }
+          if (ci >= creditos.length) break;
+        }
+      }
+      if (!items.length) { alert('No se pudo asignar el crédito a las facturas.'); return; }
+
+      try {
+        const res = await fetch(`${API}/cuenta-corriente/aplicar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cliente_id: clienteActualId, items })
+        });
+        const r = await res.json();
+        if (!r.success) { alert('No se pudo aplicar: ' + r.message); return; }
+
+        bootstrap.Modal.getInstance(document.getElementById('modalAplicar')).hide();
+        await cargarMovimientos();
+        alert(`✅ ${r.message}\n\nLas facturas impactadas ya figuran como Pagadas o Parciales.`);
+      } catch (error) {
+        console.error(error);
+        alert('Error de conexión al aplicar los cobros');
+      }
+    }
+
+    async function deshacerAplicacion(id) {
+      if (!confirm('¿Deshacer esta aplicación?\n\nEl crédito vuelve a estar disponible. No se borra ningún movimiento.')) return;
+      try {
+        const res = await fetch(`${API}/cuenta-corriente/aplicacion/${id}`, { method: 'DELETE' });
+        const r = await res.json();
+        if (!r.success) { alert(r.message); return; }
+        await cargarMovimientos();
+      } catch (error) {
+        alert('Error de conexión al deshacer la aplicación');
+      }
+    }
+
+    // ============ FASE 3: GASTOS COMPARTIDOS ============
+    function abrirGastoCompartido(direccion) {
+      if (!clienteActualId) return;
+      abrirModalNuevo();
+
+      const hint = document.getElementById('movHint');
+      hint.style.display = '';
+      if (direccion === 'yo-pague') {
+        hint.innerHTML = '💰 <strong>Yo pagué un gasto por él</strong> (ej: seguro de flota): se suma al <strong>Debe</strong> → le queda debiendo.';
+        seleccionarCategoriaSiExiste('Seguro de flota');
+        document.getElementById('movDescripcion').placeholder = 'Ej: Seguro de flota 1-5';
+        document.getElementById('movDebe').focus();
+      } else {
+        hint.innerHTML = '💰 <strong>Él pagó un gasto por mí</strong> (ej: internet): se suma al <strong>Haber</strong> → le desconto. Después podés repartirlo con <strong>Regularizar cuenta</strong>.';
+        seleccionarCategoriaSiExiste('Internet');
+        document.getElementById('movDescripcion').placeholder = 'Ej: Internet noviembre';
+        document.getElementById('movHaber').focus();
+      }
+    }
+
     function abrirModalNuevo() {
       if (!clienteActualId) return;
       document.getElementById('modalTitulo').textContent = 'Registrar Movimiento';
       document.getElementById('formMovimiento').reset();
       document.getElementById('movId').value = '';
       document.getElementById('movFecha').value = new Date().toISOString().split('T')[0];
+      document.getElementById('movHint').style.display = 'none'; // Fase 3: sin hint en alta normal
+      mostrarTodasCategoriasCc = false;
+      document.getElementById('movMostrarTodasCategorias').checked = false;
+      renderOpcionesCategoriasCc();
+      if (!categoriasCc.length) cargarCategoriasCc();
       new bootstrap.Modal(document.getElementById('modalMovimiento')).show();
     }
 
@@ -487,7 +1095,28 @@
       document.getElementById('movDescripcion').value = mov.descripcion;
       document.getElementById('movDebe').value = mov.debe || 0;
       document.getElementById('movHaber').value = mov.haber || 0;
-      
+      // Cargar categoría existente. Si es una categoría histórica que ya no está
+      // en la lista administrable, se agrega igual para no perder el dato.
+      const selCat = document.getElementById('movCategoria');
+      const cat = mov.categoria || '';
+      const catObj = categoriasCc.find(c => c.nombre === cat);
+      // Si el movimiento estaba clasificado con una categoría de Ingreso,
+      // destildamos el filtro para que se vea en su contexto.
+      mostrarTodasCategoriasCc = catObj ? catObj.ambito === 'INGRESO' : false;
+      const chkTodas = document.getElementById('movMostrarTodasCategorias');
+      if (chkTodas) chkTodas.checked = mostrarTodasCategoriasCc;
+      selCat.value = '';
+      renderOpcionesCategoriasCc();
+      selCat.value = cat;
+      if (cat && selCat.value !== cat) {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = `${cat} (histórica)`;
+        selCat.appendChild(opt);
+        selCat.value = cat;
+      }
+      document.getElementById('movHint').style.display = 'none';
+
       new bootstrap.Modal(document.getElementById('modalMovimiento')).show();
     }
 
@@ -507,7 +1136,8 @@
         descripcion: document.getElementById('movDescripcion').value.trim(),
         debe: debe,
         haber: haber,
-        tipo_movimiento: document.getElementById('movTipo').value
+        tipo_movimiento: document.getElementById('movTipo').value,
+        categoria: document.getElementById('movCategoria').value || null // Fase 3
       };
 
       try {
@@ -525,6 +1155,18 @@
         if (result.success) {
           bootstrap.Modal.getInstance(document.getElementById('modalMovimiento')).hide();
           await cargarMovimientos();
+
+          // 💰 Fase 2: cargo nuevo con crédito a cuenta disponible → ofrecer aplicarlo ya
+          if (!id && debe > 0 && saldoACuentaActual > 0.009) {
+            const nuevaId = result.data && result.data.id;
+            if (nuevaId && confirm(
+              `Tenés ${formatMoney(saldoACuentaActual)} de crédito a cuenta sin repartir.\n\n` +
+              `¿Querés aplicarlo ahora contra esta factura?\n\n` +
+              `(Podés hacerlo después cuando quieras con el botón "Regularizar cuenta")`
+            )) {
+              abrirModalAplicar(null, nuevaId);
+            }
+          }
         } else {
           alert(result.message);
         }

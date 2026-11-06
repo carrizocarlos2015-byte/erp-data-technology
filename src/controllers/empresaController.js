@@ -17,7 +17,9 @@ exports.obtenerDatos = async (req, res) => {
         telefono: '261-6080860',
         email: '',
         sitio_web: '',
-        logo_base64: ''
+        web: '',
+        logo_base64: '',
+        logo: ''
       });
     }
 
@@ -29,8 +31,10 @@ exports.obtenerDatos = async (req, res) => {
       direccion: data.direccion,
       telefono: data.telefono,
       email: data.email,
-      sitio_web: data.sitio_web,
-      logo_base64: data.logo_base64 || ''
+      sitio_web: data.sitio_web || '',
+      web: data.sitio_web || '',
+      logo_base64: data.logo_base64 || '',
+      logo: data.logo_base64 || ''
     });
   } catch (error) {
     console.error('Error al obtener datos empresa:', error);
@@ -41,7 +45,17 @@ exports.obtenerDatos = async (req, res) => {
 // 🟡 POST/PUT: Guardar datos de la empresa
 exports.guardarDatos = async (req, res) => {
   try {
-    const { nombre, cuit, direccion, telefono, email, sitio_web, logo_base64 } = req.body;
+    const { nombre, cuit, direccion, telefono, email } = req.body;
+
+    // Compatibilidad con el frontend: acepta 'sitio_web' o 'web'
+    const sitio_web = req.body.sitio_web ?? req.body.web ?? '';
+
+    // Compatibilidad con el frontend: acepta 'logo_base64' o 'logo'.
+    // undefined = el cliente NO envió el logo → SE CONSERVA el guardado.
+    // ''       = el cliente quiere BORRARLO explícitamente.
+    const logoEnviado = ('logo_base64' in req.body)
+      ? req.body.logo_base64
+      : (('logo' in req.body) ? req.body.logo : undefined);
 
     if (!nombre) {
       return res.status(400).json({ success: false, message: 'El nombre de la empresa es obligatorio' });
@@ -56,11 +70,13 @@ exports.guardarDatos = async (req, res) => {
       const query = `
         UPDATE configuracion_empresa
         SET nombre = $1, cuit = $2, direccion = $3, telefono = $4,
-            email = $5, sitio_web = $6, logo_base64 = $7, updated_at = CURRENT_TIMESTAMP
+            email = $5, sitio_web = $6,
+            logo_base64 = COALESCE($7, logo_base64),
+            updated_at = CURRENT_TIMESTAMP
         WHERE id = $8
         RETURNING id, nombre
       `;
-      const values = [nombre, cuit || '', direccion || '', telefono || '', email || '', sitio_web || '', logo_base64 || '', id];
+      const values = [nombre, cuit || '', direccion || '', telefono || '', email || '', sitio_web, logoEnviado ?? null, id];
       const result = await pool.query(query, values);
 
       res.json({ success: true, message: 'Datos de empresa actualizados correctamente', data: result.rows[0] });
@@ -68,10 +84,10 @@ exports.guardarDatos = async (req, res) => {
       // INSERT
       const query = `
         INSERT INTO configuracion_empresa (nombre, cuit, direccion, telefono, email, sitio_web, logo_base64)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, ''))
         RETURNING id, nombre
       `;
-      const values = [nombre, cuit || '', direccion || '', telefono || '', email || '', sitio_web || '', logo_base64 || ''];
+      const values = [nombre, cuit || '', direccion || '', telefono || '', email || '', sitio_web, logoEnviado ?? null];
       const result = await pool.query(query, values);
 
       res.status(201).json({ success: true, message: 'Datos de empresa guardados correctamente', data: result.rows[0] });

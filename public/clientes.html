@@ -38,6 +38,7 @@
           <li class="nav-item"><a class="nav-link active" href="clientes.html"><i class="bi bi-people"></i> Clientes</a></li>
           <li class="nav-item"><a class="nav-link" href="cuenta-corriente.html"><i class="bi bi-wallet2"></i> Cta. Cte.</a></li>
           <li class="nav-item"><a class="nav-link" href="finanzas.html"><i class="bi bi-cash-stack"></i> Finanzas</a></li>
+          <li class="nav-item"><a class="nav-link" href="categorias.html"><i class="bi bi-tags"></i> Categorías</a></li>
           <li class="nav-item"><a class="nav-link" href="cheques.html"><i class="bi bi-receipt"></i> Cheques</a></li>
           <li class="nav-item"><a class="nav-link" href="trabajos.html"><i class="bi bi-briefcase"></i> Trabajos</a></li>
           <li class="nav-item"><a class="nav-link" href="agenda.html"><i class="bi bi-calendar"></i> Agenda</a></li>
@@ -142,6 +143,27 @@
   <button class="btn btn-primary rounded-circle position-fixed" style="bottom: 30px; right: 30px; width: 60px; height: 60px; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(13,110,253,0.4);" onclick="abrirModalNuevo()" title="Nuevo Cliente">
     <i class="bi bi-plus-lg"></i>
   </button>
+  <button class="btn btn-outline-danger rounded-circle position-fixed" style="bottom: 100px; right: 30px; width: 60px; height: 60px; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(220,53,69,0.4);" onclick="abrirModalEliminados()" title="Clientes eliminados">
+    <i class="bi bi-trash"></i>
+  </button>
+
+  <!-- Modal Clientes Eliminados -->
+  <div class="modal fade" id="modalEliminados" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Clientes Eliminados</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="listaEliminados">
+          <div class="text-center text-muted py-4">Cargando clientes eliminados...</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
@@ -300,6 +322,67 @@
         }
       } catch (error) {
         alert('Error al eliminar cliente');
+      }
+    }
+
+    async function cargarClientesInactivos() {
+      try {
+        const res = await fetch(`${API}/clientes/inactivos`);
+        const inactivos = await res.json();
+        const cont = document.getElementById('listaEliminados');
+        if (!inactivos || inactivos.length === 0) {
+          cont.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-trash me-2"></i>No hay clientes eliminados.</div>';
+          return;
+        }
+        cont.innerHTML = `
+          <table class="table table-sm table-hover">
+            <thead>
+              <tr>
+                <th>Código</th><th>Nombre</th><th>CUIT/DNI</th><th>Teléfono</th><th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${inactivos.map(c => `
+                <tr>
+                  <td><strong>${c.codigo}</strong></td>
+                  <td>${c.nombre}</td>
+                  <td>${c.cuit || '-'}</td>
+                  <td>${c.telefono || '-'}</td>
+                  <td>
+                    <button class="btn btn-sm btn-success" onclick="restaurarCliente('${c.id}', '${c.nombre}')" title="Restaurar cliente">
+                      <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+                    </button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (error) {
+        console.error('Error al cargar clientes inactivos:', error);
+        document.getElementById('listaEliminados').innerHTML = '<div class="text-danger py-4">Error al cargar clientes eliminados.</div>';
+      }
+    }
+
+    function abrirModalEliminados() {
+      cargarClientesInactivos();
+      new bootstrap.Modal(document.getElementById('modalEliminados')).show();
+    }
+
+    async function restaurarCliente(id, nombre) {
+      if (!confirm(`¿Restaurar al cliente "${nombre}"?\n\nQuedará activo nuevamente y su código quedará ocupado.`)) return;
+      try {
+        const res = await fetch(`${API}/clientes/${id}/restaurar`, { method: 'PATCH' });
+        const result = await res.json();
+        if (result.success) {
+          alert(result.message);
+          bootstrap.Modal.getInstance(document.getElementById('modalEliminados')).hide();
+          cargarClientes(); // recargar lista principal
+        } else {
+          alert(result.message);
+        }
+      } catch (error) {
+        alert('Error al restaurar cliente');
       }
     }
   </script>

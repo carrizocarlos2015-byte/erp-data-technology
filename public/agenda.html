@@ -40,6 +40,7 @@
           <li class="nav-item"><a class="nav-link" href="clientes.html"><i class="bi bi-people"></i> Clientes</a></li>
           <li class="nav-item"><a class="nav-link" href="cuenta-corriente.html"><i class="bi bi-wallet2"></i> Cta. Cte.</a></li>
           <li class="nav-item"><a class="nav-link" href="finanzas.html"><i class="bi bi-cash-stack"></i> Finanzas</a></li>
+          <li class="nav-item"><a class="nav-link" href="categorias.html"><i class="bi bi-tags"></i> Categorías</a></li>
           <li class="nav-item"><a class="nav-link" href="cheques.html"><i class="bi bi-receipt"></i> Cheques</a></li>
           <li class="nav-item"><a class="nav-link" href="trabajos.html"><i class="bi bi-briefcase"></i> Trabajos</a></li>
           <li class="nav-item"><a class="nav-link active" href="agenda.html"><i class="bi bi-calendar"></i> Agenda</a></li>
@@ -203,11 +204,11 @@
                 <label class="form-label">Hora Inicio *</label>
                 <input type="time" class="form-control" id="eventoHoraInicio" required>
               </div>
-              <div class="col-md-3 mb-3">
+              <div class="col-md-3 mb-3" style="display: none;">
                 <label class="form-label">Fecha Fin</label>
                 <input type="date" class="form-control" id="eventoFechaFin">
               </div>
-              <div class="col-md-3 mb-3">
+              <div class="col-md-3 mb-3" style="display: none;">
                 <label class="form-label">Hora Fin</label>
                 <input type="time" class="form-control" id="eventoHoraFin">
               </div>
@@ -219,7 +220,7 @@
               </div>
               <div class="col-md-6 mb-3">
                 <label class="form-label">Método de Pago</label>
-                <select class="form-select" id="eventoMetodoPago">
+                <select class="form-select" id="eventoMetodoPago" onchange="actualizarAyudaCobroEvento()">
                   <option value="">Sin cobro</option>
                   <option value="Efectivo">Efectivo</option>
                   <option value="Transferencia">Transferencia</option>
@@ -227,7 +228,9 @@
                   <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
                   <option value="Tarjeta de Débito">Tarjeta de Débito</option>
                   <option value="Mercado Pago">Mercado Pago</option>
+                  <option value="Cuenta Corriente">Cuenta Corriente (queda como deuda)</option>
                 </select>
+                <div class="form-text" id="ayudaCobroEvento"></div>
               </div>
             </div>
             <div class="mb-3 form-check">
@@ -316,7 +319,7 @@
         document.getElementById(`cant${capitalize(key)}`).textContent = `${kpis[estado]?.cantidad || 0} eventos`;
       });
       
-      document.getElementById('kpiTotal').textContent = kpis.total_general || 0;
+      document.getElementById('kpiTotal').textContent = kpis.cantidad_general || 0;
       document.getElementById('cantTotal').textContent = `${kpis.cantidad_general || 0} eventos`;
     }
 
@@ -335,23 +338,32 @@
       tbody.innerHTML = eventos.map(ev => {
         const cliente = clientesList.find(c => c.id === ev.cliente_id);
         const clienteNombre = cliente ? `${cliente.codigo} - ${cliente.nombre}` : '-';
+        const monto = ev.monto_cobrado || 0;
+        let cobroBadge;
+        if (ev.a_cuenta_corriente) {
+          cobroBadge = '<span class="badge bg-info text-dark" title="Deuda registrada en Cuenta Corriente">Cta. Cte.</span>';
+        } else if (ev.cobrado) {
+          cobroBadge = '<span class="badge bg-success">Cobrado</span>';
+        } else {
+          cobroBadge = '<span class="badge bg-secondary">Pendiente</span>';
+        }
         
         return `
         <tr>
-          <td><strong>${ev.codigo}</strong></td>
+          <td><strong>${ev.codigo_evento || '-'}</strong></td>
           <td>${ev.titulo}</td>
           <td>${clienteNombre}</td>
-          <td>${ev.tipo}</td>
-          <td>${formatDateTime(ev.fecha_inicio, ev.hora_inicio)}</td>
-          <td>${formatDateTime(ev.fecha_fin, ev.hora_fin)}</td>
-          <td class="text-end">${ev.monto > 0 ? formatMoney(ev.monto) : '-'}</td>
+          <td>${ev.tipo_evento || '-'}</td>
+          <td>${formatDateTime(ev.fecha_inicio)}</td>
+          <td>${formatDateTime(ev.fecha_fin)}</td>
+          <td class="text-end">${monto > 0 ? formatMoney(monto) : '-'}</td>
           <td><span class="badge ${getBadgeClass(ev.estado)}">${ev.estado}</span></td>
-          <td>${ev.cobrado ? '<span class="badge bg-success">Cobrado</span>' : '<span class="badge bg-secondary">Pendiente</span>'}</td>
+          <td>${cobroBadge}</td>
           <td>
             <button class="btn btn-sm btn-outline-primary me-1" onclick="editarEvento('${ev.id}')">
               <i class="bi bi-pencil"></i>
             </button>
-            <button class="btn btn-sm btn-outline-danger" onclick="eliminarEvento('${ev.id}', '${ev.titulo}')">
+            <button class="btn btn-sm btn-outline-danger" onclick="eliminarEvento('${ev.id}', '${ev.titulo.replace(/'/g, "\\'")}')">
               <i class="bi bi-trash"></i>
             </button>
           </td>
@@ -384,7 +396,7 @@
       const en24hs = new Date(ahora.getTime() + 24 * 60 * 60 * 1000);
       
       const proximos = eventosData.filter(ev => {
-        const fechaInicio = new Date(`${ev.fecha_inicio}T${ev.hora_inicio}`);
+        const fechaInicio = new Date(ev.fecha_inicio);
         return fechaInicio >= ahora && fechaInicio <= en24hs && ev.estado !== 'Cancelado' && ev.estado !== 'Completado';
       });
       
@@ -395,8 +407,24 @@
         alertasEl.innerHTML = proximos.map(ev => {
           const cliente = clientesList.find(c => c.id === ev.cliente_id);
           const clienteNombre = cliente ? cliente.nombre : 'Sin cliente';
-          return `<div class="alert alert-warning mb-1"><i class="bi bi-clock"></i> <strong>${ev.titulo}</strong> - ${clienteNombre} (${formatDateTime(ev.fecha_inicio, ev.hora_inicio)})</div>`;
+          return `<div class="alert alert-warning mb-1"><i class="bi bi-clock"></i> <strong>${ev.titulo}</strong> - ${clienteNombre} (${formatDateTime(ev.fecha_inicio)})</div>`;
         }).join('');
+      }
+    }
+
+    function actualizarAyudaCobroEvento() {
+      const metodo = document.getElementById('eventoMetodoPago').value;
+      const ayuda = document.getElementById('ayudaCobroEvento');
+      const chk = document.getElementById('eventoCobrado');
+      if (metodo === 'Cuenta Corriente') {
+        chk.checked = false;
+        chk.disabled = true;
+        ayuda.className = 'form-text text-info';
+        ayuda.innerHTML = '<i class="bi bi-wallet2"></i> Se generará una factura pendiente en la Cuenta Corriente del cliente.';
+      } else {
+        chk.disabled = false;
+        ayuda.className = 'form-text text-muted';
+        ayuda.innerHTML = '';
       }
     }
 
@@ -406,6 +434,7 @@
       document.getElementById('eventoId').value = '';
       document.getElementById('eventoFechaInicio').value = new Date().toISOString().split('T')[0];
       document.getElementById('eventoHoraInicio').value = '09:00';
+      actualizarAyudaCobroEvento();
       new bootstrap.Modal(document.getElementById('modalEvento')).show();
     }
 
@@ -416,40 +445,52 @@
       document.getElementById('modalTitulo').textContent = 'Editar Evento';
       document.getElementById('eventoId').value = ev.id;
       document.getElementById('eventoTitulo').value = ev.titulo;
-      document.getElementById('eventoTipo').value = ev.tipo;
+      document.getElementById('eventoTipo').value = ev.tipo_evento || 'Visita Técnica';
       document.getElementById('eventoCliente').value = ev.cliente_id || '';
-      document.getElementById('eventoFechaInicio').value = ev.fecha_inicio.split('T')[0];
-      document.getElementById('eventoHoraInicio').value = ev.hora_inicio;
-      document.getElementById('eventoFechaFin').value = ev.fecha_fin ? ev.fecha_fin.split('T')[0] : '';
-      document.getElementById('eventoHoraFin').value = ev.hora_fin || '';
-      document.getElementById('eventoMonto').value = ev.monto || 0;
+      const fechaHora = String(ev.fecha_inicio || '').split('T');
+      document.getElementById('eventoFechaInicio').value = fechaHora[0] || '';
+      document.getElementById('eventoHoraInicio').value = (fechaHora[1] || '09:00').slice(0, 5);
+      document.getElementById('eventoMonto').value = ev.monto_cobrado || 0;
       document.getElementById('eventoMetodoPago').value = ev.metodo_pago || '';
       document.getElementById('eventoCobrado').checked = ev.cobrado || false;
       document.getElementById('eventoEstado').value = ev.estado;
       document.getElementById('eventoObservaciones').value = ev.observaciones || '';
+      actualizarAyudaCobroEvento();
       
       new bootstrap.Modal(document.getElementById('modalEvento')).show();
     }
 
     async function guardarEvento() {
       const id = document.getElementById('eventoId').value;
+      const metodoPago = document.getElementById('eventoMetodoPago').value || null;
+      const esCuentaCorriente = metodoPago === 'Cuenta Corriente';
       const data = {
         titulo: document.getElementById('eventoTitulo').value.trim(),
-        tipo: document.getElementById('eventoTipo').value,
+        tipo_evento: document.getElementById('eventoTipo').value,
         cliente_id: document.getElementById('eventoCliente').value || null,
         fecha_inicio: document.getElementById('eventoFechaInicio').value,
         hora_inicio: document.getElementById('eventoHoraInicio').value,
-        fecha_fin: document.getElementById('eventoFechaFin').value || null,
-        hora_fin: document.getElementById('eventoHoraFin').value || null,
-        monto: parseFloat(document.getElementById('eventoMonto').value) || 0,
-        metodo_pago: document.getElementById('eventoMetodoPago').value || null,
-        cobrado: document.getElementById('eventoCobrado').checked,
+        monto_cobrado: parseFloat(document.getElementById('eventoMonto').value) || 0,
+        metodo_pago: metodoPago,
+        cobrado: esCuentaCorriente ? false : document.getElementById('eventoCobrado').checked,
+        a_cuenta_corriente: esCuentaCorriente,
         estado: document.getElementById('eventoEstado').value,
         observaciones: document.getElementById('eventoObservaciones').value.trim()
       };
 
       if (!data.titulo || !data.fecha_inicio || !data.hora_inicio) {
         alert('Título, Fecha Inicio y Hora Inicio son obligatorios');
+        return;
+      }
+
+      if (esCuentaCorriente && !data.cliente_id) {
+        alert('Para enviar el evento a Cuenta Corriente tenés que asignarle un cliente');
+        return;
+      }
+
+      // Si se cobra (cobrado o cuenta corriente), debe haber un monto
+      if ((data.cobrado || esCuentaCorriente) && data.monto_cobrado <= 0) {
+        alert('Para registrar el cobro ingresá un monto mayor a 0');
         return;
       }
 
@@ -468,6 +509,13 @@
         if (result.success) {
           bootstrap.Modal.getInstance(document.getElementById('modalEvento')).hide();
           await cargarEventos();
+          if (result.registradoCuentaCorriente) {
+            alert('✅ Evento guardado. Se generó la deuda en la Cuenta Corriente del cliente.');
+          } else if (result.registradoFinanzas) {
+            alert('✅ Evento guardado y el cobro se registró automáticamente en Finanzas.');
+          } else if (id && data.cobrado) {
+            alert('✅ Evento guardado. (El cobro ya estaba registrado en Finanzas o no tiene monto.)');
+          }
         } else {
           alert(result.message);
         }
@@ -508,11 +556,12 @@
       return '$' + parseFloat(amount || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    function formatDateTime(fecha, hora) {
+    function formatDateTime(fecha) {
       if (!fecha) return '-';
-      const parts = fecha.split('T')[0].split('-');
+      const [datePart, timePart] = String(fecha).split('T');
+      const parts = datePart.split('-');
       const dateStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
-      return hora ? `${dateStr} ${hora}` : dateStr;
+      return timePart ? `${dateStr} ${timePart.slice(0, 5)}` : dateStr;
     }
   </script>
 </body>
